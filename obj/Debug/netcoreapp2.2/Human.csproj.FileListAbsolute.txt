@@ -1,0 +1,11 @@
+C:\Git\BOOTCAMP\CodingDojo\Bootcamp_secondstack\OOP\Human\bin\Debug\netcoreapp2.2\Human.deps.json
+C:\Git\BOOTCAMP\CodingDojo\Bootcamp_secondstack\OOP\Human\bin\Debug\netcoreapp2.2\Human.runtimeconfig.json
+C:\Git\BOOTCAMP\CodingDojo\Bootcamp_secondstack\OOP\Human\bin\Debug\netcoreapp2.2\Human.runtimeconfig.dev.json
+c:\Git\BOOTCAMP\CodingDojo\Bootcamp_secondstack\OOP\Human\bin\Debug\netcoreapp2.2\Human.dll
+c:\Git\BOOTCAMP\CodingDojo\Bootcamp_secondstack\OOP\Human\bin\Debug\netcoreapp2.2\Human.pdb
+c:\Git\BOOTCAMP\CodingDojo\Bootcamp_secondstack\OOP\Human\obj\Debug\netcoreapp2.2\Human.csprojAssemblyReference.cache
+c:\Git\BOOTCAMP\CodingDojo\Bootcamp_secondstack\OOP\Human\obj\Debug\netcoreapp2.2\Human.csproj.CoreCompileInputs.cache
+c:\Git\BOOTCAMP\CodingDojo\Bootcamp_secondstack\OOP\Human\obj\Debug\netcoreapp2.2\Human.AssemblyInfoInputs.cache
+c:\Git\BOOTCAMP\CodingDojo\Bootcamp_secondstack\OOP\Human\obj\Debug\netcoreapp2.2\Human.AssemblyInfo.cs
+c:\Git\BOOTCAMP\CodingDojo\Bootcamp_secondstack\OOP\Human\obj\Debug\netcoreapp2.2\Human.dll
+c:\Git\BOOTCAMP\CodingDojo\Bootcamp_secondstack\OOP\Human\obj\Debug\netcoreapp2.2\Human.pdb
