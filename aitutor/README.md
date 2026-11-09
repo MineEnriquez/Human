@@ -13,6 +13,7 @@ A single-page tutor for learning AI concepts with interactive visuals and Python
 | Vector math      | Vectors and cosine similarity · Embeddings |
 | Vector databases | Storing records · Searching (top-k, metadata filters, ANN indexes) |
 | RAG              | Step 1: ingestion and chunking · The RAG workflow end to end |
+| RAG frameworks   | RAG with LlamaIndex · RAG with LangChain (LCEL) |
 | MCP              | Hosts, clients and servers · A tool call, message by message |
 
 ## Terminology: vector math vs vector databases
@@ -47,6 +48,23 @@ Each lesson has:
 - **See it**: an interactive visual (draggable vectors, embedding map, live tokenizer, temperature sampler, attention heatmap, chunk slicer, RAG pipeline, MCP diagram and message flow).
 - **Code it**: a Python exercise that runs in the browser (via Brython). Run the tests, fix, run again. Later exercises reuse the code you wrote earlier.
 - **Quiz**: fresh multiple-choice questions every time.
+
+## RAG frameworks (LlamaIndex and LangChain)
+
+Each framework lesson maps every RAG step you built by hand to the framework's
+class, shows the real setup code (including swapping in ChromaDB), and has an
+exercise written against the framework's real API.
+
+The libraries can't run in the browser, so `FW_LLAMA` and `FW_LANGCHAIN` in
+`index.html` are small Python stand-ins that register fake `llama_index.*`,
+`langchain_core.*` and `langchain_text_splitters` modules covering only the
+calls the exercises use, plus a stand-in embedding model and LLM. A learner's
+solution runs unchanged with the real libraries once real models are configured.
+If you change an exercise to use another API call, add it to the stand-in too.
+
+Running the lesson code on your own machine needs `pip install` (commands are in
+each lesson) and an `ANTHROPIC_API_KEY` for the LLM. The in-browser exercises need
+neither.
 
 ## Running it
 

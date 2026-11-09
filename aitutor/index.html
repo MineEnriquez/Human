@@ -383,7 +383,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 
 <script>
 const py = String.raw;
-const TRACKS = ["Start here", "LLMs", "Vector math", "Vector databases", "RAG", "MCP"];
+const TRACKS = ["Start here", "LLMs", "Vector math", "Vector databases", "RAG", "RAG frameworks", "MCP"];
 
 /* TERMINOLOGY (for learners and for whoever develops this tutor)
    "Vector" means two different things in this app, so every lesson in those tracks
@@ -408,6 +408,326 @@ const DOMAINS = {
   db: { label: "Vector databases", tag: "database", other: "math", first: "vector-db-store",
     note: "Here we mean a <b>vector database</b>: a piece of software that stores <b>records</b> (id, vector, metadata) in a <b>collection</b> and answers <b>queries</b>. The similarity maths it uses is covered in <b>vector math</b>." }
 };
+
+// ---------------------------------------------------------------- RAG FRAMEWORK STAND-INS
+// LlamaIndex and LangChain can't run in the browser, so these small Python stand-ins mimic the
+// exact slice of each public API the exercises use. Learners write real framework code; the same
+// code runs unchanged against the real libraries (plus a real embedding model and LLM).
+const FW_COMMON = py`import sys as _sys, types as _types, re as _re, math as _math
+
+_STOP = set("a an the is are was were be to of and or in on at for with do does did i my me you your we our it this that how what when where which who can".split())
+
+def _toks(text):
+    out = []
+    for w in _re.findall(r"[a-z0-9]+", text.lower()):
+        if len(w) > 3 and w.endswith("s"):
+            w = w[:-1]
+        if w not in _STOP:
+            out.append(w)
+    return out
+
+class _StandInEmbedding:
+    """Stand-in embedding model: hashes each word into a 256-dimension count vector."""
+    dims = 256
+    def _one(self, text):
+        v = [0.0] * self.dims
+        for w in _toks(text):
+            h = 0
+            for ch in w:
+                h = (h * 31 + ord(ch)) % 1000003
+            v[h % self.dims] += 1.0
+        return v
+    def embed_documents(self, texts):
+        return [self._one(t) for t in texts]
+    def embed_query(self, text):
+        return self._one(text)
+    def get_text_embedding(self, text):
+        return self._one(text)
+    def get_query_embedding(self, text):
+        return self._one(text)
+
+def _cos(a, b):
+    d = sum(x * y for x, y in zip(a, b))
+    n = _math.sqrt(sum(x * x for x in a)) * _math.sqrt(sum(y * y for y in b))
+    return d / n if n else 0.0
+
+def _fake_llm_answer(prompt):
+    ctx, inside = [], False
+    for ln in prompt.split("\n"):
+        low = ln.strip().lower()
+        if low.startswith("question"):
+            inside = False
+        if inside and ln.strip():
+            ctx.append(ln.strip())
+        if "context" in low and low.endswith(":"):
+            inside = True
+    if not ctx:
+        return "I don't know based on the context."
+    return "Based on the context: " + ctx[0]
+
+def _module(name, **attrs):
+    m = _types.ModuleType(name)
+    for k, v in attrs.items():
+        setattr(m, k, v)
+    _sys.modules[name] = m
+    return m
+`;
+
+const FW_LLAMA = FW_COMMON + py`
+class _LI_Document:
+    def __init__(self, text="", metadata=None, **kw):
+        self.text = text
+        self.metadata = metadata or {}
+    def get_content(self):
+        return self.text
+
+class _LI_TextNode:
+    def __init__(self, text, metadata=None):
+        self.text = text
+        self.metadata = metadata or {}
+    def get_content(self):
+        return self.text
+    def __repr__(self):
+        return "TextNode(text=%r)" % self.text
+
+class _LI_NodeWithScore:
+    def __init__(self, node, score):
+        self.node = node
+        self.score = score
+    @property
+    def text(self):
+        return self.node.text
+    def get_content(self):
+        return self.node.text
+    def __repr__(self):
+        return "NodeWithScore(score=%.3f, text=%r)" % (self.score, self.node.text)
+
+def _ntok(t):
+    return int(len(t.split()) * 1.3 + 0.5)
+
+class _LI_SentenceSplitter:
+    def __init__(self, chunk_size=1024, chunk_overlap=200, **kw):
+        if chunk_overlap >= chunk_size:
+            raise ValueError("chunk_overlap must be smaller than chunk_size")
+        self.chunk_size = chunk_size
+        self.chunk_overlap = chunk_overlap
+    def get_nodes_from_documents(self, documents):
+        nodes = []
+        for doc in documents:
+            sents = [s.strip() for s in _re.findall(r"[^.!?]+[.!?]*", doc.text) if s.strip()]
+            cur = []
+            for s in sents:
+                if cur and _ntok(" ".join(cur + [s])) > self.chunk_size:
+                    nodes.append(_LI_TextNode(" ".join(cur), dict(doc.metadata)))
+                    cur = [s]
+                else:
+                    cur = cur + [s]
+            if cur:
+                nodes.append(_LI_TextNode(" ".join(cur), dict(doc.metadata)))
+        return nodes
+
+class _LI_StandInLLM:
+    def complete(self, prompt):
+        return _fake_llm_answer(prompt)
+
+class _LI_Settings:
+    llm = None
+    embed_model = None
+
+_LI_EMB = _StandInEmbedding()
+_LI_LLM = _LI_StandInLLM()
+
+class _LI_Retriever:
+    def __init__(self, index, k):
+        self.index = index
+        self.k = k
+    def retrieve(self, query):
+        emb = _LI_Settings.embed_model or _LI_EMB
+        q = emb.get_query_embedding(str(query))
+        scored = [_LI_NodeWithScore(n, _cos(q, v)) for n, v in zip(self.index._nodes, self.index._vectors)]
+        scored.sort(key=lambda x: x.score, reverse=True)
+        return scored[:self.k]
+
+class _LI_Response:
+    def __init__(self, response, source_nodes):
+        self.response = response
+        self.source_nodes = source_nodes
+    def __str__(self):
+        return self.response
+
+class _LI_QueryEngine:
+    def __init__(self, index, k):
+        self.index = index
+        self.k = k
+    def query(self, query):
+        nodes = _LI_Retriever(self.index, self.k).retrieve(query)
+        prompt = "Context:\n" + "\n".join(n.node.text for n in nodes) + "\nQuestion: " + str(query)
+        return _LI_Response((_LI_Settings.llm or _LI_LLM).complete(prompt), nodes)
+
+class _LI_VectorStoreIndex:
+    def __init__(self, nodes=None, **kw):
+        self._nodes = list(nodes or [])
+        emb = _LI_Settings.embed_model or _LI_EMB
+        self._vectors = [emb.get_text_embedding(n.text) for n in self._nodes]
+    @classmethod
+    def from_documents(cls, documents, transformations=None, **kw):
+        splitter = (transformations or [_LI_SentenceSplitter()])[0]
+        return cls(splitter.get_nodes_from_documents(documents))
+    def as_retriever(self, similarity_top_k=2, **kw):
+        return _LI_Retriever(self, similarity_top_k)
+    def as_query_engine(self, similarity_top_k=2, **kw):
+        return _LI_QueryEngine(self, similarity_top_k)
+
+_li = _module("llama_index")
+_li.core = _module("llama_index.core", Document=_LI_Document, VectorStoreIndex=_LI_VectorStoreIndex, Settings=_LI_Settings)
+_li.core.node_parser = _module("llama_index.core.node_parser", SentenceSplitter=_LI_SentenceSplitter)
+_li.core.schema = _module("llama_index.core.schema", TextNode=_LI_TextNode, NodeWithScore=_LI_NodeWithScore)
+`;
+
+const FW_LANGCHAIN = FW_COMMON + py`
+class _LC_Document:
+    def __init__(self, page_content="", metadata=None, **kw):
+        self.page_content = page_content
+        self.metadata = metadata or {}
+    def __repr__(self):
+        return "Document(page_content=%r)" % self.page_content
+
+class _LC_Runnable:
+    def invoke(self, x):
+        raise NotImplementedError
+    def __or__(self, other):
+        return _LC_Sequence(self, _lc_coerce(other))
+    def __ror__(self, other):
+        return _LC_Sequence(_lc_coerce(other), self)
+
+class _LC_Sequence(_LC_Runnable):
+    def __init__(self, first, second):
+        self.first = first
+        self.second = second
+    def invoke(self, x):
+        return self.second.invoke(self.first.invoke(x))
+
+class _LC_Lambda(_LC_Runnable):
+    def __init__(self, fn):
+        self.fn = fn
+    def invoke(self, x):
+        return self.fn(x)
+
+class _LC_Parallel(_LC_Runnable):
+    def __init__(self, steps):
+        self.steps = {k: _lc_coerce(v) for k, v in steps.items()}
+    def invoke(self, x):
+        return {k: r.invoke(x) for k, r in self.steps.items()}
+
+def _lc_coerce(x):
+    if isinstance(x, _LC_Runnable):
+        return x
+    if isinstance(x, dict):
+        return _LC_Parallel(x)
+    if callable(x):
+        return _LC_Lambda(x)
+    raise TypeError("can't use %s in a chain" % type(x).__name__)
+
+class _LC_Passthrough(_LC_Runnable):
+    def invoke(self, x):
+        return x
+
+class _LC_Splitter:
+    def __init__(self, chunk_size=4000, chunk_overlap=200, **kw):
+        if chunk_overlap > chunk_size:
+            raise ValueError("chunk_overlap must not be larger than chunk_size")
+        self.chunk_size = chunk_size
+        self.chunk_overlap = chunk_overlap
+    def split_text(self, text):
+        out, cur = [], ""
+        for p in [p.strip() for p in text.split("\n\n") if p.strip()]:
+            if len(p) > self.chunk_size:
+                if cur:
+                    out.append(cur)
+                    cur = ""
+                buf = ""
+                for w in p.split():
+                    if buf and len(buf) + 1 + len(w) > self.chunk_size:
+                        out.append(buf)
+                        buf = w
+                    else:
+                        buf = (buf + " " + w).strip()
+                if buf:
+                    out.append(buf)
+                continue
+            if cur and len(cur) + 2 + len(p) > self.chunk_size:
+                out.append(cur)
+                cur = p
+            else:
+                cur = p if not cur else cur + "\n\n" + p
+        if cur:
+            out.append(cur)
+        return out
+    def split_documents(self, documents):
+        return [_LC_Document(c, dict(d.metadata)) for d in documents for c in self.split_text(d.page_content)]
+
+class _LC_InMemoryVectorStore:
+    def __init__(self, embedding):
+        self.embedding = embedding
+        self.docs = []
+        self.vectors = []
+    def add_documents(self, documents):
+        self.vectors += self.embedding.embed_documents([d.page_content for d in documents])
+        self.docs += list(documents)
+        return [str(i) for i in range(len(self.docs) - len(documents), len(self.docs))]
+    @classmethod
+    def from_documents(cls, documents, embedding, **kw):
+        store = cls(embedding)
+        store.add_documents(documents)
+        return store
+    def similarity_search(self, query, k=4):
+        q = self.embedding.embed_query(query)
+        order = sorted(range(len(self.docs)), key=lambda i: _cos(q, self.vectors[i]), reverse=True)
+        return [self.docs[i] for i in order[:k]]
+    def as_retriever(self, search_kwargs=None, **kw):
+        k = (search_kwargs or {}).get("k", 4)
+        return _LC_Lambda(lambda q: self.similarity_search(q, k))
+
+class _LC_PromptValue:
+    def __init__(self, text):
+        self.text = text
+    def to_string(self):
+        return self.text
+
+class _LC_ChatPromptTemplate(_LC_Runnable):
+    def __init__(self, template):
+        self.template = template
+    @classmethod
+    def from_template(cls, template):
+        return cls(template)
+    def invoke(self, values):
+        return _LC_PromptValue(self.template.format(**values))
+
+class _LC_AIMessage:
+    def __init__(self, content):
+        self.content = content
+
+class _LC_StandInChat(_LC_Runnable):
+    def invoke(self, x):
+        text = x.to_string() if hasattr(x, "to_string") else str(x)
+        return _LC_AIMessage(_fake_llm_answer(text))
+
+class _LC_StrOutputParser(_LC_Runnable):
+    def invoke(self, x):
+        return x.content if hasattr(x, "content") else str(x)
+
+_lc = _module("langchain_core")
+_lc.documents = _module("langchain_core.documents", Document=_LC_Document)
+_lc.runnables = _module("langchain_core.runnables", RunnablePassthrough=_LC_Passthrough, RunnableLambda=_LC_Lambda)
+_lc.vectorstores = _module("langchain_core.vectorstores", InMemoryVectorStore=_LC_InMemoryVectorStore)
+_lc.prompts = _module("langchain_core.prompts", ChatPromptTemplate=_LC_ChatPromptTemplate)
+_lc.output_parsers = _module("langchain_core.output_parsers", StrOutputParser=_LC_StrOutputParser)
+_module("langchain_text_splitters", RecursiveCharacterTextSplitter=_LC_Splitter)
+
+embeddings = _StandInEmbedding()   # on your machine: HuggingFaceEmbeddings(...)
+llm = _LC_StandInChat()            # on your machine: ChatAnthropic(...)
+`;
+
 
 const TOPICS = [
 // ---------------------------------------------------------------- START HERE
@@ -1165,8 +1485,256 @@ print(build_prompt(question, retrieve(question, store, vocab)))
 `
   } },
 
+// ---------------------------------------------------------------- RAG FRAMEWORKS
+{ id: "llamaindex", track: 5, title: "RAG with LlamaIndex", visual: "llamaindexMap",
+  lesson: `**LlamaIndex** is a Python framework built around one job: connecting LLMs to your data. Every step of the RAG workflow you built by hand has a ready-made class. The map above lines them up. Tap a row to highlight it in the real code below.
+
+The pieces, in LlamaIndex's own words:
+
+- **Reader**: loads source files into **Documents**. \`SimpleDirectoryReader\` handles PDFs, Word, Markdown and more.
+- **Node parser**: the chunker. \`SentenceSplitter(chunk_size, chunk_overlap)\` cuts Documents into **Nodes** (chunks), measured in tokens.
+- **Embedding model**: set once in \`Settings.embed_model\`.
+- **VectorStoreIndex**: embeds every Node and stores it. By default the vectors sit in memory; pass a **vector store** to use a real vector database instead.
+- **Retriever**: \`index.as_retriever(similarity_top_k=k)\` runs the query and returns **NodeWithScore** results.
+- **Query engine**: \`index.as_query_engine()\` does retrieval *and* augmented generation in one call, using \`Settings.llm\`.
+
+In both frameworks, **vector store** means the database sense: a vector database, or an in-memory stand-in for one.
+
+Running it on your own computer needs \`pip install\` and an **Anthropic API key** (in the \`ANTHROPIC_API_KEY\` environment variable) for the LLM. The exercise here needs neither: a small stand-in for LlamaIndex runs in your browser, and your code is the same code you'd run for real.`,
+  code: [
+    ["Full pipeline on your machine", py`# pip install llama-index-core llama-index-llms-anthropic llama-index-embeddings-huggingface
+from llama_index.core import Settings, SimpleDirectoryReader, VectorStoreIndex
+from llama_index.core.node_parser import SentenceSplitter
+from llama_index.llms.anthropic import Anthropic
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+
+Settings.llm = Anthropic(model="claude-sonnet-5-5")       # reads ANTHROPIC_API_KEY
+Settings.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5")
+
+documents = SimpleDirectoryReader("handbook/").load_data()  # PDFs, .docx, .md ...
+splitter = SentenceSplitter(chunk_size=512, chunk_overlap=50)
+index = VectorStoreIndex.from_documents(documents, transformations=[splitter])
+
+retriever = index.as_retriever(similarity_top_k=3)
+for hit in retriever.retrieve("When do you open on weekends?"):
+    print(round(hit.score, 2), hit.node.get_content())
+
+query_engine = index.as_query_engine(similarity_top_k=3)
+print(query_engine.query("When do you open on weekends?"))`],
+    ["Swap in a real vector database (ChromaDB)", py`# pip install llama-index-vector-stores-chroma chromadb
+import chromadb
+from llama_index.core import StorageContext
+from llama_index.vector_stores.chroma import ChromaVectorStore
+
+collection = chromadb.PersistentClient(path="./db").get_or_create_collection("handbook")
+storage = StorageContext.from_defaults(vector_store=ChromaVectorStore(chroma_collection=collection))
+index = VectorStoreIndex.from_documents(documents, storage_context=storage,
+                                        transformations=[splitter])`]
+  ],
+  terms: [["Document / Node", "LlamaIndex's names for a source file and for one chunk of it."], ["SentenceSplitter", "The node parser that chunks Documents into Nodes."], ["VectorStoreIndex", "Embeds Nodes and stores them in a vector store for search."], ["Vector store", "A vector database (or in-memory stand-in) behind the index.", "db"], ["Query engine", "Retrieval plus augmented generation in one call."]],
+  check: "In LlamaIndex, which object would you change to move your vectors from memory into a real vector database like Chroma, and which objects would stay the same?",
+  ex: {
+    file: "rag_llamaindex.py", prelude: FW_LLAMA,
+    task: `Rebuild your RAG pipeline with LlamaIndex. A stand-in for \`llama_index\` and a stand-in embedding model and LLM run in your browser, so there's no install and no API key. Use the real class names and arguments; this exact code works with the real library once \`Settings\` points at real models.`,
+    starter: py`from llama_index.core import Document, VectorStoreIndex
+from llama_index.core.node_parser import SentenceSplitter
+
+handbook = ("Returns are accepted within 30 days with a receipt. "
+            "Our cafe opens at 7am on weekdays and 8am on weekends. "
+            "Loyalty members earn one point for every dollar spent. "
+            "Clean the grinder weekly with a dry brush.")
+
+def build_index(text):
+    # RAG steps 1-2: ingest, chunk, embed and store.
+    # Wrap text in a Document, make a SentenceSplitter(chunk_size=20, chunk_overlap=0)
+    # and return VectorStoreIndex.from_documents(..., transformations=[splitter]).
+    pass
+
+def retrieve(index, question, k=2):
+    # RAG step 3: make a retriever with similarity_top_k=k, call .retrieve(question),
+    # and return the chunk texts (hit.node.get_content()), best first.
+    pass
+
+def answer(index, question):
+    # RAG step 4: make a query engine with similarity_top_k=2,
+    # .query(question), and return the response as a string.
+    pass
+
+index = build_index(handbook)
+print(retrieve(index, "When do you open on weekends?"))
+print(answer(index, "When do you open on weekends?"))
+`,
+    tests: py`__check("build_index returns a VectorStoreIndex", lambda: isinstance(build_index(handbook), _LI_VectorStoreIndex))
+__check("the splitter made one node per sentence (4 nodes)", lambda: len(build_index(handbook)._nodes) == 4)
+__check("retrieve returns chunk texts as strings", lambda: all(isinstance(t, str) for t in retrieve(build_index(handbook), "weekend hours", 2)))
+__check("top chunk for the weekend question is the opening-hours one", lambda: "8am on weekends" in retrieve(build_index(handbook), "When do you open on weekends?", 2)[0])
+__check("retrieve respects k", lambda: len(retrieve(build_index(handbook), "points per dollar", 1)) == 1)
+__check("answer returns a string grounded in the right chunk", lambda: isinstance(answer(build_index(handbook), "When do you open on weekends?"), str) and "8am" in answer(build_index(handbook), "When do you open on weekends?"))
+`,
+    hint: "`build_index`: `splitter = SentenceSplitter(chunk_size=20, chunk_overlap=0)` then `VectorStoreIndex.from_documents([Document(text=text)], transformations=[splitter])`. `retrieve`: `[hit.node.get_content() for hit in index.as_retriever(similarity_top_k=k).retrieve(question)]`. `answer`: `str(index.as_query_engine(similarity_top_k=2).query(question))`.",
+    solution: py`from llama_index.core import Document, VectorStoreIndex
+from llama_index.core.node_parser import SentenceSplitter
+
+handbook = ("Returns are accepted within 30 days with a receipt. "
+            "Our cafe opens at 7am on weekdays and 8am on weekends. "
+            "Loyalty members earn one point for every dollar spent. "
+            "Clean the grinder weekly with a dry brush.")
+
+def build_index(text):
+    documents = [Document(text=text)]
+    splitter = SentenceSplitter(chunk_size=20, chunk_overlap=0)
+    return VectorStoreIndex.from_documents(documents, transformations=[splitter])
+
+def retrieve(index, question, k=2):
+    retriever = index.as_retriever(similarity_top_k=k)
+    return [hit.node.get_content() for hit in retriever.retrieve(question)]
+
+def answer(index, question):
+    query_engine = index.as_query_engine(similarity_top_k=2)
+    return str(query_engine.query(question))
+
+index = build_index(handbook)
+print(retrieve(index, "When do you open on weekends?"))
+print(answer(index, "When do you open on weekends?"))
+`
+  } },
+
+{ id: "langchain", track: 5, title: "RAG with LangChain", visual: "langchainMap",
+  lesson: `**LangChain** is a general toolkit for building LLM apps. For RAG it gives you separate building blocks that you snap together into a **chain**. The map above lines them up with your hand-built pipeline. Tap a row to highlight it in the code below.
+
+The building blocks:
+
+- **Document loaders** such as \`PyPDFLoader\` turn files into **Documents** (\`page_content\` plus \`metadata\`).
+- **Text splitters** chunk them. \`RecursiveCharacterTextSplitter(chunk_size, chunk_overlap)\` counts characters and tries paragraph, then line, then word boundaries.
+- **Embeddings** such as \`HuggingFaceEmbeddings\` turn text into vectors.
+- **Vector stores** keep the embedded chunks. \`InMemoryVectorStore\` is built in, and \`Chroma\`, \`PineconeVectorStore\`, \`QdrantVectorStore\` and \`PGVector\` connect to real vector databases with the same methods.
+- **Retrievers**: \`vector_store.as_retriever(search_kwargs={"k": 3})\` runs the query.
+- **Prompt, model and output parser** do augmented generation.
+
+The glue is **LCEL** (LangChain Expression Language): the \`|\` operator pipes each step's output into the next. A dict runs its entries side by side, which is how the retrieved context and the original question both reach the prompt.
+
+Running it on your own computer needs \`pip install\` and an **Anthropic API key** (\`ANTHROPIC_API_KEY\`). The exercise needs neither: stand-ins for LangChain, an embedding model and a chat model run in your browser.`,
+  code: [
+    ["Full pipeline on your machine", py`# pip install langchain-core langchain-text-splitters langchain-community pypdf langchain-anthropic langchain-huggingface
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_core.vectorstores import InMemoryVectorStore
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+from langchain_anthropic import ChatAnthropic
+
+docs = PyPDFLoader("handbook.pdf").load()
+splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+chunks = splitter.split_documents(docs)
+
+embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+vector_store = InMemoryVectorStore.from_documents(chunks, embedding=embeddings)
+retriever = vector_store.as_retriever(search_kwargs={"k": 3})
+
+prompt = ChatPromptTemplate.from_template(
+    "Answer using only this context:\n{context}\n\nQuestion: {question}")
+llm = ChatAnthropic(model="claude-sonnet-5-5")              # reads ANTHROPIC_API_KEY
+
+def format_docs(docs):
+    return "\n\n".join(d.page_content for d in docs)
+
+chain = ({"context": retriever | format_docs, "question": RunnablePassthrough()}
+         | prompt | llm | StrOutputParser())
+print(chain.invoke("When do you open on weekends?"))`],
+    ["Swap in a real vector database (ChromaDB)", py`# pip install langchain-chroma
+from langchain_chroma import Chroma
+
+vector_store = Chroma.from_documents(chunks, embedding=embeddings,
+                                     persist_directory="./db")
+retriever = vector_store.as_retriever(search_kwargs={"k": 3})   # the chain stays the same`]
+  ],
+  terms: [["Document", "LangChain's chunk or file: page_content plus metadata."], ["Text splitter", "Chunks Documents, e.g. RecursiveCharacterTextSplitter."], ["Vector store", "LangChain's interface to a vector database such as Chroma or pgvector.", "db"], ["Retriever", "Takes a question, returns relevant Documents."], ["LCEL", "The | syntax that pipes one step's output into the next."]],
+  check: "In the LCEL chain, what does the dictionary {\"context\": ..., \"question\": RunnablePassthrough()} do, and why is it needed before the prompt?",
+  ex: {
+    file: "rag_langchain.py", prelude: FW_LANGCHAIN,
+    task: `Rebuild your RAG pipeline with LangChain and LCEL. Stand-ins for LangChain, plus \`embeddings\` (an embedding model) and \`llm\` (a chat model), run in your browser. Use the real class names; on your machine you'd create \`embeddings\` and \`llm\` as shown in the lesson.`,
+    starter: py`from langchain_core.documents import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_core.vectorstores import InMemoryVectorStore
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+# Ready for you: embeddings (embedding model) and llm (chat model).
+
+handbook = ("Returns are accepted within 30 days with a receipt.\n\n"
+            "Our cafe opens at 7am on weekdays and 8am on weekends.\n\n"
+            "Loyalty members earn one point for every dollar spent.\n\n"
+            "Clean the grinder weekly with a dry brush.")
+
+def build_retriever(text, k=2):
+    # RAG steps 1-2: split [Document(page_content=text)] with
+    # RecursiveCharacterTextSplitter(chunk_size=80, chunk_overlap=0),
+    # store the chunks with InMemoryVectorStore.from_documents(..., embedding=embeddings)
+    # and return vector_store.as_retriever(search_kwargs={"k": k}).
+    pass
+
+def format_docs(docs):
+    # Join each Document's page_content with "\n".
+    pass
+
+prompt = ChatPromptTemplate.from_template(
+    "Answer using only this context:\n{context}\n\nQuestion: {question}")
+
+def build_chain(retriever):
+    # RAG steps 3-4 as one LCEL chain:
+    #   {"context": retriever | format_docs, "question": RunnablePassthrough()}
+    #   | prompt | llm | StrOutputParser()
+    pass
+
+retriever = build_retriever(handbook)
+print([d.page_content for d in retriever.invoke("When do you open on weekends?")])
+print(build_chain(retriever).invoke("When do you open on weekends?"))
+`,
+    tests: py`__check("the retriever returns k Documents", lambda: len(build_retriever(handbook, 2).invoke("weekend hours")) == 2 and hasattr(build_retriever(handbook, 2).invoke("weekend hours")[0], "page_content"))
+__check("the splitter kept one paragraph per chunk", lambda: all("\n" not in d.page_content for d in build_retriever(handbook, 4).invoke("cafe")))
+__check("top Document for the weekend question is the opening-hours one", lambda: "8am on weekends" in build_retriever(handbook, 2).invoke("When do you open on weekends?")[0].page_content)
+__check("format_docs joins page_content with newlines", lambda: format_docs([Document(page_content="a"), Document(page_content="b")]) == "a\nb")
+__check("the chain returns a string grounded in the right chunk", lambda: (lambda out: isinstance(out, str) and "8am" in out)(build_chain(build_retriever(handbook, 2)).invoke("When do you open on weekends?")))
+`,
+    hint: "`chunks = RecursiveCharacterTextSplitter(chunk_size=80, chunk_overlap=0).split_documents([Document(page_content=text)])`, then `InMemoryVectorStore.from_documents(chunks, embedding=embeddings).as_retriever(search_kwargs={\"k\": k})`. `format_docs` is `\"\\n\".join(d.page_content for d in docs)`. The chain is the pipe expression from the comment, returned.",
+    solution: py`from langchain_core.documents import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_core.vectorstores import InMemoryVectorStore
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+
+handbook = ("Returns are accepted within 30 days with a receipt.\n\n"
+            "Our cafe opens at 7am on weekdays and 8am on weekends.\n\n"
+            "Loyalty members earn one point for every dollar spent.\n\n"
+            "Clean the grinder weekly with a dry brush.")
+
+def build_retriever(text, k=2):
+    splitter = RecursiveCharacterTextSplitter(chunk_size=80, chunk_overlap=0)
+    chunks = splitter.split_documents([Document(page_content=text)])
+    vector_store = InMemoryVectorStore.from_documents(chunks, embedding=embeddings)
+    return vector_store.as_retriever(search_kwargs={"k": k})
+
+def format_docs(docs):
+    return "\n".join(d.page_content for d in docs)
+
+prompt = ChatPromptTemplate.from_template(
+    "Answer using only this context:\n{context}\n\nQuestion: {question}")
+
+def build_chain(retriever):
+    return ({"context": retriever | format_docs, "question": RunnablePassthrough()}
+            | prompt | llm | StrOutputParser())
+
+retriever = build_retriever(handbook)
+print([d.page_content for d in retriever.invoke("When do you open on weekends?")])
+print(build_chain(retriever).invoke("When do you open on weekends?"))
+`
+  } },
+
 // ---------------------------------------------------------------- MCP
-{ id: "mcp", track: 5, title: "MCP: hosts, clients and servers", visual: "mcparch",
+{ id: "mcp", track: 6, title: "MCP: hosts, clients and servers", visual: "mcparch",
   lesson: `The **Model Context Protocol (MCP)** is an open standard for connecting AI apps to outside tools and data. Instead of every app writing custom code for every service, a service is wrapped once as an **MCP server**, and any MCP-aware app can plug it in. People often compare it to USB-C for AI.
 
 The pieces, as in the diagram above:
@@ -1258,7 +1826,7 @@ print(get_weather("Oslo"))
 `
   } },
 
-{ id: "mcp-calls", track: 5, title: "A tool call, message by message", visual: "mcpflow",
+{ id: "mcp-calls", track: 6, title: "A tool call, message by message", visual: "mcpflow",
   lesson: `MCP messages use **JSON-RPC 2.0**: small JSON objects with a \`method\`, \`params\` and an \`id\` that ties each response to its request. They travel over **stdio** (for a local server) or **HTTP** (for a remote one).
 
 Step through the conversation above. Notice that the model never talks to the server directly:
@@ -1390,7 +1958,7 @@ function md(src) {
   }
   return out.join("");
 }
-const plain = t => [t.lesson, t.formula || "", t.lesson2 || "", t.code || ""].join("\n").replace(/\*\*/g, "");
+const plain = t => [t.lesson, t.formula || "", t.lesson2 || "", Array.isArray(t.code) ? t.code.map(c => c[0] + ":\n" + c[1]).join("\n\n") : (t.code || "")].join("\n").replace(/\*\*/g, "");
 
 // ---------------------------------------------------------------- Claude
 let sample = null;
@@ -1991,6 +2559,10 @@ const VISUALS = {
     card.append(seg, qEl, flow, detail, ans); root.append(card); draw();
   },
 
+  // ---- RAG FRAMEWORK visuals: one shared builder, two configurations
+  llamaindexMap(root) { frameworkMap(root, "llamaindex"); },
+  langchainMap(root) { frameworkMap(root, "langchain"); },
+
   mcparch(root) {
     const card = labCard("How an AI app plugs into tools", "interactive · tap any chip");
     const SERVERS = [
@@ -2076,6 +2648,52 @@ const VISUALS = {
   }
 };
 
+// Shared by the llamaindexMap / langchainMap visuals: lines up each RAG step across
+// the hand-built course code, LlamaIndex and LangChain, and highlights it in the real code.
+const FW_STEPS = [
+  { step: "1 · Ingest", hand: "docs = [ ... ]", llamaindex: "SimpleDirectoryReader(...).load_data()", langchain: "PyPDFLoader(...).load()",
+    match: { llamaindex: ["SimpleDirectoryReader("], langchain: ["PyPDFLoader("] } },
+  { step: "1 · Chunk", hand: "chunk(text, size, overlap)", llamaindex: "SentenceSplitter(chunk_size, chunk_overlap)", langchain: "RecursiveCharacterTextSplitter(...)",
+    match: { llamaindex: ["SentenceSplitter(chunk"], langchain: ["RecursiveCharacterTextSplitter(chunk", "split_documents("] } },
+  { step: "2 · Embed", hand: "embed(text, vocab)", llamaindex: "Settings.embed_model = ...", langchain: "HuggingFaceEmbeddings(...)",
+    match: { llamaindex: ["Settings.embed_model"], langchain: ["HuggingFaceEmbeddings("] } },
+  { step: "2 · Store in vector DB", hand: "SearchableStore.add(...)", llamaindex: "VectorStoreIndex.from_documents(...)", langchain: "InMemoryVectorStore.from_documents(...)",
+    match: { llamaindex: ["VectorStoreIndex.from_documents"], langchain: ["InMemoryVectorStore.from_documents"] } },
+  { step: "3 · Retrieve", hand: "store.query(query_vector, k)", llamaindex: "index.as_retriever(similarity_top_k=k)", langchain: "as_retriever(search_kwargs={\"k\": k})",
+    match: { llamaindex: ["as_retriever(", "retriever.retrieve(", "print(round(hit"], langchain: ["as_retriever(", "retriever | format_docs"] } },
+  { step: "4 · Augment + generate", hand: "build_prompt(...) → llm(prompt)", llamaindex: "index.as_query_engine().query(q)", langchain: "prompt | llm | StrOutputParser()",
+    match: { llamaindex: ["Settings.llm", "as_query_engine(", "query_engine.query("], langchain: ["ChatPromptTemplate.from_template", "Answer using only", "ChatAnthropic(", "| prompt | llm", "chain.invoke(", "chain = ("] } }
+];
+function frameworkMap(root, fw) {
+  const other = fw === "llamaindex" ? "langchain" : "llamaindex";
+  const NAME = { llamaindex: "LlamaIndex", langchain: "LangChain" };
+  const card = labCard(`Your pipeline → ${NAME[fw]}`, "interactive · tap a row");
+  const code = TOPICS.find(t => t.id === fw).code[0][1].split("\n");
+  let sel = 3;
+  const wrap = h("div", { style: "overflow-x:auto" });
+  const codeEl = h("pre", { class: "block", style: "padding:8px 0" });
+  const note = h("p", { class: "muted", style: "margin:0;font-size:.86rem" });
+  const cell = "padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top;font-size:.84rem";
+  function draw() {
+    wrap.innerHTML = "";
+    const table = h("table", { style: "border-collapse:collapse;width:100%;min-width:560px" });
+    table.innerHTML = `<thead><tr>${["RAG step", "You built by hand", NAME[fw], NAME[other]].map((c, i) => `<th style="text-align:left;padding:6px 10px;border-bottom:1px solid var(--line);font:500 .7rem var(--font-mono);text-transform:uppercase;letter-spacing:.08em;color:${i === 2 ? "var(--accent)" : "var(--muted)"}">${c}</th>`).join("")}</tr></thead>`;
+    const tb = h("tbody");
+    FW_STEPS.forEach((r, i) => {
+      const tr = h("tr", { tabindex: "0", style: `cursor:pointer;${i === sel ? "background:var(--accent-soft)" : ""}` },
+        `<td style="${cell};font-weight:600;white-space:nowrap">${esc(r.step)}</td><td style="${cell};font-family:var(--font-mono)">${esc(r.hand)}</td><td style="${cell};font-family:var(--font-mono);color:var(--accent);font-weight:500">${esc(r[fw])}</td><td style="${cell};font-family:var(--font-mono);color:var(--muted)">${esc(r[other])}</td>`);
+      tr.onclick = () => { sel = i; draw(); };
+      tr.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); sel = i; draw(); } };
+      tb.append(tr);
+    });
+    table.append(tb); wrap.append(table);
+    const keys = FW_STEPS[sel].match[fw];
+    codeEl.innerHTML = code.map(l => { const on = keys.some(k => l.includes(k)); return `<span style="display:block;padding:0 14px;${on ? "background:var(--mark);font-weight:600" : "opacity:.55"}">${esc(l) || " "}</span>`; }).join("");
+    note.textContent = `Highlighted: where "${FW_STEPS[sel].step}" happens in ${NAME[fw]}. Compare the columns to see the same step in ${NAME[other]}.`;
+  }
+  card.append(wrap, note, codeEl); root.append(card); draw();
+}
+
 // ---------------------------------------------------------------- rendering
 function renderRail() {
   const rail = $("rail"); rail.innerHTML = "";
@@ -2109,7 +2727,8 @@ function renderLearn() {
   let html = md(t.lesson);
   if (t.formula) html += `<div class="formula">${esc(t.formula)}</div>`;
   if (t.lesson2) html += md(t.lesson2);
-  if (t.code) html += `<pre><code>${esc(t.code)}</code></pre>`;
+  if (Array.isArray(t.code)) t.code.forEach(([cap, c]) => { html += `<h4>${esc(cap)}</h4><pre><code>${esc(c)}</code></pre>`; });
+  else if (t.code) html += `<pre><code>${esc(t.code)}</code></pre>`;
   $("lesson").innerHTML = html;
   $("terms").innerHTML = t.terms.map(([k, d, dom]) => { const tg = dom || t.domain; return `<div class="term${tg ? " dom-" + tg : ""}"><dt>${esc(k)}${tg ? `<span class="tag">${DOMAINS[tg].tag}</span>` : ""}</dt><dd>${esc(d)}</dd></div>`; }).join("");
   const dn = $("domainNote"); dn.innerHTML = "";
@@ -2188,7 +2807,7 @@ async function runTests() {
   }
   attempts[id] = (attempts[id] || 0) + 1; store.set("attempts", attempts);
   if (id === current) $("attempts").textContent = `run ${attempts[id]}`;
-  const pre = HARNESS + "\n__sys.stdout = __Quiet()\n" + helperSource(ex) + "\n__sys.stdout = __real_out\n";
+  const pre = HARNESS + "\n__sys.stdout = __Quiet()\n" + (ex.prelude || "") + "\n" + helperSource(ex) + "\n__sys.stdout = __real_out\n";
   const offset = pre.split("\n").length - 1;
   const src = pre + code + "\n\n__sys.stdout = __Quiet()\n" + ex.tests + "\n__sys.stdout = __real_out\n";
   let r;
