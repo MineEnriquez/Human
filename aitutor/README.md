@@ -10,44 +10,34 @@ A single-page tutor for learning AI concepts with interactive visuals and Python
 |------------------|---------|
 | Start here       | How the pieces fit together (LLM + vector DB + RAG + MCP) |
 | LLMs             | Tokens · Next-token prediction and temperature · Attention |
-| Vector math      | Vectors and cosine similarity · Embeddings |
 | Vector databases | Storing records · Searching (top-k, metadata filters, ANN indexes) |
 | RAG              | Step 1: ingestion and chunking · The RAG workflow end to end |
 | RAG frameworks   | RAG with LlamaIndex · RAG with LangChain (LCEL) |
 | MCP              | Hosts, clients and servers · A tool call, message by message |
 
-## Terminology: vector math vs vector databases
+## Terminology: vector databases only
 
-"Vector" means two different things in this course. Learners and anyone
-developing this tutor should keep them apart the same way:
+This course teaches **vector databases**, not vector maths. "Vector" only appears
+as part of a database record: the embedding stored next to an id and metadata.
 
-| | Vector math (`domain: "math"`) | Vector databases (`domain: "db"`) |
-|---|---|---|
-| What it is | Maths: a vector is an ordered list of numbers | Software: a database system that stores and searches vectors |
-| Key terms | vector, dot product, norm, cosine similarity, embedding, dimensions | collection, record (id + vector + metadata), add/upsert/get/delete, query, top-k, metadata filter, ANN index |
-| Examples | `[3, 4]`, `cosine(a, b)` | ChromaDB, Pinecone, Weaviate, Qdrant, pgvector |
-| Lesson ids | `vector-math`, `embeddings` | `vector-db-store`, `vector-db-search` |
-| Visuals | `vectorMath`, `embeddingMap` | `vectorDbRecords`, `vectorDbSearch` |
-| JS helpers | `mathDot`, `mathNorm`, `mathCosine` | (database visuals call the math helpers) |
-| Python | `dot`, `norm`, `cosine` | `class VectorStore`, `class SearchableStore(VectorStore)` |
+| | Vector databases (`domain: "db"`) |
+|---|---|
+| What it is | Software: a database system that stores and searches embeddings |
+| Key terms | collection, record (id + vector + metadata), add/upsert/get/delete, query, top-k, metadata filter, ANN index |
+| Examples | ChromaDB, Pinecone, Weaviate, Qdrant, pgvector |
+| Lesson ids | `vector-db-store`, `vector-db-search` |
+| Visuals | `vectorDbRecords`, `vectorDbSearch` |
+| Python | `class VectorStore`, `class SearchableStore(VectorStore)` |
 
-Rules:
+Rules for learners, the tutor bot and anyone developing this tutor:
 
-- Say **vector** only for the list of numbers. Say **vector database** (or vector DB) for the system, never just "vectors".
-- Vector-math lessons never mention storage. Database lessons may *use* vector math (cosine ranking) and say so.
-- Every lesson in those two tracks shows a banner naming its domain, and its glossary cards carry a `math` or `database` tag.
-- The tutor bot is instructed to follow the same rules.
-- The same conventions are documented in a `TERMINOLOGY` comment at the top of the script in `index.html`.
+- Say **vector database** (or vector DB) for the system, never just "vectors".
+- Similarity (cosine) is a built-in database feature. Exercises get `cosine()` from
+  `SIMILARITY_PRELUDE`; visuals use `dbSimilarity()`. The maths behind it is not taught.
+- Don't add vector-maths lessons. The `TERMINOLOGY` comment in `index.html` says the same.
 
-The Python exercises build on each other: `cosine()` (vector math) is used
-by `SearchableStore.query()` (vector database), which powers the RAG pipeline.
-
-Each lesson has:
-
-- **Gradient bot**: a tutor (powered by Claude) that greets you, teaches step by step, and sees your code.
-- **See it**: an interactive visual (draggable vectors, embedding map, live tokenizer, temperature sampler, attention heatmap, chunk slicer, RAG pipeline, MCP diagram and message flow).
-- **Code it**: a Python exercise that runs in the browser (via Brython). Run the tests, fix, run again. Later exercises reuse the code you wrote earlier.
-- **Quiz**: fresh multiple-choice questions every time.
+The Python exercises build on each other: `VectorStore` (storing) → `SearchableStore`
+(searching) → the RAG pipeline.
 
 ## RAG frameworks (LlamaIndex and LangChain)
 

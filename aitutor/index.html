@@ -109,7 +109,6 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .domain { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; padding: 10px 14px; border-radius: 10px; margin-bottom: 14px; font-size: 0.9rem; background: var(--paper); border-left: 4px solid var(--dom); }
 .domain b.dom-label { font: 600 0.7rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--dom); display: block; }
 .domain p { margin: 0; flex: 1 1 260px; }
-.dom-math { --dom: var(--c4); }
 .dom-db { --dom: var(--c3); }
 .tag { font: 600 0.62rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em; border-radius: 4px; padding: 1px 6px; margin-left: 6px; vertical-align: 2px; color: var(--dom); border: 1px solid var(--dom); }
 .terms { margin-top: 22px; display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
@@ -356,7 +355,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
           <div class="seg" id="levelSeg">
             <button data-level="beginner" aria-pressed="true">A beginner</button>
             <button data-level="coder" aria-pressed="false">A Python coder</button>
-            <button data-level="math" aria-pressed="false">The math</button>
+            <button data-level="math" aria-pressed="false">With formulas</button>
           </div>
         </div>
         <div class="chat" id="chat" aria-live="polite"></div>
@@ -383,31 +382,35 @@ button, input, textarea, select { font: inherit; color: inherit; }
 
 <script>
 const py = String.raw;
-const TRACKS = ["Start here", "LLMs", "Vector math", "Vector databases", "RAG", "RAG frameworks", "MCP"];
+const TRACKS = ["Start here", "LLMs", "Vector databases", "RAG", "RAG frameworks", "MCP"];
 
 /* TERMINOLOGY (for learners and for whoever develops this tutor)
-   "Vector" means two different things in this app, so every lesson in those tracks
-   carries a domain, and the code keeps the two apart by name:
+   This course teaches VECTOR DATABASES, not vector maths. "Vector" only ever appears as
+   part of a database record: the embedding stored alongside an id and metadata.
 
-   domain "math"  Vector math. A vector is an ordered list of numbers; dot product,
-                  norm, cosine similarity, embeddings. Nothing is stored.
-                  Lesson ids: vector-math, embeddings. Visuals: vectorMath, embeddingMap.
-                  JS helpers: mathDot / mathNorm / mathCosine. Python: dot, norm, cosine.
    domain "db"    Vector databases. A database system (Chroma, Pinecone, Weaviate,
                   Qdrant, pgvector) that stores RECORDS (id + vector + metadata) in a
                   COLLECTION and answers QUERIES (query vector, top-k, metadata filter).
                   Lesson ids: vector-db-store, vector-db-search. Visuals: vectorDbRecords,
                   vectorDbSearch. Python: class VectorStore, class SearchableStore.
 
-   Rules: say "vector" only for the list of numbers; say "vector database" (or "vector DB")
-   for the system, never just "vectors". Database code may call math helpers, but math
-   lessons never mention storage. */
+   Rules: say "vector database" (or "vector DB") for the system, never just "vectors".
+   Similarity (cosine) is presented as a built-in feature of the database, provided to
+   exercises by SIMILARITY_PRELUDE and to visuals by dbSimilarity(); the course does not
+   teach the maths behind it. Do not add vector-maths lessons. */
 const DOMAINS = {
-  math: { label: "Vector math", tag: "math", other: "db", first: "vector-math",
-    note: "Here a <b>vector</b> means a list of numbers and the maths you do with it. Nothing is stored anywhere. The software that stores vectors is a separate topic: <b>vector databases</b>." },
-  db: { label: "Vector databases", tag: "database", other: "math", first: "vector-db-store",
-    note: "Here we mean a <b>vector database</b>: a piece of software that stores <b>records</b> (id, vector, metadata) in a <b>collection</b> and answers <b>queries</b>. The similarity maths it uses is covered in <b>vector math</b>." }
+  db: { label: "Vector databases", tag: "database",
+    note: "Here we mean a <b>vector database</b>: a piece of software that stores <b>records</b> (id, vector, metadata) in a <b>collection</b> and answers <b>queries</b>." }
 };
+// Provided to exercises that rank records: the similarity function a vector database has built in.
+const SIMILARITY_PRELUDE = py`import math as _sim_math
+
+def cosine(a, b):
+    """Built-in similarity: 1 = same direction, 0 = unrelated. Provided, like in a real vector DB."""
+    d = sum(x * y for x, y in zip(a, b))
+    n = _sim_math.sqrt(sum(x * x for x in a)) * _sim_math.sqrt(sum(y * y for y in b))
+    return d / n if n else 0.0
+`;
 
 // ---------------------------------------------------------------- RAG FRAMEWORK STAND-INS
 // LlamaIndex and LangChain can't run in the browser, so these small Python stand-ins mimic the
@@ -735,13 +738,13 @@ const TOPICS = [
   lesson: `Before diving in, here's the map. Modern AI apps combine a few parts, and each part fixes a weakness of another.
 
 - **Large language model (LLM)**: the "brain" that understands language, reasons and writes. On its own it has three big gaps. Its knowledge stops at a **training cutoff**, it has never seen your **private or specialised data**, and when it doesn't know something it may **hallucinate**: make up a confident, wrong answer.
-- **Embeddings**: lists of numbers that capture what a piece of text *means*, not just which words it uses. These are vectors in the maths sense, covered in the **Vector math** track.
+- **Embeddings**: lists of numbers, made by an **embedding model**, that capture what a piece of text *means*, not just which words it uses.
 - **Vector database**: a piece of software, not a maths idea. It stores embeddings as records and finds the closest ones fast. Covered in the **Vector databases** track. Popular choices include Pinecone, Weaviate, ChromaDB, Qdrant, and pgvector (an add-on for PostgreSQL).
 - **Retrieval-augmented generation (RAG)**: the pipeline that connects them. Embed the question, look up the closest chunks in the vector database, and hand them to the LLM so it answers from real sources.
 - **MCP**: the standard plug that lets the LLM go beyond reading, to **act**: call tools, query live systems, and fetch fresh data.
 
 Flip the switch in the diagram above to compare an LLM on its own with the full setup. Tap any box to see which lesson covers it.`,
-  terms: [["Training cutoff", "The date after which a model has no knowledge."], ["Hallucination", "A fluent, confident answer that isn't true."], ["Vector database", "Software that stores embeddings as records and finds the nearest ones fast.", "db"], ["RAG", "Retrieve relevant text, then let the LLM answer from it."], ["Embedding", "A vector (list of numbers) that captures meaning.", "math"]],
+  terms: [["Training cutoff", "The date after which a model has no knowledge."], ["Hallucination", "A fluent, confident answer that isn't true."], ["Vector database", "Software that stores embeddings as records and finds the nearest ones fast.", "db"], ["RAG", "Retrieve relevant text, then let the LLM answer from it."], ["Embedding", "A list of numbers that captures what text means; stored in a vector database."]],
   check: "Name the LLM's three weaknesses from this lesson, and say which part of the system helps with each.",
   ex: {
     file: "pipeline.py",
@@ -960,10 +963,14 @@ Each token's query is compared with every key using a dot product. Softmax turns
   terms: [["Query / Key / Value", "Vectors used to match tokens and mix information."], ["Attention weights", "Softmax of query-key scores: where a token looks."], ["Transformer", "The architecture of stacked attention layers behind LLMs."]],
   check: "In attention, what role does the dot product between a query and a key play?",
   ex: {
-    file: "attention.py", uses: ["vector-math", "next-token"],
-    task: `Implement scaled dot-product attention for one query. Your \`dot()\` and \`softmax()\` from earlier lessons are loaded. This is the core calculation inside every transformer.`,
+    file: "attention.py", uses: ["next-token"],
+    task: `Implement scaled dot-product attention for one query. A \`dot()\` helper is provided and your \`softmax()\` from the last lesson is loaded. This is the core calculation inside every transformer.`,
     starter: py`import math
-# dot() and softmax() from earlier lessons are loaded for you.
+# softmax() from the last lesson is loaded for you.
+
+def dot(a, b):
+    # Provided: multiply matching numbers and add them up.
+    return sum(x * y for x, y in zip(a, b))
 
 def attention_weights(query, keys):
     # For each key: score = dot(query, key) / sqrt(len(query))
@@ -991,6 +998,9 @@ __check("attend returns a vector the size of a value", lambda: len(attend(__q, _
     hint: "Scores: `[dot(query, k) / math.sqrt(len(query)) for k in keys]`, then `softmax(scores)`. For `attend`, for each position `j` in a value vector, add up `w[i] * values[i][j]` over all `i`.",
     solution: py`import math
 
+def dot(a, b):
+    return sum(x * y for x, y in zip(a, b))
+
 def attention_weights(query, keys):
     d = len(query)
     scores = [dot(query, k) / math.sqrt(d) for k in keys]
@@ -1009,131 +1019,11 @@ print(attend(q, keys, values))
 `
   } },
 
-// ================================================================ VECTOR MATH  (domain: "math")
-// Pure mathematics: a vector is a list of numbers. Nothing in this track mentions storage.
-{ id: "vector-math", track: 2, domain: "math", title: "Vectors and cosine similarity", visual: "vectorMath",
-  lesson: `In maths, a **vector** is an ordered list of numbers, like \`[3, 4]\`. A vector with two numbers can be drawn as an arrow from the origin; with more numbers it's the same idea in more dimensions. AI systems turn almost everything into vectors: words, sentences, images, songs.
-
-Two operations do most of the work:
-
-- **Dot product**: multiply matching numbers and add them. \`[1, 2] · [3, 4] = 1×3 + 2×4 = 11\`
-- **Length (norm)**: how long the arrow is. \`|[3, 4]| = √(3² + 4²) = 5\`
-
-Combine them and you get **cosine similarity**. It measures the angle between two arrows and ignores how long they are:`,
-  formula: "cos θ = (a · b) / (|a| × |b|)",
-  lesson2: `It runs from **1** (same direction) through **0** (unrelated, at right angles) to **−1** (opposite). Drag the arrow tips above to get a feel for it.`,
-  terms: [["Vector", "An ordered list of numbers, drawn as an arrow."], ["Dot product", "Sum of pairwise products of two vectors."], ["Norm", "The length of a vector."], ["Cosine similarity", "How aligned two vectors are, from −1 to 1."]],
-  check: "Two arrows point the same way, but one is ten times longer. What is their cosine similarity, and why?",
-  ex: {
-    file: "vector_math.py",
-    task: `Write the three vector-math functions you'll reuse for the rest of the course: \`dot\`, \`norm\` and \`cosine\`. Run the tests, read what fails, fix it, and run again.`,
-    starter: py`import math
-
-def dot(a, b):
-    # Multiply matching numbers and add them up.
-    # dot([1, 2], [3, 4]) -> 1*3 + 2*4 = 11
-    pass
-
-def norm(a):
-    # The length of the arrow: the square root of dot(a, a)
-    pass
-
-def cosine(a, b):
-    # dot(a, b) divided by (norm(a) * norm(b))
-    pass
-
-print("cosine of [1, 0] and [1, 1] =", cosine([1, 0], [1, 1]))
-`,
-    tests: py`__check("dot([1, 2], [3, 4]) == 11", lambda: dot([1, 2], [3, 4]) == 11)
-__check("works in 3D: dot([1, 0, 2], [2, 5, 1]) == 4", lambda: dot([1, 0, 2], [2, 5, 1]) == 4)
-__check("norm([3, 4]) == 5", lambda: abs(norm([3, 4]) - 5) < 1e-9)
-__check("same direction gives cosine 1", lambda: abs(cosine([2, 2], [5, 5]) - 1) < 1e-9)
-__check("right angle gives cosine 0", lambda: abs(cosine([1, 0], [0, 3])) < 1e-9)
-__check("opposite gives cosine -1", lambda: abs(cosine([1, 2], [-2, -4]) + 1) < 1e-9)
-`,
-    hint: "Use `zip(a, b)` to walk through both lists together and `sum()` to add up the products. `math.sqrt()` gives a square root. `cosine` can call your `dot` and `norm`.",
-    solution: py`import math
-
-def dot(a, b):
-    return sum(x * y for x, y in zip(a, b))
-
-def norm(a):
-    return math.sqrt(dot(a, a))
-
-def cosine(a, b):
-    return dot(a, b) / (norm(a) * norm(b))
-
-print("cosine of [1, 0] and [1, 1] =", cosine([1, 0], [1, 1]))
-`
-  } },
-
-{ id: "embeddings", track: 2, domain: "math", title: "Embeddings: meaning as vectors", visual: "embeddingMap",
-  lesson: `An **embedding** is a vector that a model has learned for a word, sentence or image, arranged so that **similar meanings point in similar directions**. "Cat" lands near "kitten" and far from "bus".
-
-Real embeddings have hundreds or thousands of **dimensions** (numbers per vector). The map above squeezes a few words into 2D so you can see the idea. Tap a word to find its nearest neighbours by cosine similarity, the function you just wrote.
-
-Directions can carry meaning too:`,
-  formula: "king − man + woman ≈ queen",
-  lesson2: `In Python you'd normally get embeddings from an **embedding model**, for example \`model.encode("a sentence")\` with the sentence-transformers library, or an embeddings API. They come back as plain lists of floats, which is to say ordinary vectors.`,
-  terms: [["Embedding", "A learned vector that captures meaning."], ["Embedding model", "The model that turns text into embeddings."], ["Dimensions", "How many numbers each vector has."], ["Nearest neighbours", "The vectors with the highest similarity to a given one."]],
-  check: "Why do the embeddings of \"How do I reset my password?\" and \"forgot login\" end up close together even though they share no words?",
-  ex: {
-    file: "embeddings.py", uses: ["vector-math"],
-    task: `Find nearest neighbours in a small set of word embeddings. \`most_similar\` returns the \`k\` words whose vectors are closest to a given word. Your \`cosine()\` from the vector-math lesson is loaded.`,
-    starter: py`# cosine() from the vector-math lesson is loaded for you.
-# Each word's embedding is a 3D vector: [is_animal, is_small_or_cute, is_vehicle]
-embeddings = {
-    "cat":     [0.90, 0.70, 0.00],
-    "kitten":  [0.80, 0.95, 0.00],
-    "dog":     [0.95, 0.50, 0.05],
-    "truck":   [0.00, 0.05, 0.95],
-    "bus":     [0.05, 0.20, 0.90],
-    "toy car": [0.10, 0.90, 0.60],
-}
-
-def most_similar(word, embeddings, k=2):
-    # Return a list of the k OTHER words most similar to word,
-    # best match first. Don't include the word itself.
-    pass
-
-print(most_similar("cat", embeddings))
-print(most_similar("truck", embeddings, k=1))
-`,
-    tests: py`__check("returns a list of k words", lambda: isinstance(most_similar("cat", embeddings, 3), list) and len(most_similar("cat", embeddings, 3)) == 3)
-__check("never includes the word itself", lambda: "cat" not in most_similar("cat", embeddings, 5))
-__check("cat's top 2 are dog and kitten", lambda: sorted(most_similar("cat", embeddings, 2)) == ["dog", "kitten"])
-__check("truck's nearest is bus", lambda: most_similar("truck", embeddings, 1) == ["bus"])
-__check("best match comes first", lambda: most_similar("kitten", embeddings, 1) == ["cat"])
-`,
-    hint: "Loop over `embeddings.items()`, skip the word itself, and collect `(score, other_word)` pairs using `cosine(embeddings[word], vec)`. Sort with `reverse=True` and keep the first `k` words.",
-    solution: py`embeddings = {
-    "cat":     [0.90, 0.70, 0.00],
-    "kitten":  [0.80, 0.95, 0.00],
-    "dog":     [0.95, 0.50, 0.05],
-    "truck":   [0.00, 0.05, 0.95],
-    "bus":     [0.05, 0.20, 0.90],
-    "toy car": [0.10, 0.90, 0.60],
-}
-
-def most_similar(word, embeddings, k=2):
-    target = embeddings[word]
-    scored = []
-    for other, vec in embeddings.items():
-        if other != word:
-            scored.append((cosine(target, vec), other))
-    scored.sort(reverse=True)
-    return [w for _, w in scored[:k]]
-
-print(most_similar("cat", embeddings))
-print(most_similar("truck", embeddings, k=1))
-`
-  } },
-
 // ================================================================ VECTOR DATABASES  (domain: "db")
 // The storage system: records (id + vector + metadata) in a collection, searched with queries.
-// It *uses* vector math (cosine) but the lessons talk about records, collections and queries.
-{ id: "vector-db-store", track: 3, domain: "db", title: "Vector databases: storing records", visual: "vectorDbRecords",
-  lesson: `A **vector database** is a database system, like PostgreSQL or MongoDB, built for one kind of data: embeddings. Your app sends it records and later asks it questions. It is software you install or rent, not a kind of maths.
+// Similarity ranking is treated as a built-in database feature (SIMILARITY_PRELUDE / dbSimilarity).
+{ id: "vector-db-store", track: 2, domain: "db", title: "Vector databases: storing records", visual: "vectorDbRecords",
+  lesson: `A **vector database** is a database system, like PostgreSQL or MongoDB, built for one kind of data: **embeddings**. An embedding is a list of numbers, made by an **embedding model** from a piece of text, arranged so that texts with similar meanings get similar numbers. Your app sends the database records and later asks it questions. It's software you install or rent.
 
 Data lives in a **collection** (some products call it an **index** or a **table**). Each **record** has:
 
@@ -1249,7 +1139,7 @@ print(store.count(), store.get("cat"))
 `
   } },
 
-{ id: "vector-db-search", track: 3, domain: "db", title: "Vector databases: searching", visual: "vectorDbSearch",
+{ id: "vector-db-search", track: 2, domain: "db", title: "Vector databases: searching", visual: "vectorDbSearch",
   lesson: `Storing records is half the job. The other half is the **query**: your app sends a **query vector** (the embedding of a question) and the database returns the **top-k** most similar records.
 
 A query usually has three parts:
@@ -1258,7 +1148,7 @@ A query usually has three parts:
 - **k**, how many results to return
 - an optional **metadata filter** ("only records where topic = pets"), applied before ranking
 
-To rank records, the database needs a similarity measure. Most let you choose one per collection, usually **cosine**, dot product or Euclidean distance: the vector math from the previous track.
+To rank records, the database uses a built-in **similarity measure**, which you choose when you create the collection: usually **cosine similarity**, dot product or Euclidean distance. You don't compute it yourself; the database scores each record from 1 (very similar) down to 0 (unrelated).
 
 Comparing the query with every record is called **brute force**. It's exact, but slow with millions of records. So vector databases build an **approximate nearest neighbour (ANN) index**, such as **HNSW**, which checks only a small fraction of the records and is almost always right. Tap the map above to move the query, change k, and add a filter. Querying ChromaDB looks like this:`,
   code: py`hits = handbook.query(
@@ -1270,10 +1160,10 @@ print(hits["documents"])   # [['Our cafe opens at 8am on weekends.']]`,
   terms: [["Query vector", "The embedding of the question being searched for."], ["Top-k", "How many of the most similar records to return."], ["Metadata filter", "Restrict a query to records with matching fields."], ["ANN index", "A structure such as HNSW that finds near matches without checking every record."]],
   check: "Your support bot keeps quoting last year's pricing page. How could a metadata filter in the query fix that?",
   ex: {
-    file: "vector_db_search.py", uses: ["vector-math", "vector-db-store"],
-    task: `Add search to your vector database. \`SearchableStore\` extends your \`VectorStore\` from the last lesson with a \`query\` method. It ranks records with \`cosine()\` from the vector-math lesson. Both are loaded.`,
+    file: "vector_db_search.py", prelude: SIMILARITY_PRELUDE, uses: ["vector-db-store"],
+    task: `Add search to your vector database. \`SearchableStore\` extends your \`VectorStore\` from the last lesson with a \`query\` method. It ranks records with \`cosine()\`, the database's built-in similarity function. Both are loaded.`,
     starter: py`# Loaded for you:
-#   cosine(a, b)             from the vector-math lesson
+#   cosine(a, b)             the database's built-in similarity (1 = same, 0 = unrelated)
 #   class VectorStore        from "Vector databases: storing records"
 
 class SearchableStore(VectorStore):
@@ -1329,7 +1219,7 @@ print(store.query([1, 0, 0], k=1, where={"topic": "transport"}))
   } },
 
 // ---------------------------------------------------------------- RAG
-{ id: "chunking", track: 4, title: "RAG step 1: ingestion and chunking", visual: "chunking",
+{ id: "chunking", track: 3, title: "RAG step 1: ingestion and chunking", visual: "chunking",
   lesson: `**Retrieval-augmented generation (RAG)** gives an LLM the right facts at question time by looking them up in your documents. The first step is **ingestion**: loading source documents (PDFs, internal wikis, database rows) and **chunking** them, cutting them into passages small enough to search and to fit in a prompt.
 
 Two settings matter:
@@ -1380,7 +1270,7 @@ for c in chunk(doc, size=6, overlap=2):
 `
   } },
 
-{ id: "rag", track: 4, title: "The RAG workflow, end to end", visual: "rag",
+{ id: "rag", track: 3, title: "The RAG workflow, end to end", visual: "rag",
   lesson: `RAG connects an LLM to knowledge stored in a vector database. It runs in four steps. Walk through them in the visual above using an example café handbook:
 
 1. **Ingestion and chunking**: source documents (PDFs, internal wikis, databases) are split into smaller passages called **chunks**.
@@ -1398,7 +1288,7 @@ The division of labour: the **vector database** handles fast, scalable retrieval
   terms: [["Ingestion", "Loading and chunking source documents."], ["Embedding model", "Turns text into vectors; the same one is used for chunks and questions."], ["Retrieval", "Similarity search for the chunks closest to the question."], ["Grounding", "Answering from the retrieved context, not memory."]],
   check: "Why must the question be embedded with the same embedding model as the chunks? What would go wrong if it weren't?",
   ex: {
-    file: "rag.py", uses: ["vector-math", "tokens", "vector-db-store", "vector-db-search"],
+    file: "rag.py", prelude: SIMILARITY_PRELUDE, uses: ["tokens", "vector-db-store", "vector-db-search"],
     task: `Build all four RAG steps on top of the vector database you wrote. Your \`tokenize()\` (LLMs track) and \`SearchableStore\` (Vector databases track) are loaded. A simple word-count "embedding model" is provided.`,
     starter: py`# Loaded for you:
 #   tokenize(text)          from the LLMs track
@@ -1486,7 +1376,7 @@ print(build_prompt(question, retrieve(question, store, vocab)))
   } },
 
 // ---------------------------------------------------------------- RAG FRAMEWORKS
-{ id: "llamaindex", track: 5, title: "RAG with LlamaIndex", visual: "llamaindexMap",
+{ id: "llamaindex", track: 4, title: "RAG with LlamaIndex", visual: "llamaindexMap",
   lesson: `**LlamaIndex** is a Python framework built around one job: connecting LLMs to your data. Every step of the RAG workflow you built by hand has a ready-made class. The map above lines them up. Tap a row to highlight it in the real code below.
 
 The pieces, in LlamaIndex's own words:
@@ -1599,7 +1489,7 @@ print(answer(index, "When do you open on weekends?"))
 `
   } },
 
-{ id: "langchain", track: 5, title: "RAG with LangChain", visual: "langchainMap",
+{ id: "langchain", track: 4, title: "RAG with LangChain", visual: "langchainMap",
   lesson: `**LangChain** is a general toolkit for building LLM apps. For RAG it gives you separate building blocks that you snap together into a **chain**. The map above lines them up with your hand-built pipeline. Tap a row to highlight it in the code below.
 
 The building blocks:
@@ -1734,7 +1624,7 @@ print(build_chain(retriever).invoke("When do you open on weekends?"))
   } },
 
 // ---------------------------------------------------------------- MCP
-{ id: "mcp", track: 6, title: "MCP: hosts, clients and servers", visual: "mcparch",
+{ id: "mcp", track: 5, title: "MCP: hosts, clients and servers", visual: "mcparch",
   lesson: `The **Model Context Protocol (MCP)** is an open standard for connecting AI apps to outside tools and data. Instead of every app writing custom code for every service, a service is wrapped once as an **MCP server**, and any MCP-aware app can plug it in. People often compare it to USB-C for AI.
 
 The pieces, as in the diagram above:
@@ -1826,7 +1716,7 @@ print(get_weather("Oslo"))
 `
   } },
 
-{ id: "mcp-calls", track: 6, title: "A tool call, message by message", visual: "mcpflow",
+{ id: "mcp-calls", track: 5, title: "A tool call, message by message", visual: "mcpflow",
   lesson: `MCP messages use **JSON-RPC 2.0**: small JSON objects with a \`method\`, \`params\` and an \`id\` that ties each response to its request. They travel over **stdio** (for a local server) or **HTTP** (for a remote one).
 
 Step through the conversation above. Notice that the model never talks to the server directly:
@@ -1929,6 +1819,13 @@ let chats = store.get("chats", {});
   store.set("prog", prog); store.set("drafts", drafts); store.set("passed", passed); store.set("attempts", attempts); store.set("chats", chats);
   const t = store.get("topic", null); if (t && RENAMED[t]) store.set("topic", RENAMED[t]);
   store.set("schema", 2);
+})();
+// Vector math lessons were removed: drop their saved progress, drafts and chats.
+(function dropVectorMath() {
+  if (store.get("schema", 1) >= 3) return;
+  for (const map of [prog, drafts, passed, attempts, chats]) ["vector-math", "embeddings"].forEach(id => delete map[id]);
+  store.set("prog", prog); store.set("drafts", drafts); store.set("passed", passed); store.set("attempts", attempts); store.set("chats", chats);
+  store.set("schema", 3);
 })();
 let current = store.get("topic", TOPICS[0].id);
 if (!TOPICS.some(t => t.id === current)) current = TOPICS[0].id;
@@ -2057,134 +1954,14 @@ const h = (tag, attrs = {}, html = "") => { const e = document.createElement(tag
 const topic = () => TOPICS.find(t => t.id === current);
 const SVGNS = "http://www.w3.org/2000/svg";
 const s = (tag, attrs = {}) => { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
-// Vector MATH helpers (pure functions on number arrays). Not database code: see VectorDb* visuals for that.
-const mathDot = (a, b) => a.reduce((t, x, i) => t + x * b[i], 0), mathNorm = a => Math.sqrt(mathDot(a, a));
-const mathCosine = (a, b) => { const n = mathNorm(a) * mathNorm(b); return n ? mathDot(a, b) / n : 0; };
+// The similarity score a vector database computes for a query vector vs a stored record (cosine).
+const dbSimilarity = (a, b) => { const dot = a.reduce((t, x, i) => t + x * b[i], 0), n = Math.hypot(...a) * Math.hypot(...b); return n ? dot / n : 0; };
 const softmaxJS = (z, T = 1) => { const sc = z.map(v => v / T), m = Math.max(...sc), e = sc.map(v => Math.exp(v - m)), t = e.reduce((a, b) => a + b, 0); return e.map(v => v / t); };
 function labCard(title, kicker) { const c = h("div", { class: "lab" }); c.append(h("div", { class: "lab-head" }, `<h3>${esc(title)}</h3><span>${esc(kicker)}</span>`)); return c; }
 function svgPoint(svg, evt) { const p = svg.createSVGPoint(); p.x = evt.clientX; p.y = evt.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); }
 
 // ---------------------------------------------------------------- VISUALS
 const VISUALS = {
-  // ---- VECTOR MATH visuals (domain "math")
-  vectorMath(root) {
-    const card = labCard("Drag the arrow tips", "interactive · cosine similarity");
-    const grid = h("div", { class: "lab-grid" });
-    const svg = s("svg", { viewBox: "-5.4 -5.4 10.8 10.8", role: "img", "aria-label": "Two vectors a and b on a grid; drag their tips" });
-    for (let i = -5; i <= 5; i++) {
-      svg.append(s("line", { x1: i, y1: -5, x2: i, y2: 5, style: "stroke:var(--line)", "stroke-width": i === 0 ? 0.05 : 0.02 }));
-      svg.append(s("line", { x1: -5, y1: i, x2: 5, y2: i, style: "stroke:var(--line)", "stroke-width": i === 0 ? 0.05 : 0.02 }));
-    }
-    const arc = s("path", { fill: "none", style: "stroke:var(--muted)", "stroke-width": 0.05, "stroke-dasharray": "0.12 0.1" });
-    svg.append(arc);
-    const vecs = { a: { v: [3, 1], color: "var(--c1)" }, b: { v: [1, 3], color: "var(--c2)" } };
-    for (const k in vecs) {
-      const o = vecs[k];
-      o.line = s("line", { x1: 0, y1: 0, style: `stroke:${o.color}`, "stroke-width": 0.12, "stroke-linecap": "round" });
-      o.head = s("path", { style: `fill:${o.color}` });
-      o.knob = s("circle", { r: 0.42, style: `fill:${o.color}`, opacity: 0.22, cursor: "grab" });
-      o.label = s("text", { "font-size": 0.6, style: `fill:${o.color};font-family:var(--font-mono);font-weight:600` });
-      o.label.textContent = k;
-      svg.append(o.line, o.head, o.label, o.knob);
-      o.knob.addEventListener("pointerdown", e => { e.preventDefault(); drag = k; svg.setPointerCapture(e.pointerId); });
-    }
-    let drag = null;
-    svg.addEventListener("pointermove", e => {
-      if (!drag) return;
-      const p = svgPoint(svg, e);
-      let x = Math.max(-5, Math.min(5, Math.round(p.x * 2) / 2)), y = Math.max(-5, Math.min(5, Math.round(-p.y * 2) / 2));
-      if (x === 0 && y === 0) x = 0.5;
-      vecs[drag].v = [x, y]; draw();
-    });
-    const end = () => { drag = null; };
-    svg.addEventListener("pointerup", end); svg.addEventListener("pointercancel", end);
-    const side = h("div", { class: "prim" });
-    const stats = h("dl", { class: "stats" });
-    const verdict = h("div", { class: "verdict" });
-    const presets = h("div", { class: "row" });
-    [["Same direction", [2, 1], [4, 2]], ["Right angle", [3, 0], [0, 2]], ["Opposite", [2, 2], [-3, -3]], ["Close", [4, 1], [3, 2]]].forEach(([n, a, b]) =>
-      presets.append(h("button", { class: "btn small", onclick: () => { vecs.a.v = a; vecs.b.v = b; draw(); } }, esc(n))));
-    side.append(verdict, stats, h("p", { class: "muted", style: "margin:0;font-size:.86rem" }, "Tip: making one arrow longer without turning it leaves the cosine unchanged."), presets);
-    function draw() {
-      for (const k in vecs) {
-        const o = vecs[k], [x, y] = o.v, L = Math.hypot(x, y), ux = x / L, uy = y / L;
-        const bx = x - ux * 0.45, by = y - uy * 0.45;
-        o.line.setAttribute("x2", bx); o.line.setAttribute("y2", -by);
-        o.head.setAttribute("d", `M${x},${-y} L${bx - uy * 0.25},${-(by + ux * 0.25)} L${bx + uy * 0.25},${-(by - ux * 0.25)} Z`);
-        o.knob.setAttribute("cx", x); o.knob.setAttribute("cy", -y);
-        o.label.setAttribute("x", x + 0.25); o.label.setAttribute("y", -y - 0.3);
-      }
-      const a = vecs.a.v, b = vecs.b.v, c = mathCosine(a, b), ang = Math.acos(Math.max(-1, Math.min(1, c)));
-      const a1 = Math.atan2(a[1], a[0]), a2 = Math.atan2(b[1], b[0]);
-      let d = a2 - a1; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
-      const r = 1.1, p1 = [r * Math.cos(a1), r * Math.sin(a1)], p2 = [r * Math.cos(a1 + d), r * Math.sin(a1 + d)];
-      arc.setAttribute("d", `M${p1[0]},${-p1[1]} A${r},${r} 0 0 ${d > 0 ? 0 : 1} ${p2[0]},${-p2[1]}`);
-      stats.innerHTML = `<dt>a</dt><dd>[${a.join(", ")}]</dd><dt>b</dt><dd>[${b.join(", ")}]</dd>
-        <dt>a · b</dt><dd>${mathDot(a, b).toFixed(2)}</dd><dt>|a| × |b|</dt><dd>${mathNorm(a).toFixed(2)} × ${mathNorm(b).toFixed(2)}</dd>
-        <dt>angle</dt><dd>${(ang * 180 / Math.PI).toFixed(0)}°</dd><dt>cosine</dt><dd><b>${c.toFixed(3)}</b></dd>`;
-      verdict.textContent = c > 0.9 ? "Very similar" : c > 0.5 ? "Somewhat similar" : c > -0.2 ? "Unrelated" : c > -0.9 ? "Pointing apart" : "Opposite";
-      verdict.style.color = c > 0.5 ? "var(--ok)" : c < -0.2 ? "var(--bad)" : "var(--muted)";
-    }
-    grid.append(svg, side); card.append(grid); root.append(card); draw();
-  },
-
-  embeddingMap(root) {
-    const card = labCard("A 2D map of word embeddings", "interactive · nearest neighbours");
-    const W = {
-      man: [2.2, 0.6, 1], woman: [1.8, 1.6, 1], king: [3.4, 1.4, 1], queen: [3.0, 2.4, 1], prince: [2.9, 1.0, 1], princess: [2.5, 2.1, 1],
-      cat: [-2.0, 2.4, 2], kitten: [-1.5, 2.6, 2], dog: [-2.6, 2.0, 2], puppy: [-2.1, 1.7, 2],
-      apple: [-2.6, -1.6, 3], banana: [-2.1, -2.1, 3], orange: [-3.1, -1.9, 3], grape: [-1.7, -1.4, 3],
-      car: [1.5, -2.6, 4], bus: [2.2, -2.5, 4], bike: [0.9, -3.0, 4], train: [2.8, -2.0, 4]
-    };
-    const grid = h("div", { class: "lab-grid" });
-    const svg = s("svg", { viewBox: "-4.4 -3.8 8.8 7.6", role: "img", "aria-label": "Scatter of words grouped by meaning; tap a word" });
-    svg.append(s("line", { x1: -4.4, y1: 0, x2: 4.4, y2: 0, style: "stroke:var(--line)", "stroke-width": 0.03 }), s("line", { x1: 0, y1: -3.8, x2: 0, y2: 3.8, style: "stroke:var(--line)", "stroke-width": 0.03 }));
-    const layer = s("g"); svg.append(layer);
-    const pts = s("g"); svg.append(pts);
-    const nodes = {};
-    for (const w in W) {
-      const [x, y, c] = W[w];
-      const g = s("g", { cursor: "pointer", tabindex: 0, role: "button", "aria-label": w });
-      const dot = s("circle", { cx: x, cy: -y, r: 0.13, style: `fill:var(--c${c})` });
-      const t = s("text", { x: x + 0.18, y: -y + 0.11, "font-size": 0.3, style: "fill:var(--ink);font-family:var(--font-body)" }); t.textContent = w;
-      const hit = s("circle", { cx: x, cy: -y, r: 0.38, fill: "transparent" });
-      g.append(dot, t, hit); pts.append(g); nodes[w] = { g, dot };
-      g.onclick = () => pick(w); g.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(w); } };
-    }
-    const side = h("div", { class: "prim" });
-    const info = h("div");
-    const btn = h("button", { class: "btn small", onclick: analogy }, "Try king − man + woman");
-    side.append(info, h("div", { class: "row" }, ""), btn);
-    side.querySelector(".row").append(btn);
-    function clear() { layer.innerHTML = ""; for (const w in nodes) { nodes[w].dot.setAttribute("r", 0.13); nodes[w].g.style.opacity = 1; } }
-    function ray(x, y, color, width = 0.03, dash = "0.1 0.08") { layer.append(s("line", { x1: 0, y1: 0, x2: x, y2: -y, style: `stroke:${color}`, "stroke-width": width, "stroke-dasharray": dash })); }
-    function pick(w) {
-      clear();
-      const v = W[w].slice(0, 2);
-      const ranked = Object.keys(W).filter(o => o !== w).map(o => [o, mathCosine(v, W[o].slice(0, 2))]).sort((a, b) => b[1] - a[1]);
-      ray(v[0], v[1], "var(--ink)", 0.04, "none");
-      ranked.slice(0, 3).forEach(([o]) => { ray(W[o][0], W[o][1], "var(--accent)"); layer.append(s("line", { x1: v[0], y1: -v[1], x2: W[o][0], y2: -W[o][1], style: "stroke:var(--accent)", "stroke-width": 0.05 })); });
-      nodes[w].dot.setAttribute("r", 0.2);
-      const far = ranked[ranked.length - 1];
-      info.innerHTML = `<p style="margin:0 0 6px">Nearest to <b>${esc(w)}</b> by cosine:</p>` + bars(ranked.slice(0, 3)) +
-        `<p class="muted" style="margin:8px 0 0;font-size:.86rem">Least similar: ${esc(far[0])} (${far[1].toFixed(2)}). The dashed rays show that cosine compares directions from the origin.</p>`;
-    }
-    function analogy() {
-      clear();
-      const r = [W.king[0] - W.man[0] + W.woman[0], W.king[1] - W.man[1] + W.woman[1]];
-      const ranked = Object.keys(W).filter(o => !["king", "man", "woman"].includes(o)).map(o => [o, mathCosine(r, W[o].slice(0, 2))]).sort((a, b) => b[1] - a[1]);
-      const arrow = (a, b, col) => layer.append(s("line", { x1: a[0], y1: -a[1], x2: b[0], y2: -b[1], style: `stroke:${col}`, "stroke-width": 0.06, "stroke-linecap": "round" }));
-      const mid = [W.king[0] - W.man[0], W.king[1] - W.man[1]];
-      arrow(W.king, mid, "var(--c2)"); arrow(mid, r, "var(--c3)");
-      layer.append(s("circle", { cx: r[0], cy: -r[1], r: 0.26, fill: "none", style: "stroke:var(--accent)", "stroke-width": 0.06 }));
-      ["king", "man", "woman"].forEach(w => nodes[w].dot.setAttribute("r", 0.19));
-      info.innerHTML = `<p style="margin:0 0 6px"><b>king − man + woman</b> lands at [${r.map(v => v.toFixed(1)).join(", ")}]. The closest word is:</p>` + bars(ranked.slice(0, 3)) +
-        `<p class="muted" style="margin:8px 0 0;font-size:.86rem">The orange arrow subtracts "man", the green one adds "woman". The direction between them acts like a "gender" axis.</p>`;
-    }
-    const bars = list => `<div class="bars">` + list.map(([o, c], i) => `<div class="bar${i === 0 ? " hit" : ""}"><span class="lbl">${esc(o)}</span><div class="track-b"><div class="fill" style="width:${Math.max(0, c) * 100}%"></div></div><span class="pct">${c.toFixed(3)}</span></div>`).join("") + `</div>`;
-    grid.append(svg, side); card.append(grid); root.append(card); pick("cat");
-  },
-
   tokens(root) {
     const card = labCard("Watch text become tokens", "interactive · simplified tokenizer");
     const inp = h("input", { type: "text", id: "tokInput", "aria-label": "Text to tokenize", value: "Tokenizers split unbelievable words into pieces, but common words stay whole!" });
@@ -2408,7 +2185,7 @@ const VISUALS = {
       prev.disabled = stage === 0; next.disabled = stage === 3;
       when.textContent = stage < 2 ? "Done once, ahead of time (and again when documents change)" : "Done for every question";
       const qv = embed(q()), qt = toks(q()), ignored = qt.filter(w => !VOCAB.includes(w));
-      const scored = ROWS.map(r => ({ ...r, s: qv.some(Boolean) ? mathCosine(qv, r.vec) : 0 })).sort((x, y) => y.s - x.s);
+      const scored = ROWS.map(r => ({ ...r, s: qv.some(Boolean) ? dbSimilarity(qv, r.vec) : 0 })).sort((x, y) => y.s - x.s);
       const k = +kIn.value, top = scored.filter(r => r.s > 0).slice(0, k);
       lastPrompt = `Answer the question using only the context below. If the answer isn't there, say you don't know.\n\nContext:\n${top.map((t, j) => `[${j + 1}] ${t.text}`).join("\n") || "(no relevant chunks found)"}\n\nQuestion: ${q()}`;
       if (stage === 0) view.innerHTML = `<p style="margin:0">The source document <b>${SOURCE}</b> is loaded and split into small chunks, one idea each:</p>
@@ -2496,7 +2273,7 @@ const VISUALS = {
     function draw() {
       const k = +kIn.value, f = filt.value;
       const cand = ITEMS.filter(it => !f || it[3] === f);
-      const ranked = cand.map(it => [it, mathCosine(qv, [it[1], it[2]])]).sort((a, b) => b[1] - a[1]), top = ranked.slice(0, k);
+      const ranked = cand.map(it => [it, dbSimilarity(qv, [it[1], it[2]])]).sort((a, b) => b[1] - a[1]), top = ranked.slice(0, k);
       layer.innerHTML = ""; pts.innerHTML = "";
       layer.append(s("line", { x1: 0, y1: 0, x2: qv[0], y2: -qv[1], style: "stroke:var(--ink)", "stroke-width": 0.05, "stroke-dasharray": "0.12 0.08" }));
       top.forEach(([it]) => layer.append(s("line", { x1: qv[0], y1: -qv[1], x2: it[1], y2: -it[2], style: "stroke:var(--accent)", "stroke-width": 0.06 })));
@@ -2523,7 +2300,7 @@ const VISUALS = {
     const Q = "When does our café open on Saturday, and do I need an umbrella there today?";
     const NODES = [
       { id: "q", name: "Your question", lesson: null, info: "Everything starts with a question in plain language." },
-      { id: "emb", name: "Embedding model", lesson: "embeddings", rag: true, info: "Turns the question into a vector, using the same model that embedded your documents." },
+      { id: "emb", name: "Embedding model", lesson: "vector-db-store", rag: true, info: "Turns the question into a vector, using the same model that embedded your documents." },
       { id: "vdb", name: "Vector database", lesson: "vector-db-store", rag: true, info: "A database system that stores your chunks as records (id + vector + text + metadata) and returns the records most similar to the question (ChromaDB, Pinecone, Weaviate, Qdrant, pgvector…)." },
       { id: "ctx", name: "Retrieved chunks", lesson: "rag", rag: true, info: "The most relevant passages, e.g. \"Our café opens at 8am on weekends.\" They're added to the prompt as context: that's the RAG workflow." },
       { id: "llm", name: "LLM", lesson: "next-token", info: "The brain: reads the prompt and writes the answer one token at a time. On its own it has a training cutoff, no private data, and can hallucinate." },
@@ -2733,9 +2510,8 @@ function renderLearn() {
   $("terms").innerHTML = t.terms.map(([k, d, dom]) => { const tg = dom || t.domain; return `<div class="term${tg ? " dom-" + tg : ""}"><dt>${esc(k)}${tg ? `<span class="tag">${DOMAINS[tg].tag}</span>` : ""}</dt><dd>${esc(d)}</dd></div>`; }).join("");
   const dn = $("domainNote"); dn.innerHTML = "";
   if (t.domain) {
-    const D = DOMAINS[t.domain], other = DOMAINS[D.other];
+    const D = DOMAINS[t.domain];
     const box = h("div", { class: "domain dom-" + t.domain }, `<p><b class="dom-label">${D.label}</b>${D.note}</p>`);
-    box.append(h("button", { class: "btn small", onclick: () => { selectTopic(other.first); setTab("learn"); } }, `Go to ${other.label.toLowerCase()} →`));
     dn.append(box);
   }
   $("checkQ").textContent = t.check;
@@ -2920,8 +2696,8 @@ How to tutor:
 - Don't hand over the full exercise solution unless they explicitly ask for it; give hints instead.
 - End most replies with one short question that checks understanding or suggests the next step.
 - Never invent citations or claim certainty you don't have.
-- Terminology: "vector" means the mathematical object (a list of numbers). "Vector database" (or "vector DB") means the storage software that holds records of id + vector + metadata in a collection. Never shorten "vector database" to "vectors", and in vector math answers don't bring in databases unless the student asks. When both come up, name which one you mean.
-- The page has tabs the student can open: "See it" (an interactive visual for this lesson), "Code it" (the Python exercise with a Run tests button) and "Quiz". Point them there when it helps, e.g. "Open See it and drag the arrows until the cosine is 0."
+- Terminology: this course teaches vector databases, not vector maths. Say "vector database" (or "vector DB") for the storage software that holds records of id + vector + metadata in a collection; never shorten it to "vectors". Treat similarity (cosine) as a built-in database feature and don't teach the maths behind it unless the student explicitly asks.
+- The page has tabs the student can open: "See it" (an interactive visual for this lesson), "Code it" (the Python exercise with a Run tests button) and "Quiz". Point them there when it helps, e.g. "Open See it and tap the map to move the query."
 
 If the student asks you to teach the lesson step by step, act as a guide through a short interactive session: teach ONE small idea per message (under 120 words), connect it to the visual or a tiny Python snippet, then give them a small task or question and stop to wait for their reply. Move to the next idea only after they respond. Cover the lesson in about 4 to 6 steps, finishing by sending them to the Code it tab.
 
