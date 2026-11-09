@@ -288,7 +288,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
       </svg>
       <div>
         <h1>Gradient</h1>
-        <p>Learn vectors, LLMs, RAG and MCP by seeing and coding</p>
+        <p>Learn LLMs, vector databases, RAG and MCP by seeing and coding</p>
       </div>
     </div>
     <div class="meter" aria-live="polite">
@@ -376,125 +376,102 @@ button, input, textarea, select { font: inherit; color: inherit; }
 
 <script>
 const py = String.raw;
-const TRACKS = ["Vectors", "LLMs", "RAG", "MCP"];
+const TRACKS = ["Start here", "LLMs", "Vector databases", "RAG", "MCP"];
 
 const TOPICS = [
-// ---------------------------------------------------------------- VECTORS
-{ id: "vectors", track: 0, title: "Vectors and cosine similarity", visual: "vectors",
-  lesson: `A **vector** is a list of numbers, like \`[3, 4]\`. A vector with two numbers can be drawn as an arrow from the origin. AI systems turn almost everything into vectors: words, sentences, images, songs.
+// ---------------------------------------------------------------- START HERE
+{ id: "big-picture", track: 0, title: "How the pieces fit together", visual: "bigpicture",
+  lesson: `Before diving in, here's the map. Modern AI apps combine a few parts, and each part fixes a weakness of another.
 
-Two operations do most of the work:
+- **Large language model (LLM)**: the "brain" that understands language, reasons and writes. On its own it has three big gaps. Its knowledge stops at a **training cutoff**, it has never seen your **private or specialised data**, and when it doesn't know something it may **hallucinate**: make up a confident, wrong answer.
+- **Embeddings**: lists of numbers that capture what a piece of text *means*, not just which words it uses.
+- **Vector database**: a database built to store embeddings and find the closest ones fast. Popular choices include Pinecone, Weaviate, ChromaDB, Qdrant, and pgvector (an add-on for PostgreSQL).
+- **Retrieval-augmented generation (RAG)**: the pipeline that connects them. Embed the question, look up the closest chunks in the vector database, and hand them to the LLM so it answers from real sources.
+- **MCP**: the standard plug that lets the LLM go beyond reading, to **act**: call tools, query live systems, and fetch fresh data.
 
-- **Dot product**: multiply matching numbers and add them. \`[1, 2] · [3, 4] = 1×3 + 2×4 = 11\`
-- **Length (norm)**: how long the arrow is. \`|[3, 4]| = √(3² + 4²) = 5\`
-
-Combine them and you get **cosine similarity**. It measures the angle between two arrows and ignores how long they are:`,
-  formula: "cos θ = (a · b) / (|a| × |b|)",
-  lesson2: `It runs from **1** (same direction) through **0** (unrelated, at right angles) to **−1** (opposite). Drag the arrow tips above to get a feel for it. Search engines, recommenders and RAG systems all use this one number to decide that two things are "about the same".`,
-  terms: [["Vector", "An ordered list of numbers, drawn as an arrow."], ["Dot product", "Sum of pairwise products of two vectors."], ["Cosine similarity", "How aligned two vectors are, from −1 to 1."]],
-  check: "Two arrows point the same way, but one is ten times longer. What is their cosine similarity, and why?",
+Flip the switch in the diagram above to compare an LLM on its own with the full setup. Tap any box to see which lesson covers it.`,
+  terms: [["Training cutoff", "The date after which a model has no knowledge."], ["Hallucination", "A fluent, confident answer that isn't true."], ["Vector database", "Stores embeddings and finds the nearest ones fast."], ["RAG", "Retrieve relevant text, then let the LLM answer from it."]],
+  check: "Name the LLM's three weaknesses from this lesson, and say which part of the system helps with each.",
   ex: {
-    file: "vectors.py",
-    task: `Write the three building blocks you'll reuse for the rest of the course: \`dot\`, \`norm\` and \`cosine\`. Run the tests, read what fails, fix it, and run again.`,
-    starter: py`import math
+    file: "pipeline.py",
+    task: `Wire up the whole pipeline before learning each part. The stand-in functions below play the roles of the embedding model, the vector database and the LLM. Write \`rag_answer\` so it calls them in the right order.`,
+    starter: py`# Stand-ins for the real components. You'll build real versions later.
+calls = []
 
-def dot(a, b):
-    # Multiply matching numbers and add them up.
-    # dot([1, 2], [3, 4]) -> 1*3 + 2*4 = 11
+def embed(text):
+    calls.append("embed")
+    return [len(text) % 7, text.count(" ")]   # a pretend embedding
+
+def vector_search(query_vector, k=2):
+    calls.append("search")
+    chunks = ["Our cafe opens at 8am on weekends.",
+              "Returns are accepted within 30 days."]
+    return chunks[:k]
+
+def llm(prompt):
+    calls.append("llm")
+    return "Answer based on: " + prompt[:60] + "..."
+
+def rag_answer(question, k=2):
+    # 1. Embed the question.
+    # 2. Search the vector database for the k closest chunks.
+    # 3. Build a prompt that contains the chunks AND the question.
+    # 4. Send the prompt to the LLM and return its answer.
     pass
 
-def norm(a):
-    # The length of the arrow: the square root of dot(a, a)
-    pass
-
-def cosine(a, b):
-    # dot(a, b) divided by (norm(a) * norm(b))
-    pass
-
-print("cosine of [1, 0] and [1, 1] =", cosine([1, 0], [1, 1]))
+print(rag_answer("When do you open on Saturday?"))
+print(calls)
 `,
-    tests: py`__check("dot([1, 2], [3, 4]) == 11", lambda: dot([1, 2], [3, 4]) == 11)
-__check("works in 3D: dot([1, 0, 2], [2, 5, 1]) == 4", lambda: dot([1, 0, 2], [2, 5, 1]) == 4)
-__check("norm([3, 4]) == 5", lambda: abs(norm([3, 4]) - 5) < 1e-9)
-__check("same direction gives cosine 1", lambda: abs(cosine([2, 2], [5, 5]) - 1) < 1e-9)
-__check("right angle gives cosine 0", lambda: abs(cosine([1, 0], [0, 3])) < 1e-9)
-__check("opposite gives cosine -1", lambda: abs(cosine([1, 2], [-2, -4]) + 1) < 1e-9)
+    tests: py`__seen = []
+__real_llm = llm
+def __spy(prompt):
+    __seen.append(prompt)
+    return __real_llm(prompt)
+llm = __spy
+def __run(q="When do you open?", k=2):
+    calls.clear()
+    __seen.clear()
+    return rag_answer(q, k)
+def __order():
+    __run()
+    return calls == ["embed", "search", "llm"]
+def __prompt_has_all():
+    __run("When do you open?", 2)
+    return bool(__seen) and "8am" in __seen[-1] and "Returns" in __seen[-1] and "When do you open?" in __seen[-1]
+def __respects_k():
+    __run("Hours?", 1)
+    return bool(__seen) and "8am" in __seen[-1] and "Returns" not in __seen[-1]
+__check("returns the LLM's answer", lambda: str(__run()).startswith("Answer based on:"))
+__check("calls embed, then search, then the LLM", __order)
+__check("the prompt contains the chunks and the question", __prompt_has_all)
+__check("passes k through to the search", __respects_k)
 `,
-    hint: "Use `zip(a, b)` to walk through both lists together and `sum()` to add up the products. `math.sqrt()` gives a square root. `cosine` can call your `dot` and `norm`.",
-    solution: py`import math
+    hint: "Four lines: `vec = embed(question)`, `chunks = vector_search(vec, k)`, build `prompt` with an f-string that joins the chunks with `\"\\n\".join(chunks)` and adds the question, then `return llm(prompt)`.",
+    solution: py`calls = []
 
-def dot(a, b):
-    return sum(x * y for x, y in zip(a, b))
+def embed(text):
+    calls.append("embed")
+    return [len(text) % 7, text.count(" ")]
 
-def norm(a):
-    return math.sqrt(dot(a, a))
+def vector_search(query_vector, k=2):
+    calls.append("search")
+    chunks = ["Our cafe opens at 8am on weekends.",
+              "Returns are accepted within 30 days."]
+    return chunks[:k]
 
-def cosine(a, b):
-    return dot(a, b) / (norm(a) * norm(b))
+def llm(prompt):
+    calls.append("llm")
+    return "Answer based on: " + prompt[:60] + "..."
 
-print("cosine of [1, 0] and [1, 1] =", cosine([1, 0], [1, 1]))
-`
-  } },
+def rag_answer(question, k=2):
+    vec = embed(question)
+    chunks = vector_search(vec, k)
+    context = "\n".join(chunks)
+    prompt = f"Use these passages:\n{context}\n\nQuestion: {question}"
+    return llm(prompt)
 
-{ id: "embeddings", track: 0, title: "Embeddings: meaning as vectors", visual: "embeddings",
-  lesson: `An **embedding** is a vector a model has learned for a word, sentence or image, arranged so that **similar meanings point in similar directions**. "Cat" lands near "kitten" and far from "bus".
-
-Real embeddings have hundreds or thousands of dimensions. The map above squeezes a few words into 2D so you can see the idea. Tap a word to find its nearest neighbours by cosine similarity, the same function you just wrote.
-
-Directions can carry meaning too:`,
-  formula: "king − man + woman ≈ queen",
-  lesson2: `In Python you'd normally get embeddings from a model, for example \`model.encode("a sentence")\` with the sentence-transformers library, or an embeddings API. They come back as lists of floats, and everything you do with them afterwards is the vector maths from lesson 1.`,
-  terms: [["Embedding", "A learned vector that captures meaning."], ["Nearest neighbours", "The items with the highest similarity to a query."], ["Dimensions", "How many numbers each vector has."]],
-  check: "Why does searching with embeddings find \"How do I reset my password?\" for the query \"forgot login\" even though they share no words?",
-  ex: {
-    file: "embeddings.py", uses: ["vectors"],
-    task: `Build a tiny semantic search. \`most_similar\` should return the \`k\` words whose vectors are closest to a given word. Your \`cosine()\` from lesson 1 is already loaded.`,
-    starter: py`# cosine() from lesson 1 is loaded for you.
-# Each word is a 3D vector: [is_animal, is_small_or_cute, is_vehicle]
-words = {
-    "cat":     [0.90, 0.70, 0.00],
-    "kitten":  [0.80, 0.95, 0.00],
-    "dog":     [0.95, 0.50, 0.05],
-    "truck":   [0.00, 0.05, 0.95],
-    "bus":     [0.05, 0.20, 0.90],
-    "toy car": [0.10, 0.90, 0.60],
-}
-
-def most_similar(word, vectors, k=2):
-    # Return a list of the k OTHER words most similar to word,
-    # best match first. Don't include the word itself.
-    pass
-
-print(most_similar("cat", words))
-print(most_similar("truck", words, k=1))
-`,
-    tests: py`__check("returns a list of k words", lambda: isinstance(most_similar("cat", words, 3), list) and len(most_similar("cat", words, 3)) == 3)
-__check("never includes the word itself", lambda: "cat" not in most_similar("cat", words, 5))
-__check("cat's top 2 are dog and kitten", lambda: sorted(most_similar("cat", words, 2)) == ["dog", "kitten"])
-__check("truck's nearest is bus", lambda: most_similar("truck", words, 1) == ["bus"])
-__check("best match comes first", lambda: most_similar("kitten", words, 1) == ["cat"])
-`,
-    hint: "Loop over `vectors.items()`, skip the word itself, and collect `(score, other_word)` pairs using `cosine(vectors[word], vec)`. Sort with `reverse=True` and keep the first `k` words.",
-    solution: py`words = {
-    "cat":     [0.90, 0.70, 0.00],
-    "kitten":  [0.80, 0.95, 0.00],
-    "dog":     [0.95, 0.50, 0.05],
-    "truck":   [0.00, 0.05, 0.95],
-    "bus":     [0.05, 0.20, 0.90],
-    "toy car": [0.10, 0.90, 0.60],
-}
-
-def most_similar(word, vectors, k=2):
-    target = vectors[word]
-    scored = []
-    for other, vec in vectors.items():
-        if other != word:
-            scored.append((cosine(target, vec), other))
-    scored.sort(reverse=True)
-    return [w for _, w in scored[:k]]
-
-print(most_similar("cat", words))
-print(most_similar("truck", words, k=1))
+print(rag_answer("When do you open on Saturday?"))
+print(calls)
 `
   } },
 
@@ -681,9 +658,220 @@ print(attend(q, keys, values))
 `
   } },
 
+// ---------------------------------------------------------------- VECTOR DATABASES
+{ id: "vectors", track: 2, title: "Similarity search: how a vector DB compares", visual: "vectors",
+  lesson: `A vector database answers one question: *which stored vectors are closest to this one?* To do that it needs a way to measure "closeness". This lesson is that measurement.
+
+A **vector** is a list of numbers, like \`[3, 4]\`. A vector with two numbers can be drawn as an arrow from the origin. AI systems turn almost everything into vectors: words, sentences, images, songs.
+
+Two operations do most of the work:
+
+- **Dot product**: multiply matching numbers and add them. \`[1, 2] · [3, 4] = 1×3 + 2×4 = 11\`
+- **Length (norm)**: how long the arrow is. \`|[3, 4]| = √(3² + 4²) = 5\`
+
+Combine them and you get **cosine similarity**. It measures the angle between two arrows and ignores how long they are:`,
+  formula: "cos θ = (a · b) / (|a| × |b|)",
+  lesson2: `It runs from **1** (same direction) through **0** (unrelated, at right angles) to **−1** (opposite). Drag the arrow tips above to get a feel for it. Vector databases like Chroma, Pinecone and pgvector use this one number to decide that two things are "about the same".`,
+  terms: [["Vector", "An ordered list of numbers, drawn as an arrow."], ["Dot product", "Sum of pairwise products of two vectors."], ["Cosine similarity", "How aligned two vectors are, from −1 to 1."]],
+  check: "Two arrows point the same way, but one is ten times longer. What is their cosine similarity, and why?",
+  ex: {
+    file: "vectors.py",
+    task: `Write the three building blocks you'll reuse for the rest of the course: \`dot\`, \`norm\` and \`cosine\`. Run the tests, read what fails, fix it, and run again.`,
+    starter: py`import math
+
+def dot(a, b):
+    # Multiply matching numbers and add them up.
+    # dot([1, 2], [3, 4]) -> 1*3 + 2*4 = 11
+    pass
+
+def norm(a):
+    # The length of the arrow: the square root of dot(a, a)
+    pass
+
+def cosine(a, b):
+    # dot(a, b) divided by (norm(a) * norm(b))
+    pass
+
+print("cosine of [1, 0] and [1, 1] =", cosine([1, 0], [1, 1]))
+`,
+    tests: py`__check("dot([1, 2], [3, 4]) == 11", lambda: dot([1, 2], [3, 4]) == 11)
+__check("works in 3D: dot([1, 0, 2], [2, 5, 1]) == 4", lambda: dot([1, 0, 2], [2, 5, 1]) == 4)
+__check("norm([3, 4]) == 5", lambda: abs(norm([3, 4]) - 5) < 1e-9)
+__check("same direction gives cosine 1", lambda: abs(cosine([2, 2], [5, 5]) - 1) < 1e-9)
+__check("right angle gives cosine 0", lambda: abs(cosine([1, 0], [0, 3])) < 1e-9)
+__check("opposite gives cosine -1", lambda: abs(cosine([1, 2], [-2, -4]) + 1) < 1e-9)
+`,
+    hint: "Use `zip(a, b)` to walk through both lists together and `sum()` to add up the products. `math.sqrt()` gives a square root. `cosine` can call your `dot` and `norm`.",
+    solution: py`import math
+
+def dot(a, b):
+    return sum(x * y for x, y in zip(a, b))
+
+def norm(a):
+    return math.sqrt(dot(a, a))
+
+def cosine(a, b):
+    return dot(a, b) / (norm(a) * norm(b))
+
+print("cosine of [1, 0] and [1, 1] =", cosine([1, 0], [1, 1]))
+`
+  } },
+
+{ id: "embeddings", track: 2, title: "Embeddings: meaning as vectors", visual: "embeddings",
+  lesson: `An **embedding** is a vector a model has learned for a word, sentence or image, arranged so that **similar meanings point in similar directions**. "Cat" lands near "kitten" and far from "bus".
+
+Real embeddings have hundreds or thousands of dimensions. The map above squeezes a few words into 2D so you can see the idea. Tap a word to find its nearest neighbours by cosine similarity, the same function a vector database uses.
+
+Directions can carry meaning too:`,
+  formula: "king − man + woman ≈ queen",
+  lesson2: `In Python you'd normally get embeddings from a model, for example \`model.encode("a sentence")\` with the sentence-transformers library, or an embeddings API. They come back as lists of floats, You store them in a vector database (next lesson) and compare them with the similarity search you just learned.`,
+  terms: [["Embedding", "A learned vector that captures meaning."], ["Nearest neighbours", "The items with the highest similarity to a query."], ["Dimensions", "How many numbers each vector has."]],
+  check: "Why does searching with embeddings find \"How do I reset my password?\" for the query \"forgot login\" even though they share no words?",
+  ex: {
+    file: "embeddings.py", uses: ["vectors"],
+    task: `Build a tiny semantic search. \`most_similar\` should return the \`k\` words whose vectors are closest to a given word. Your \`cosine()\` from the similarity-search lesson is already loaded.`,
+    starter: py`# cosine() from the similarity-search lesson is loaded for you.
+# Each word is a 3D vector: [is_animal, is_small_or_cute, is_vehicle]
+words = {
+    "cat":     [0.90, 0.70, 0.00],
+    "kitten":  [0.80, 0.95, 0.00],
+    "dog":     [0.95, 0.50, 0.05],
+    "truck":   [0.00, 0.05, 0.95],
+    "bus":     [0.05, 0.20, 0.90],
+    "toy car": [0.10, 0.90, 0.60],
+}
+
+def most_similar(word, vectors, k=2):
+    # Return a list of the k OTHER words most similar to word,
+    # best match first. Don't include the word itself.
+    pass
+
+print(most_similar("cat", words))
+print(most_similar("truck", words, k=1))
+`,
+    tests: py`__check("returns a list of k words", lambda: isinstance(most_similar("cat", words, 3), list) and len(most_similar("cat", words, 3)) == 3)
+__check("never includes the word itself", lambda: "cat" not in most_similar("cat", words, 5))
+__check("cat's top 2 are dog and kitten", lambda: sorted(most_similar("cat", words, 2)) == ["dog", "kitten"])
+__check("truck's nearest is bus", lambda: most_similar("truck", words, 1) == ["bus"])
+__check("best match comes first", lambda: most_similar("kitten", words, 1) == ["cat"])
+`,
+    hint: "Loop over `vectors.items()`, skip the word itself, and collect `(score, other_word)` pairs using `cosine(vectors[word], vec)`. Sort with `reverse=True` and keep the first `k` words.",
+    solution: py`words = {
+    "cat":     [0.90, 0.70, 0.00],
+    "kitten":  [0.80, 0.95, 0.00],
+    "dog":     [0.95, 0.50, 0.05],
+    "truck":   [0.00, 0.05, 0.95],
+    "bus":     [0.05, 0.20, 0.90],
+    "toy car": [0.10, 0.90, 0.60],
+}
+
+def most_similar(word, vectors, k=2):
+    target = vectors[word]
+    scored = []
+    for other, vec in vectors.items():
+        if other != word:
+            scored.append((cosine(target, vec), other))
+    scored.sort(reverse=True)
+    return [w for _, w in scored[:k]]
+
+print(most_similar("cat", words))
+print(most_similar("truck", words, k=1))
+`
+  } },
+
+{ id: "vector-db", track: 2, title: "Vector databases", visual: "vectordb",
+  lesson: `Once you have embeddings for thousands or millions of chunks, you need somewhere to keep them and a fast way to ask "which ones are closest to this?". That's a **vector database**.
+
+It stores, for every item:
+
+- an **id**
+- the **vector** (the embedding)
+- **metadata**: extra fields like source, date or topic, which you can **filter** on ("only search the HR handbook")
+
+Comparing the query with every vector (**brute force**, what the map above does) is exact but slow at scale. Real vector databases build an **approximate nearest neighbour (ANN)** index, such as **HNSW**, that checks only a small fraction of vectors and is still almost always right.
+
+Popular options: **ChromaDB** (easy, local, great for learning), **Pinecone** (hosted), **Weaviate** and **Qdrant** (open source, self-host or cloud), and **pgvector**, which adds vector search to the PostgreSQL database many apps already use. The Python looks much the same in all of them:`,
+  code: py`import chromadb
+
+client = chromadb.Client()
+docs = client.create_collection("handbook")
+docs.add(ids=["d1", "d2"],
+         documents=["Our cafe opens at 8am on weekends.",
+                    "Returns are accepted within 30 days."],
+         metadatas=[{"topic": "hours"}, {"topic": "policy"}])
+
+hits = docs.query(query_texts=["When do you open?"], n_results=1)
+print(hits["documents"])`,
+  terms: [["Vector database", "Stores vectors plus metadata and finds nearest neighbours."], ["Metadata filter", "Limit a search to items with matching fields."], ["ANN index", "A structure (like HNSW) that finds near neighbours fast."], ["pgvector", "A PostgreSQL extension for storing and searching vectors."]],
+  check: "Your support bot keeps quoting last year's pricing page. How could metadata in the vector database help?",
+  ex: {
+    file: "vector_store.py", uses: ["vectors"],
+    task: `Build a tiny in-memory vector database: \`add\` items with metadata, then \`query\` for the nearest ids with an optional metadata filter. Your \`cosine()\` from the similarity-search lesson is loaded. This is what Chroma or Qdrant do for you, minus the fast index.`,
+    starter: py`# cosine() from the vectors lesson is loaded for you.
+class VectorStore:
+    def __init__(self):
+        self.items = []   # each item: {"id": ..., "vector": [...], "metadata": {...}}
+
+    def add(self, id, vector, metadata=None):
+        # Save the item. If metadata is None, store an empty dict.
+        pass
+
+    def query(self, vector, k=2, where=None):
+        # Return the ids of the k items most similar to vector, best first.
+        # If where is given, e.g. {"topic": "pets"}, only consider items
+        # whose metadata contains all of those key/value pairs.
+        pass
+
+db = VectorStore()
+db.add("cat",   [0.9, 0.1, 0.0],  {"topic": "pets"})
+db.add("dog",   [0.8, 0.3, 0.0],  {"topic": "pets"})
+db.add("bus",   [0.0, 0.2, 0.9],  {"topic": "transport"})
+db.add("train", [0.1, 0.1, 0.95], {"topic": "transport"})
+print(db.query([1, 0, 0], k=2))
+print(db.query([1, 0, 0], k=1, where={"topic": "transport"}))
+`,
+    tests: py`def __db():
+    d = VectorStore()
+    d.add("cat", [0.9, 0.1, 0.0], {"topic": "pets"})
+    d.add("dog", [0.8, 0.3, 0.0], {"topic": "pets"})
+    d.add("bus", [0.0, 0.2, 0.9], {"topic": "transport"})
+    d.add("train", [0.1, 0.1, 0.95], {"topic": "transport"})
+    return d
+__check("add stores every item", lambda: len(__db().items) == 4)
+__check("metadata defaults to an empty dict", lambda: (lambda d: (d.add("x", [1, 1, 1]), d.items[-1]["metadata"])[1] == {})(VectorStore()))
+__check("query returns the nearest ids, best first", lambda: __db().query([1, 0, 0], k=2) == ["cat", "dog"])
+__check("where filters by metadata", lambda: __db().query([1, 0, 0], k=1, where={"topic": "transport"}) == ["train"])
+__check("k bigger than the store returns everything", lambda: len(__db().query([0, 0, 1], k=10)) == 4)
+`,
+    hint: "In `add`, append `{\"id\": id, \"vector\": vector, \"metadata\": metadata or {}}`. In `query`, keep items where `all(item[\"metadata\"].get(key) == value for key, value in where.items())`, sort them by `cosine(vector, item[\"vector\"])` with `reverse=True`, and return the first `k` ids.",
+    solution: py`class VectorStore:
+    def __init__(self):
+        self.items = []
+
+    def add(self, id, vector, metadata=None):
+        self.items.append({"id": id, "vector": vector, "metadata": metadata or {}})
+
+    def query(self, vector, k=2, where=None):
+        candidates = self.items
+        if where:
+            candidates = [it for it in candidates
+                          if all(it["metadata"].get(key) == val for key, val in where.items())]
+        ranked = sorted(candidates, key=lambda it: cosine(vector, it["vector"]), reverse=True)
+        return [it["id"] for it in ranked[:k]]
+
+db = VectorStore()
+db.add("cat",   [0.9, 0.1, 0.0],  {"topic": "pets"})
+db.add("dog",   [0.8, 0.3, 0.0],  {"topic": "pets"})
+db.add("bus",   [0.0, 0.2, 0.9],  {"topic": "transport"})
+db.add("train", [0.1, 0.1, 0.95], {"topic": "transport"})
+print(db.query([1, 0, 0], k=2))
+print(db.query([1, 0, 0], k=1, where={"topic": "transport"}))
+`
+  } },
+
 // ---------------------------------------------------------------- RAG
-{ id: "chunking", track: 2, title: "Chunking documents", visual: "chunking",
-  lesson: `**Retrieval-augmented generation (RAG)** gives an LLM the right facts at question time by looking them up in your documents. The first step is **chunking**: cutting documents into passages small enough to search and to fit in a prompt.
+{ id: "chunking", track: 3, title: "RAG step 1: ingestion and chunking", visual: "chunking",
+  lesson: `**Retrieval-augmented generation (RAG)** gives an LLM the right facts at question time by looking them up in your documents. The first step is **ingestion**: loading source documents (PDFs, internal wikis, database rows) and **chunking** them, cutting them into passages small enough to search and to fit in a prompt.
 
 Two settings matter:
 
@@ -733,23 +921,27 @@ for c in chunk(doc, size=6, overlap=2):
 `
   } },
 
-{ id: "rag", track: 2, title: "Retrieve, augment, generate", visual: "rag",
-  lesson: `With documents chunked, a RAG system answers a question in four moves:
+{ id: "rag", track: 3, title: "The RAG workflow, end to end", visual: "rag",
+  lesson: `RAG connects an LLM to knowledge stored in a vector database. It runs in four steps. Walk through them in the visual above using an example café handbook:
 
-1. **Embed** the question into a vector.
-2. **Score** every chunk by cosine similarity to the question.
-3. **Retrieve** the top *k* chunks.
-4. **Augment** the prompt with those chunks and ask the LLM to answer **using only them**.
+1. **Ingestion and chunking**: source documents (PDFs, internal wikis, databases) are split into smaller passages called **chunks**.
+2. **Embedding and storing**: an **embedding model** turns each chunk into a vector, and the vectors are saved in the **vector database** along with the chunk text.
+3. **Query and retrieval**: when someone asks a question, it's turned into a vector with **the same embedding model**. The vector database runs a **similarity search** (such as cosine similarity) and returns the most relevant chunks.
+4. **Augmented generation**: the retrieved chunks are bundled with the original question into one prompt and sent to the LLM, which writes a **grounded** answer based on that context.
 
-Step through the pipeline above with the example café handbook, then press **Generate** to have Claude answer from just the retrieved text. Lower *k* to 1 and ask about something that isn't in the handbook to see how grounding changes the answer.
+Steps 1 and 2 happen once, ahead of time (and again whenever documents change). Steps 3 and 4 happen on every question.
 
-The demo uses simple word-count vectors so you can see every number. Production systems use learned embeddings and a **vector database** (such as Chroma, pgvector or FAISS) to search millions of chunks quickly.`,
-  terms: [["Retrieval", "Finding the chunks most similar to the question."], ["Top-k", "How many chunks go into the prompt."], ["Grounding", "Making the model answer from the given sources."], ["Hallucination", "A fluent answer that isn't supported by facts."]],
-  check: "A RAG bot gives a wrong answer even though the fact is in your documents. Name two places in the pipeline where it could have gone wrong.",
+Press **Generate** at step 4 to have Claude answer from only the retrieved chunks. Then ask "Who founded the cafe?", which isn't in the handbook, and see a grounded model say it doesn't know instead of hallucinating.
+
+The demo's "embedding model" just counts words so you can see every number. Real systems use a learned embedding model and a vector database such as ChromaDB, Pinecone, Weaviate, Qdrant or pgvector.
+
+The division of labour: the **vector database** handles fast, scalable retrieval by meaning, and the **LLM** reads what was found and writes the final answer. Frameworks like **LangChain** and **LlamaIndex** package these four steps (document loaders for PDFs, SQL and APIs; splitters; embedding models; vector-store connectors) so you can assemble a pipeline in a few lines. Building it by hand first, as you do in the exercise, shows you what those frameworks are doing for you.`,
+  terms: [["Ingestion", "Loading and chunking source documents."], ["Embedding model", "Turns text into vectors; the same one is used for chunks and questions."], ["Retrieval", "Similarity search for the chunks closest to the question."], ["Grounding", "Answering from the retrieved context, not memory."]],
+  check: "Why must the question be embedded with the same embedding model as the chunks? What would go wrong if it weren't?",
   ex: {
-    file: "rag.py", uses: ["vectors", "tokens"],
-    task: `Build the retrieval half of a RAG system. \`tokenize()\` and \`cosine()\` from earlier lessons are loaded. Turn texts into word-count vectors, rank documents against the question, and build the prompt you'd send to the LLM.`,
-    starter: py`# tokenize() and cosine() from earlier lessons are loaded for you.
+    file: "rag.py", uses: ["vectors", "tokens", "vector-db"],
+    task: `Build all four RAG steps on top of the vector database you wrote. \`tokenize()\`, \`cosine()\` and your \`VectorStore\` class are loaded. A simple word-count "embedding model" is provided.`,
+    starter: py`# tokenize(), cosine() and VectorStore from earlier lessons are loaded.
 docs = [
     "Returns are accepted within 30 days with a receipt.",
     "Our cafe opens at 7am on weekdays and 8am on weekends.",
@@ -757,32 +949,43 @@ docs = [
     "Clean the grinder weekly with a dry brush.",
 ]
 
-def bag_of_words(text, vocab):
-    # Count how often each vocab word appears in tokenize(text).
-    # Return one count per vocab word, in the same order as vocab.
+def embed(text, vocab):
+    # Our toy embedding model: how often each vocab word appears in text.
+    tokens = tokenize(text)
+    return [tokens.count(w) for w in vocab]
+
+def ingest(docs):
+    # Steps 1 + 2: ingestion, embedding and storing.
+    # - vocab = sorted list of every unique token in all docs
+    # - make a VectorStore and add each doc with
+    #     id = its index, vector = embed(doc, vocab), metadata = {"text": doc}
+    # Return (store, vocab).
     pass
 
-def retrieve(query, docs, k=1):
-    # 1. vocab = every unique token in the query and all docs (sorted).
-    # 2. Turn the query and each doc into bag_of_words vectors.
-    # 3. Return the k docs with the highest cosine(), best first.
+def retrieve(question, store, vocab, k=1):
+    # Step 3: query and retrieval.
+    # Embed the question with the SAME vocab, query the store, and
+    # return the matching chunk texts, best first.
+    # If the question vector is all zeros, return [] (nothing matches).
     pass
 
-def build_prompt(query, passages):
-    # Return a prompt string that lists the passages and asks the
-    # model to answer the question using only those passages.
+def build_prompt(question, chunks):
+    # Step 4: augmented generation. Return a prompt with the chunks as
+    # context, the question, and an instruction to answer only from them.
     pass
 
+store, vocab = ingest(docs)
 question = "When does the cafe open on weekends?"
-print(build_prompt(question, retrieve(question, docs, k=1)))
+print(build_prompt(question, retrieve(question, store, vocab)))
 `,
-    tests: py`__check('bag_of_words("the cat the", ["cat", "dog", "the"]) == [1, 0, 2]', lambda: bag_of_words("the cat the", ["cat", "dog", "the"]) == [1, 0, 2])
-__check("finds the opening-hours doc", lambda: retrieve("When does the cafe open on weekends?", docs, 1) == [docs[1]])
-__check("finds the loyalty doc", lambda: retrieve("How many points per dollar spent?", docs, 1) == [docs[2]])
-__check("k=2 returns two different docs", lambda: len(set(retrieve("cafe receipt", docs, 2))) == 2)
-__check("prompt includes the question and the passage", lambda: "weekends?" in build_prompt("When does the cafe open on weekends?", [docs[1]]) and docs[1] in build_prompt("When does the cafe open on weekends?", [docs[1]]))
+    tests: py`__check("ingest stores every doc in a VectorStore", lambda: isinstance(ingest(docs)[0], VectorStore) and len(ingest(docs)[0].items) == 4)
+__check("vocab is sorted and has no duplicates", lambda: (lambda v: v == sorted(set(v)) and "cafe" in v)(ingest(docs)[1]))
+__check("retrieves the opening-hours chunk", lambda: (lambda sv: retrieve("When does the cafe open on weekends?", sv[0], sv[1], 1) == [docs[1]])(ingest(docs)))
+__check("retrieves the loyalty chunk", lambda: (lambda sv: retrieve("How many points per dollar spent?", sv[0], sv[1], 1) == [docs[2]])(ingest(docs)))
+__check("unrelated question returns nothing", lambda: (lambda sv: retrieve("xyz qqq", sv[0], sv[1], 2) == [])(ingest(docs)))
+__check("prompt includes the question and the chunk", lambda: docs[1] in build_prompt("Weekend hours?", [docs[1]]) and "Weekend hours?" in build_prompt("Weekend hours?", [docs[1]]))
 `,
-    hint: "`bag_of_words`: `tokens = tokenize(text)` then `[tokens.count(w) for w in vocab]`. `retrieve`: build `vocab = sorted(set(...))` from all tokens, then `sorted(docs, key=lambda d: cosine(q_vec, bag_of_words(d, vocab)), reverse=True)[:k]`. `build_prompt` is an f-string.",
+    hint: "`ingest`: build `vocab = sorted({t for d in docs for t in tokenize(d)})`, then `store.add(i, embed(d, vocab), {\"text\": d})` for each `i, d` in `enumerate(docs)`. `retrieve`: `q = embed(question, vocab)`; if `sum(q) == 0` return `[]`; get `ids = store.query(q, k)` and map each id back to its text via `store.items`.",
     solution: py`docs = [
     "Returns are accepted within 30 days with a receipt.",
     "Our cafe opens at 7am on weekdays and 8am on weekends.",
@@ -790,32 +993,38 @@ __check("prompt includes the question and the passage", lambda: "weekends?" in b
     "Clean the grinder weekly with a dry brush.",
 ]
 
-def bag_of_words(text, vocab):
+def embed(text, vocab):
     tokens = tokenize(text)
     return [tokens.count(w) for w in vocab]
 
-def retrieve(query, docs, k=1):
-    all_tokens = set(tokenize(query))
-    for d in docs:
-        all_tokens.update(tokenize(d))
-    vocab = sorted(all_tokens)
-    q = bag_of_words(query, vocab)
-    ranked = sorted(docs, key=lambda d: cosine(q, bag_of_words(d, vocab)), reverse=True)
-    return ranked[:k]
+def ingest(docs):
+    vocab = sorted({t for d in docs for t in tokenize(d)})
+    store = VectorStore()
+    for i, d in enumerate(docs):
+        store.add(i, embed(d, vocab), {"text": d})
+    return store, vocab
 
-def build_prompt(query, passages):
-    context = "\n".join(f"[{i + 1}] {p}" for i, p in enumerate(passages))
-    return ("Answer the question using only the passages below. "
+def retrieve(question, store, vocab, k=1):
+    q = embed(question, vocab)
+    if sum(q) == 0:
+        return []
+    texts = {it["id"]: it["metadata"]["text"] for it in store.items}
+    return [texts[i] for i in store.query(q, k)]
+
+def build_prompt(question, chunks):
+    context = "\n".join(f"[{i + 1}] {c}" for i, c in enumerate(chunks))
+    return ("Answer the question using only the context below. "
             "If the answer isn't there, say you don't know.\n\n"
-            f"Passages:\n{context}\n\nQuestion: {query}")
+            f"Context:\n{context}\n\nQuestion: {question}")
 
+store, vocab = ingest(docs)
 question = "When does the cafe open on weekends?"
-print(build_prompt(question, retrieve(question, docs, k=1)))
+print(build_prompt(question, retrieve(question, store, vocab)))
 `
   } },
 
 // ---------------------------------------------------------------- MCP
-{ id: "mcp", track: 3, title: "MCP: hosts, clients and servers", visual: "mcparch",
+{ id: "mcp", track: 4, title: "MCP: hosts, clients and servers", visual: "mcparch",
   lesson: `The **Model Context Protocol (MCP)** is an open standard for connecting AI apps to outside tools and data. Instead of every app writing custom code for every service, a service is wrapped once as an **MCP server**, and any MCP-aware app can plug it in. People often compare it to USB-C for AI.
 
 The pieces, as in the diagram above:
@@ -907,7 +1116,7 @@ print(get_weather("Oslo"))
 `
   } },
 
-{ id: "mcp-calls", track: 3, title: "A tool call, message by message", visual: "mcpflow",
+{ id: "mcp-calls", track: 4, title: "A tool call, message by message", visual: "mcpflow",
   lesson: `MCP messages use **JSON-RPC 2.0**: small JSON objects with a \`method\`, \`params\` and an \`id\` that ties each response to its request. They travel over **stdio** (for a local server) or **HTTP** (for a remote one).
 
 Step through the conversation above. Notice that the model never talks to the server directly:
@@ -1435,7 +1644,8 @@ const VISUALS = {
   },
 
   rag(root) {
-    const card = labCard("Step through a RAG pipeline", "interactive · example café handbook");
+    const card = labCard("The RAG workflow, step by step", "interactive · example café handbook");
+    const SOURCE = "handbook.pdf";
     const DOCS = [
       "Returns are accepted within 30 days with a receipt.",
       "Our cafe opens at 7am on weekdays and 8am on weekends.",
@@ -1446,59 +1656,147 @@ const VISUALS = {
     ];
     const STOP = new Set("a an the is are was were be to of and or in on at for with do does did i my me you your we our it this that how what when where which who can".split(" "));
     const toks = t => (t.toLowerCase().match(/[a-z0-9]+/g) || []).map(w => w.length > 3 && w.endsWith("s") ? w.slice(0, -1) : w).filter(w => !STOP.has(w));
+    const VOCAB = [...new Set(DOCS.flatMap(toks))].sort();
+    const embed = t => { const ts = toks(t); return VOCAB.map(w => ts.filter(x => x === w).length); };
+    const ROWS = DOCS.map((d, i) => ({ id: "chunk-" + (i + 1), text: d, vec: embed(d) }));
+    const chipsOf = v => v.map((n, j) => n ? `<span class="vec-chip">${esc(VOCAB[j])}: ${n}</span>` : "").join("");
     const sel = h("select", { id: "ragQ", "aria-label": "Pick a question" });
     ["When does the cafe open on weekends?", "How do I get a free drink?", "Can I use water to clean the grinder?", "What's the wifi password?", "Do you have oat milk?", "Who founded the cafe?"].forEach(q => sel.append(h("option", {}, esc(q))));
     const custom = h("input", { type: "text", id: "ragCustom", placeholder: "…or type your own question", "aria-label": "Your own question" });
     const kIn = h("input", { type: "range", min: "1", max: "3", step: "1", value: "2", id: "ragK" });
     const kv = h("span", { class: "readout" }, "2");
-    const kl = h("label", { for: "ragK" }, "Top-k "); kl.append(kIn, kv);
+    const kl = h("label", { for: "ragK" }, "Chunks to retrieve (k) "); kl.append(kIn, kv);
+    const STAGES = [["1 · Ingestion & chunking", "documents → chunks"], ["2 · Embedding & storing", "chunks → vector DB"], ["3 · Query & retrieval", "similarity search"], ["4 · Augmented generation", "grounded answer"]];
     const stagesEl = h("div", { class: "pipeline" });
-    const STAGES = [["1 · Embed", "the question"], ["2 · Score", "every chunk"], ["3 · Retrieve", "the top k"], ["4 · Augment", "the prompt"], ["5 · Generate", "an answer"]];
     let stage = 0;
     STAGES.forEach(([a, b], i) => stagesEl.append(h("button", { class: "stage", onclick: () => { stage = i; draw(); } }, `<b>${a}</b>${b}`)));
+    const when = h("p", { class: "readout", style: "margin:0" });
     const view = h("div", { class: "prim" });
     const nav = h("div", { class: "row" });
     const prev = h("button", { class: "btn small", onclick: () => { stage = Math.max(0, stage - 1); draw(); } }, "← Back");
-    const next = h("button", { class: "btn primary small", onclick: () => { stage = Math.min(4, stage + 1); draw(); } }, "Next step →");
+    const next = h("button", { class: "btn primary small", onclick: () => { stage = Math.min(3, stage + 1); draw(); } }, "Next step →");
     nav.append(prev, next);
     const q = () => custom.value.trim() || sel.value;
-    function compute() {
-      const vocab = [...new Set([...toks(q()), ...DOCS.flatMap(toks)])].sort();
-      const bow = t => { const ts = toks(t); return vocab.map(w => ts.filter(x => x === w).length); };
-      const qv = bow(q());
-      const scores = DOCS.map((d, i) => ({ i, d, s: vcos(qv, bow(d)) })).sort((a, b) => b.s - a.s);
-      const k = +kIn.value, top = scores.slice(0, k);
-      const prompt = `Answer the question using only the passages below. If the answer isn't there, say you don't know.\n\nPassages:\n${top.map((t, j) => `[${j + 1}] ${t.d}`).join("\n")}\n\nQuestion: ${q()}`;
-      return { qt: toks(q()), scores, top, prompt };
-    }
     let lastPrompt = "";
     function draw() {
       [...stagesEl.children].forEach((c, i) => c.classList.toggle("on", i === stage));
-      const r = compute(); lastPrompt = r.prompt;
-      prev.disabled = stage === 0; next.disabled = stage === 4;
-      if (stage === 0) view.innerHTML = `<p style="margin:0">The question becomes a vector. Here each dimension counts a meaningful word (filler words like "the" are dropped):</p><div class="vec-chips">${r.qt.map(t => `<span class="vec-chip">${esc(t)}: 1</span>`).join("") || '<span class="muted">No meaningful words yet.</span>'}</div><p class="muted" style="margin:0;font-size:.86rem">A real system calls an embedding model here and gets back hundreds of floats.</p>`;
-      if (stage === 1 || stage === 2) view.innerHTML = `<p style="margin:0">${stage === 1 ? "Every chunk is scored by cosine similarity with the question:" : `The top ${r.top.length} chunk${r.top.length > 1 ? "s are" : " is"} kept (green). Everything else is ignored.`}</p><div class="bars">` +
-        r.scores.map((x, j) => `<div class="bar${stage === 2 && j < r.top.length ? " hit" : ""}" style="${stage === 2 && j >= r.top.length ? "opacity:.4" : ""}"><span class="lbl" title="${esc(x.d)}">doc ${x.i + 1}</span><div class="track-b"><div class="fill" style="width:${(x.s * 100).toFixed(1)}%"></div></div><span class="pct">${x.s.toFixed(2)}</span></div>`).join("") +
-        `</div><div class="chunks">${r.scores.slice(0, stage === 2 ? r.top.length : 6).map(x => `<div class="chunk"><b>doc ${x.i + 1}</b>${esc(x.d)}</div>`).join("")}</div>`;
-      if (stage === 3) view.innerHTML = `<p style="margin:0">The retrieved chunks are pasted into the prompt, with an instruction to stick to them:</p><pre class="block">${esc(r.prompt)}</pre>`;
-      if (stage === 4) {
-        view.innerHTML = `<p style="margin:0">Send the augmented prompt to Claude. It only sees the ${r.top.length} retrieved chunk${r.top.length > 1 ? "s" : ""}.</p>`;
-        const box = h("div", { class: "answer-box prose" }, `<p class="muted">Press Generate to get an answer.</p>`);
+      prev.disabled = stage === 0; next.disabled = stage === 3;
+      when.textContent = stage < 2 ? "Done once, ahead of time (and again when documents change)" : "Done for every question";
+      const qv = embed(q()), qt = toks(q()), ignored = qt.filter(w => !VOCAB.includes(w));
+      const scored = ROWS.map(r => ({ ...r, s: qv.some(Boolean) ? vcos(qv, r.vec) : 0 })).sort((x, y) => y.s - x.s);
+      const k = +kIn.value, top = scored.filter(r => r.s > 0).slice(0, k);
+      lastPrompt = `Answer the question using only the context below. If the answer isn't there, say you don't know.\n\nContext:\n${top.map((t, j) => `[${j + 1}] ${t.text}`).join("\n") || "(no relevant chunks found)"}\n\nQuestion: ${q()}`;
+      if (stage === 0) view.innerHTML = `<p style="margin:0">The source document <b>${SOURCE}</b> is loaded and split into small chunks, one idea each:</p>
+        <pre class="block" style="white-space:pre-wrap">${esc(DOCS.join(" "))}</pre><p style="margin:0;text-align:center" class="muted">↓ split into ${DOCS.length} chunks</p>
+        <div class="chunks">${ROWS.map(r => `<div class="chunk"><b>${r.id}</b>${esc(r.text)}</div>`).join("")}</div>`;
+      if (stage === 1) view.innerHTML = `<p style="margin:0">The embedding model turns each chunk into a vector, and each one is saved in the <b>vector database</b> with its text. Here the toy model counts words, so each vector has ${VOCAB.length} dimensions (one per word) and only the non-zero ones are shown.</p>
+        <div class="chunks">${ROWS.map(r => `<div class="chunk"><b>${r.id} · vector</b><div class="vec-chips" style="margin:4px 0">${chipsOf(r.vec)}</div><span class="muted" style="font-size:.84rem">text: ${esc(r.text)}</span></div>`).join("")}</div>`;
+      if (stage === 2) view.innerHTML = `<p style="margin:0">The question is embedded with <b>the same model</b>:</p><div class="vec-chips">${chipsOf(qv) || '<span class="muted">No known words, so the vector is all zeros.</span>'}</div>
+        ${ignored.length ? `<p class="muted" style="margin:0;font-size:.84rem">Not in the model's vocabulary, so ignored: ${ignored.map(esc).join(", ")}</p>` : ""}
+        <p style="margin:0">The vector database scores every stored vector by cosine similarity and returns the top ${k}:</p><div class="bars">` +
+        scored.map(r => { const hit = top.includes(r); return `<div class="bar${hit ? " hit" : ""}" style="${hit ? "" : "opacity:.45"}"><span class="lbl" title="${esc(r.text)}">${r.id}</span><div class="track-b"><div class="fill" style="width:${(r.s * 100).toFixed(1)}%"></div></div><span class="pct">${r.s.toFixed(2)}</span></div>`; }).join("") +
+        `</div><div class="chunks">${top.map(r => `<div class="chunk" style="border-left:4px solid var(--ok)"><b>retrieved · ${r.id}</b>${esc(r.text)}</div>`).join("") || '<p class="muted" style="margin:0">Nothing scored above 0, so nothing is retrieved.</p>'}</div>`;
+      if (stage === 3) {
+        view.innerHTML = `<p style="margin:0">The retrieved chunks are bundled with the original question and sent to the LLM:</p><pre class="block" style="white-space:pre-wrap">${esc(lastPrompt)}</pre>`;
+        const box = h("div", { class: "answer-box prose" }, `<p class="muted">Press Generate to get a grounded answer from Claude.</p>`);
         const gen = h("button", { class: "btn primary small" }, "Generate");
         gen.onclick = async () => { gen.disabled = true; await streamInto(box, lastPrompt, { modelTier: "quick" }); gen.disabled = false; };
-        view.append(h("div", { class: "row" }), box); view.querySelector(".row").append(gen);
-        view.append(h("p", { class: "muted", style: "margin:0;font-size:.86rem" }, `Try "Who founded the cafe?". The answer isn't in the handbook, so a grounded model should say it doesn't know.`));
+        const r = h("div", { class: "row" }); r.append(gen); view.append(r, box);
+        view.append(h("p", { class: "muted", style: "margin:0;font-size:.86rem" }, `Try "Who founded the cafe?". It isn't in the handbook, so a grounded answer should say it doesn't know.`));
       }
     }
-    sel.onchange = () => { custom.value = ""; stage = 0; draw(); };
-    custom.oninput = () => { if (stage === 4) stage = 0; draw(); };
+    sel.onchange = () => { custom.value = ""; if (stage < 2) stage = 2; draw(); };
+    custom.oninput = () => { if (stage < 2) stage = 2; draw(); };
     kIn.oninput = () => { kv.textContent = kIn.value; draw(); };
+    const controls = h("div", { class: "prim" }); controls.append(sel, custom, kl);
+    card.append(controls, stagesEl, when, view, nav); root.append(card); draw();
+  },
+
+  vectordb(root) {
+    const card = labCard("Search a vector database", "interactive · tap to place a query");
+    const P = (n, deg, r, cat) => [n, r * Math.cos(deg * Math.PI / 180), r * Math.sin(deg * Math.PI / 180), cat];
+    const ITEMS = [
+      P("cat food tips", 72, 3.5, "pets"), P("dog walking routes", 100, 2.3, "pets"), P("puppy training", 128, 3.4, "pets"), P("vet visit checklist", 88, 3.6, "pets"),
+      P("pasta recipe", 200, 3.1, "food"), P("coffee brewing guide", 215, 2.4, "food"), P("sourdough baking", 228, 3.4, "food"), P("salad ideas", 190, 2.2, "food"),
+      P("bus timetable", 320, 3.0, "transport"), P("bike repair", 335, 2.5, "transport"), P("train tickets", 308, 3.5, "transport"), P("car insurance", 272, 2.9, "transport")
+    ];
+    const COL = { pets: "var(--c1)", food: "var(--c2)", transport: "var(--c3)" };
+    let qv = [-1.2, 1.4];
+    const svg = s("svg", { viewBox: "-4.2 -4.2 8.4 8.4", role: "img", "aria-label": "Stored vectors; tap to move the query" });
+    svg.append(s("line", { x1: -4.2, y1: 0, x2: 4.2, y2: 0, style: "stroke:var(--line)", "stroke-width": 0.03 }), s("line", { x1: 0, y1: -4.2, x2: 0, y2: 4.2, style: "stroke:var(--line)", "stroke-width": 0.03 }));
+    const layer = s("g"), pts = s("g"); svg.append(layer, pts);
+    const kIn = h("input", { type: "range", min: "1", max: "5", step: "1", value: "3", id: "vdbK" });
+    const kv = h("span", { class: "readout" }, "3");
+    const kl = h("label", { for: "vdbK" }, "Top-k "); kl.append(kIn, kv);
+    const filt = h("select", { id: "vdbFilter", "aria-label": "Metadata filter" });
+    [["", "No filter (search everything)"], ["pets", 'where topic = "pets"'], ["food", 'where topic = "food"'], ["transport", 'where topic = "transport"']].forEach(([v, t]) => filt.append(h("option", { value: v }, esc(t))));
+    const out = h("div", { class: "prim" });
+    const legend = h("div", { class: "row", style: "font-size:.82rem" }, Object.keys(COL).map(c => `<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${COL[c]};margin-right:4px"></span>${c}</span>`).join(""));
+    svg.addEventListener("pointerdown", e => { const p = svgPoint(svg, e); qv = [p.x, -p.y]; if (Math.hypot(...qv) < 0.2) qv = [0.3, 0.3]; draw(); });
+    function draw() {
+      const k = +kIn.value, f = filt.value;
+      const cand = ITEMS.filter(it => !f || it[3] === f);
+      const ranked = cand.map(it => [it, vcos(qv, [it[1], it[2]])]).sort((a, b) => b[1] - a[1]), top = ranked.slice(0, k);
+      layer.innerHTML = ""; pts.innerHTML = "";
+      layer.append(s("line", { x1: 0, y1: 0, x2: qv[0], y2: -qv[1], style: "stroke:var(--ink)", "stroke-width": 0.05, "stroke-dasharray": "0.12 0.08" }));
+      top.forEach(([it]) => layer.append(s("line", { x1: qv[0], y1: -qv[1], x2: it[1], y2: -it[2], style: "stroke:var(--accent)", "stroke-width": 0.06 })));
+      ITEMS.forEach(it => {
+        const on = !f || it[3] === f, hit = top.some(([t]) => t === it);
+        pts.append(s("circle", { cx: it[1], cy: -it[2], r: hit ? 0.2 : 0.13, style: `fill:${COL[it[3]]}`, opacity: on ? 1 : 0.2 }));
+        const t = s("text", { x: it[1] + 0.2, y: -it[2] + 0.1, "font-size": 0.27, style: `fill:var(--${hit ? "ink" : "muted"});font-family:var(--font-body);font-weight:${hit ? 600 : 400}`, opacity: on ? 1 : 0.3 }); t.textContent = it[0]; pts.append(t);
+      });
+      pts.append(s("rect", { x: qv[0] - 0.18, y: -qv[1] - 0.18, width: 0.36, height: 0.36, rx: 0.06, style: "fill:var(--ink)" }));
+      const ql = s("text", { x: qv[0] + 0.25, y: -qv[1] - 0.2, "font-size": 0.3, style: "fill:var(--ink);font-family:var(--font-mono);font-weight:600" }); ql.textContent = "query"; pts.append(ql);
+      out.innerHTML = `<p style="margin:0"><b>Results</b> for the query vector [${qv.map(v => v.toFixed(1)).join(", ")}]${f ? ` with filter topic = "${f}"` : ""}:</p><div class="bars">` +
+        top.map(([it, c], i) => `<div class="bar hit"><span class="lbl" title="${esc(it[0])}">${i + 1}. ${esc(it[0])}</span><div class="track-b"><div class="fill" style="width:${Math.max(0, c) * 100}%"></div></div><span class="pct">${c.toFixed(2)}</span></div>`).join("") +
+        `</div><p class="readout" style="margin:0">Compared ${cand.length} of ${ITEMS.length} vectors (brute force${f ? ", after the filter" : ""}). With millions of rows, an ANN index like HNSW checks only a small fraction.</p>`;
+    }
+    kIn.oninput = () => { kv.textContent = kIn.value; draw(); };
+    filt.onchange = draw;
     const grid = h("div", { class: "lab-grid" });
-    const left = h("div", { class: "prim" }); left.append(sel, custom, kl);
-    const docsEl = h("div", { class: "chunks" }, DOCS.map((d, i) => `<div class="chunk"><b>doc ${i + 1}</b>${esc(d)}</div>`).join(""));
-    const right = h("div", { class: "prim" }, `<span class="readout">The handbook (6 chunks)</span>`); right.append(docsEl);
-    grid.append(left, right);
-    card.append(grid, stagesEl, view, nav); root.append(card); draw();
+    const side = h("div", { class: "prim" }); side.append(kl, filt, legend, out);
+    grid.append(svg, side); card.append(grid); root.append(card); draw();
+  },
+
+  bigpicture(root) {
+    const card = labCard("One question, two setups", "interactive · tap any box");
+    const Q = "When does our café open on Saturday, and do I need an umbrella there today?";
+    const NODES = [
+      { id: "q", name: "Your question", lesson: null, info: "Everything starts with a question in plain language." },
+      { id: "emb", name: "Embedding model", lesson: "embeddings", rag: true, info: "Turns the question into a vector, using the same model that embedded your documents." },
+      { id: "vdb", name: "Vector database", lesson: "vector-db", rag: true, info: "Stores your document chunks as vectors and returns the ones most similar to the question (ChromaDB, Pinecone, Weaviate, Qdrant, pgvector…)." },
+      { id: "ctx", name: "Retrieved chunks", lesson: "rag", rag: true, info: "The most relevant passages, e.g. \"Our café opens at 8am on weekends.\" They're added to the prompt as context: that's the RAG workflow." },
+      { id: "llm", name: "LLM", lesson: "next-token", info: "The brain: reads the prompt and writes the answer one token at a time. On its own it has a training cutoff, no private data, and can hallucinate." },
+      { id: "mcp", name: "MCP tools", lesson: "mcp", mcp: true, info: "Live actions the LLM can request through MCP, e.g. get_weather(\"Lisbon\") for today's forecast." },
+      { id: "a", name: "Answer", lesson: null, info: "What you get back." }
+    ];
+    let full = true, selId = "vdb";
+    const seg = h("div", { class: "seg" });
+    const b1 = h("button", { onclick: () => { full = false; draw(); } }, "LLM alone"), b2 = h("button", { onclick: () => { full = true; draw(); } }, "LLM + vector DB + RAG + MCP");
+    seg.append(b1, b2);
+    const qEl = h("p", { style: "margin:0" }, `<span class="readout">question</span><br><b>${esc(Q)}</b>`);
+    const flow = h("div", { class: "pipeline", style: "align-items:stretch" });
+    const ans = h("div", { class: "answer-box" });
+    const detail = h("div", { class: "detail" });
+    function draw() {
+      b1.setAttribute("aria-pressed", String(!full)); b2.setAttribute("aria-pressed", String(full));
+      flow.innerHTML = "";
+      NODES.forEach((n, i) => {
+        const off = !full && (n.rag || n.mcp);
+        const b = h("button", { class: "stage" + (n.id === selId ? " on" : "") }, `<b>${n.mcp ? "side tool" : "step " + (i < 5 ? i + 1 : i)}</b>${esc(n.name)}`);
+        b.style.opacity = off ? 0.3 : 1;
+        if (n.mcp) b.style.borderStyle = "dashed";
+        b.onclick = () => { selId = n.id; draw(); };
+        flow.append(b);
+      });
+      const n = NODES.find(x => x.id === selId);
+      detail.innerHTML = `<b>${esc(n.name)}</b><br>${esc(n.info)}${!full && (n.rag || n.mcp) ? `<br><i class="muted">Skipped in the "LLM alone" setup.</i>` : ""}`;
+      if (n.lesson) { const t = TOPICS.find(x => x.id === n.lesson); const go = h("button", { class: "btn small", style: "margin-top:8px", onclick: () => { selectTopic(t.id); setTab("learn"); } }, `Go to lesson: ${esc(t.title)} →`); detail.append(h("br"), go); }
+      ans.innerHTML = full
+        ? `<span class="readout" style="color:var(--ok)">grounded answer</span><p style="margin:4px 0 0">"We open at <b>8am on weekends</b> (from your handbook, chunk 2). The weather tool says Lisbon is <b>21 °C and sunny</b> today, so no umbrella needed."</p>`
+        : `<span class="readout" style="color:var(--bad)">LLM alone</span><p style="margin:4px 0 0">"Most cafés open around <b>9am</b> on Saturdays, and it's probably fine to skip the umbrella!"</p><p class="muted" style="margin:6px 0 0;font-size:.86rem">A confident guess: it has never seen your handbook (no private data), can't check today's weather (training cutoff), and states both as fact (hallucination).</p>`;
+    }
+    card.append(seg, qEl, flow, detail, ans); root.append(card); draw();
   },
 
   mcparch(root) {
@@ -1761,7 +2059,7 @@ function greeting() {
   const t = topic(), idx = TOPICS.indexOf(t), p = prog[t.id] || {};
   const first = t.lesson.replace(/\*\*/g, "").split(/(?<=[.!?])\s/)[0];
   const status = learned(t.id) ? "You've already completed this one. Want to go deeper?" : p.code ? "Your code already passes. A quiz will finish the lesson." : "";
-  const el = h("div", { class: "msg tutor" }, BOT_TAG + `<div class="prose"><p>${idx === 0 && !Object.keys(prog).length ? "Hi! I'm <b>Gradient</b>, your AI tutor. We'll learn vectors, LLMs, RAG and MCP together by playing with visuals and writing Python. " : ""}Lesson ${idx + 1}: <b>${esc(t.title)}</b>.</p><p>${inline(first)}</p>${status ? `<p>${esc(status)}</p>` : ""}<p>How do you want to start?</p></div>`);
+  const el = h("div", { class: "msg tutor" }, BOT_TAG + `<div class="prose"><p>${idx === 0 && !Object.keys(prog).length ? "Hi! I'm <b>Gradient</b>, your AI tutor. We'll learn LLMs, vector databases, RAG and MCP together by playing with visuals and writing Python. " : ""}Lesson ${idx + 1}: <b>${esc(t.title)}</b>.</p><p>${inline(first)}</p>${status ? `<p>${esc(status)}</p>` : ""}<p>How do you want to start?</p></div>`);
   const acts = h("div", { class: "greet-actions" });
   acts.append(
     h("button", { class: "btn primary small", onclick: () => send(TEACH) }, "Teach me step by step"),
@@ -1780,7 +2078,7 @@ function renderChat() {
 }
 function rules() {
   const t = topic();
-  return `You are Gradient, a warm, patient tutor teaching AI concepts (vectors, embeddings, LLMs, RAG and MCP) with Python. You're tutoring one student through a hands-on course where each lesson has an interactive visual and a Python exercise.
+  return `You are Gradient, a warm, patient tutor teaching how LLMs, vector databases, RAG and MCP fit together, with Python. You're tutoring one student through a hands-on course where each lesson has an interactive visual and a Python exercise.
 
 Current lesson: "${t.title}".
 Lesson notes the student has read:

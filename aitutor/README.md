@@ -6,12 +6,16 @@ A single-page tutor for learning AI concepts with interactive visuals and Python
 
 ## What it covers
 
-| Track   | Lessons |
-|---------|---------|
-| Vectors | Vectors and cosine similarity · Embeddings |
-| LLMs    | Tokens · Next-token prediction and temperature · Attention |
-| RAG     | Chunking · Retrieve, augment, generate |
-| MCP     | Hosts, clients and servers · A tool call, message by message |
+| Track            | Lessons |
+|------------------|---------|
+| Start here       | How the pieces fit together (LLM + vector DB + RAG + MCP) |
+| LLMs             | Tokens · Next-token prediction and temperature · Attention |
+| Vector databases | Similarity search (cosine) · Embeddings · Vector databases (Chroma, Pinecone, Weaviate, Qdrant, pgvector) |
+| RAG              | Step 1: ingestion and chunking · The RAG workflow end to end (ingest → embed & store → query & retrieve → augmented generation) |
+| MCP              | Hosts, clients and servers · A tool call, message by message |
+
+The Python exercises build on each other: the `cosine()` you write powers your
+`VectorStore`, which powers your RAG pipeline.
 
 Each lesson has:
 
