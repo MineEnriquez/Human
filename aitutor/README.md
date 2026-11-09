@@ -10,12 +10,36 @@ A single-page tutor for learning AI concepts with interactive visuals and Python
 |------------------|---------|
 | Start here       | How the pieces fit together (LLM + vector DB + RAG + MCP) |
 | LLMs             | Tokens · Next-token prediction and temperature · Attention |
-| Vector databases | Similarity search (cosine) · Embeddings · Vector databases (Chroma, Pinecone, Weaviate, Qdrant, pgvector) |
-| RAG              | Step 1: ingestion and chunking · The RAG workflow end to end (ingest → embed & store → query & retrieve → augmented generation) |
+| Vector math      | Vectors and cosine similarity · Embeddings |
+| Vector databases | Storing records · Searching (top-k, metadata filters, ANN indexes) |
+| RAG              | Step 1: ingestion and chunking · The RAG workflow end to end |
 | MCP              | Hosts, clients and servers · A tool call, message by message |
 
-The Python exercises build on each other: the `cosine()` you write powers your
-`VectorStore`, which powers your RAG pipeline.
+## Terminology: vector math vs vector databases
+
+"Vector" means two different things in this course. Learners and anyone
+developing this tutor should keep them apart the same way:
+
+| | Vector math (`domain: "math"`) | Vector databases (`domain: "db"`) |
+|---|---|---|
+| What it is | Maths: a vector is an ordered list of numbers | Software: a database system that stores and searches vectors |
+| Key terms | vector, dot product, norm, cosine similarity, embedding, dimensions | collection, record (id + vector + metadata), add/upsert/get/delete, query, top-k, metadata filter, ANN index |
+| Examples | `[3, 4]`, `cosine(a, b)` | ChromaDB, Pinecone, Weaviate, Qdrant, pgvector |
+| Lesson ids | `vector-math`, `embeddings` | `vector-db-store`, `vector-db-search` |
+| Visuals | `vectorMath`, `embeddingMap` | `vectorDbRecords`, `vectorDbSearch` |
+| JS helpers | `mathDot`, `mathNorm`, `mathCosine` | (database visuals call the math helpers) |
+| Python | `dot`, `norm`, `cosine` | `class VectorStore`, `class SearchableStore(VectorStore)` |
+
+Rules:
+
+- Say **vector** only for the list of numbers. Say **vector database** (or vector DB) for the system, never just "vectors".
+- Vector-math lessons never mention storage. Database lessons may *use* vector math (cosine ranking) and say so.
+- Every lesson in those two tracks shows a banner naming its domain, and its glossary cards carry a `math` or `database` tag.
+- The tutor bot is instructed to follow the same rules.
+- The same conventions are documented in a `TERMINOLOGY` comment at the top of the script in `index.html`.
+
+The Python exercises build on each other: `cosine()` (vector math) is used
+by `SearchableStore.query()` (vector database), which powers the RAG pipeline.
 
 Each lesson has:
 
