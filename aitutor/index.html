@@ -1,0 +1,1922 @@
+<title>Gradient Tutor</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: lab-notebook graph paper. A topic rail (sidebar on desktop, swipe strip on phone) beside one lesson sheet:
+   Learn (interactive visual + notes) -> Code (run Python, iterate until tests pass) -> Ask (tutor) -> Quiz. */
+:root {
+  --paper: #f4f6fa;
+  --sheet: #ffffff;
+  --ink: #15213b;
+  --muted: #5b6579;
+  --line: #dce2ec;
+  --grid: rgba(21, 33, 59, 0.055);
+  --accent: #2a4bd6;
+  --accent-soft: #e6ebfc;
+  --on-accent: #ffffff;
+  --mark: #ffe38c;
+  --ok: #1b8256;
+  --ok-soft: #e1f3ea;
+  --bad: #bf3f2b;
+  --bad-soft: #fbe7e3;
+  --c1: #2a4bd6; --c2: #c2410c; --c3: #0f8a6a; --c4: #9333ea; --c5: #b45309;
+  --t1: #dfe7ff; --t2: #ffe4d1; --t3: #d6f3e8; --t4: #efdffd; --t5: #fdf0c9;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0e1420; --sheet: #151d2d; --ink: #e5eaf4; --muted: #98a2b7; --line: #26314a;
+    --grid: rgba(229, 234, 244, 0.045); --accent: #8aa3ff; --accent-soft: #1f2a48; --on-accent: #0e1420;
+    --mark: #5b4a14; --ok: #4fc58d; --ok-soft: #15301f; --bad: #f2806a; --bad-soft: #3a1c17;
+    --c1: #8aa3ff; --c2: #fb923c; --c3: #34d3a6; --c4: #c084fc; --c5: #fbbf24;
+    --t1: #243256; --t2: #4a2a17; --t3: #143a2e; --t4: #36214d; --t5: #44370f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0e1420; --sheet: #151d2d; --ink: #e5eaf4; --muted: #98a2b7; --line: #26314a;
+  --grid: rgba(229, 234, 244, 0.045); --accent: #8aa3ff; --accent-soft: #1f2a48; --on-accent: #0e1420;
+  --mark: #5b4a14; --ok: #4fc58d; --ok-soft: #15301f; --bad: #f2806a; --bad-soft: #3a1c17;
+  --c1: #8aa3ff; --c2: #fb923c; --c3: #34d3a6; --c4: #c084fc; --c5: #fbbf24;
+  --t1: #243256; --t2: #4a2a17; --t3: #143a2e; --t4: #36214d; --t5: #44370f;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background-color: var(--paper);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--ink);
+  font: 400 16px/1.6 var(--font-body);
+}
+button, input, textarea, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+.wrap {
+  max-width: 1160px; margin: 0 auto;
+  padding-block: 20px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 20px;
+}
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; }
+.logo { width: 34px; height: 34px; flex: none; }
+.brand h1 { font: 700 1.5rem/1 var(--font-display); margin: 0; letter-spacing: -0.01em; }
+.brand p { margin: 2px 0 0; color: var(--muted); font-size: 0.82rem; }
+.meter { display: flex; align-items: center; gap: 10px; font: 500 0.8rem var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.meter-bar { width: 120px; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.meter-bar span { display: block; height: 100%; background: var(--accent); width: 0; transition: width .4s ease; }
+
+.shell { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 24px; align-items: start; }
+.rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); display: flex; flex-direction: column; gap: 16px; }
+.track h2 { font: 500 0.7rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin: 0 0 4px 10px; }
+.track ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.topic-btn { width: 100%; display: flex; align-items: center; gap: 10px; text-align: left; background: none; border: 0; padding: 7px 10px; border-radius: 8px; cursor: pointer; font-size: 0.92rem; }
+.topic-btn:hover { background: var(--accent-soft); }
+.topic-btn[aria-current="true"] { background: var(--sheet); box-shadow: 0 0 0 1px var(--line); font-weight: 600; }
+.dot { width: 18px; height: 18px; flex: none; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; font-size: 11px; color: var(--on-accent); background: var(--sheet); }
+.partial .dot { border-color: var(--accent); background: linear-gradient(90deg, var(--accent) 50%, var(--sheet) 50%); }
+.done .dot { background: var(--ok); border-color: var(--ok); }
+.done .dot::after { content: "✓"; line-height: 1; }
+
+.sheet { background: var(--sheet); border: 1px solid var(--line); border-radius: 14px; min-width: 0; overflow: hidden; }
+.sheet-head { padding: 24px 28px 0; display: flex; flex-direction: column; gap: 6px; }
+.eyebrow { font: 500 0.72rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); }
+.sheet-head h2 { font: 700 clamp(1.6rem, 4vw, 2.2rem)/1.1 var(--font-display); margin: 0; letter-spacing: -0.015em; text-wrap: balance; }
+.steps { display: flex; gap: 8px; flex-wrap: wrap; font-size: 0.82rem; color: var(--muted); align-items: center; }
+.pill { border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; font: 500 0.76rem var(--font-mono); }
+.pill.on { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+.tabs { display: flex; gap: 4px; padding: 14px 28px 0; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.tab { background: none; border: 0; padding: 10px 12px; cursor: pointer; font-weight: 500; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.panel { padding: 24px 28px 28px; }
+
+.prose { max-width: 68ch; display: flex; flex-direction: column; gap: 12px; }
+.prose p, .prose ul, .prose ol { margin: 0; }
+.prose ul, .prose ol { padding-left: 1.3em; display: flex; flex-direction: column; gap: 4px; }
+.prose h4 { font: 700 1.05rem var(--font-display); margin: 6px 0 0; }
+.prose strong { background: linear-gradient(transparent 58%, var(--mark) 58%); color: inherit; padding: 0 1px; }
+.prose code, .inline-code { font: 0.88em var(--font-mono); background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+.prose pre, pre.block { margin: 0; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; font: 0.84rem/1.55 var(--font-mono); }
+.prose pre code { background: none; padding: 0; font-size: inherit; }
+.formula { font: 500 1rem var(--font-mono); background: var(--paper); border: 1px dashed var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; white-space: nowrap; }
+.notes { margin-top: 24px; }
+.terms { margin-top: 22px; display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.term { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.term dt { font: 600 0.9rem var(--font-body); }
+.term dd { margin: 2px 0 0; color: var(--muted); font-size: 0.86rem; line-height: 1.45; }
+.check { margin-top: 22px; padding: 14px 16px; border-radius: 10px; background: var(--accent-soft); }
+.check b { font: 500 0.7rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); display: block; margin-bottom: 2px; }
+.check p { margin: 0; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.btn { border: 1px solid var(--line); background: var(--sheet); border-radius: 999px; padding: 8px 16px; cursor: pointer; font-weight: 500; font-size: 0.9rem; }
+.btn:hover:not(:disabled) { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.small { padding: 5px 12px; font-size: 0.84rem; }
+.btn:disabled { opacity: .5; cursor: default; }
+.actions { margin-top: 22px; }
+.muted { color: var(--muted); }
+.readout { font: 500 0.82rem var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* Visual labs */
+.lab { border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: var(--sheet); }
+.lab-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.lab-head h3 { margin: 0; font: 700 1.05rem var(--font-display); }
+.lab-head span { font: 500 0.7rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.lab svg { width: 100%; height: auto; display: block; background: var(--paper); border-radius: 8px; touch-action: none; user-select: none; }
+.lab-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.lab label { font-size: 0.86rem; color: var(--muted); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lab input[type=range] { width: 150px; accent-color: var(--accent); }
+.lab input[type=text], .lab select { border: 1px solid var(--line); background: var(--paper); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0; }
+.stats { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font: 0.86rem var(--font-mono); font-variant-numeric: tabular-nums; margin: 0; }
+.stats dt { color: var(--muted); }
+.stats dd { margin: 0; }
+.verdict { font: 700 1.1rem var(--font-display); }
+.tok-out { display: flex; flex-wrap: wrap; gap: 3px; font: 0.95rem/1.9 var(--font-mono); }
+.tok { border-radius: 4px; padding: 0 3px; white-space: pre; }
+.tok small { display: block; font-size: 0.62rem; line-height: 1.1; color: var(--muted); text-align: center; }
+.tok-ids { font: 0.8rem var(--font-mono); color: var(--muted); overflow-wrap: anywhere; }
+.bars { display: flex; flex-direction: column; gap: 6px; }
+.bar { display: grid; grid-template-columns: 90px minmax(0, 1fr) 52px; gap: 8px; align-items: center; font-size: 0.88rem; }
+.bar .track-b { height: 14px; background: var(--paper); border-radius: 4px; overflow: hidden; border: 1px solid var(--line); }
+.bar .fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width .25s ease; }
+.bar .lbl { font-family: var(--font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar .pct { font: 0.8rem var(--font-mono); color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.bar.hit .fill { background: var(--ok); }
+.sentence { font: 600 1.15rem/1.5 var(--font-display); padding: 10px 12px; background: var(--paper); border-radius: 8px; min-height: 48px; }
+.sentence .new { color: var(--accent); }
+.words { display: flex; flex-wrap: wrap; gap: 6px; }
+.word { border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px 4px; cursor: pointer; text-align: center; background: var(--sheet); font-weight: 500; min-width: 44px; }
+.word small { display: block; font: 0.7rem var(--font-mono); color: var(--muted); }
+.word.sel { outline: 2px solid var(--ink); outline-offset: 1px; }
+.chunks { display: flex; flex-direction: column; gap: 8px; }
+.chunk { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 0.9rem; }
+.chunk b { font: 500 0.72rem var(--font-mono); color: var(--muted); display: block; }
+.chunk mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 2px; }
+.pipeline { display: flex; gap: 6px; flex-wrap: wrap; }
+.stage { flex: 1 1 110px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 0.82rem; cursor: pointer; background: var(--sheet); text-align: left; }
+.stage b { display: block; font: 500 0.68rem var(--font-mono); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.stage.on { border-color: var(--accent); background: var(--accent-soft); }
+.vec-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.vec-chip { font: 0.78rem var(--font-mono); border-radius: 4px; padding: 1px 6px; background: var(--t1); }
+.answer-box { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.arch { display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+.box { border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--sheet); }
+.box h4 { margin: 0 0 6px; font: 700 0.98rem var(--font-display); }
+.box.host { border-color: var(--accent); }
+.host-inner { display: flex; gap: 8px; flex-wrap: wrap; }
+.mini { border: 1px dashed var(--line); border-radius: 8px; padding: 4px 10px; font-size: 0.84rem; }
+.wire { text-align: center; font: 0.76rem var(--font-mono); color: var(--muted); position: relative; }
+.wire::before { content: ""; display: block; width: 2px; height: 18px; background: var(--accent); margin: 0 auto 2px; }
+.servers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.prim { display: flex; flex-direction: column; gap: 4px; }
+.prim-row { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.prim-row > span { font: 500 0.66rem var(--font-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); width: 100%; }
+.pchip { border: 0; border-radius: 6px; padding: 2px 8px; font: 0.78rem var(--font-mono); cursor: pointer; }
+.pchip.tool { background: var(--t1); } .pchip.resource { background: var(--t3); } .pchip.prompt { background: var(--t4); }
+.pchip.sel { outline: 2px solid var(--ink); }
+.detail { border-left: 3px solid var(--accent); padding: 8px 12px; background: var(--paper); border-radius: 0 8px 8px 0; font-size: 0.9rem; }
+.lanes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; text-align: center; }
+.lane-h { font: 600 0.84rem var(--font-display); padding: 6px; border-radius: 8px; background: var(--paper); }
+.lane-h.on { background: var(--accent-soft); color: var(--accent); }
+.arrow-row { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); height: 30px; align-items: center; }
+.arrow { height: 3px; background: var(--accent); position: relative; margin: 0 12%; }
+.arrow::after { content: ""; position: absolute; top: -6px; border: 7.5px solid transparent; }
+.arrow.r::after { right: -8px; border-left-color: var(--accent); border-right: 0; }
+.arrow.l::after { left: -8px; border-right-color: var(--accent); border-left: 0; }
+.self-dot { justify-self: center; font: 0.76rem var(--font-mono); color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 1px 10px; }
+.flow-cap { font-weight: 600; }
+
+/* Code */
+.task { margin-bottom: 14px; }
+.editor-wrap { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--paper); }
+.editor-bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 10px; border-bottom: 1px solid var(--line); font: 0.76rem var(--font-mono); color: var(--muted); flex-wrap: wrap; }
+.editor { width: 100%; min-height: 300px; border: 0; background: none; padding: 12px 14px; font: 0.86rem/1.6 var(--font-mono); resize: vertical; outline: none; tab-size: 4; white-space: pre; overflow: auto; }
+.code-actions { margin: 12px 0; }
+.results { display: flex; flex-direction: column; gap: 10px; }
+.tests { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.tests li { display: flex; gap: 8px; align-items: baseline; font-size: 0.88rem; }
+.tests li::before { font-weight: 700; width: 1em; flex: none; }
+.tests li.pass::before { content: "✓"; color: var(--ok); }
+.tests li.fail::before { content: "✗"; color: var(--bad); }
+.tests code { font: 0.84rem var(--font-mono); }
+.tests .err { color: var(--bad); font-size: 0.8rem; font-family: var(--font-mono); }
+.out { white-space: pre-wrap; overflow-wrap: anywhere; }
+.out.err { border-color: var(--bad); background: var(--bad-soft); }
+.result-head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.result-head .score { font: 700 1.1rem var(--font-display); }
+.success { padding: 12px 14px; border-radius: 10px; background: var(--ok-soft); border: 1px solid var(--ok); }
+.review { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.review h4 { margin: 0 0 6px; font: 700 0.95rem var(--font-display); }
+
+/* Chat */
+.level { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 0.86rem; color: var(--muted); margin-bottom: 14px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; }
+.seg button { border: 0; background: none; border-radius: 999px; padding: 4px 12px; cursor: pointer; font-size: 0.84rem; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+.chat { display: flex; flex-direction: column; gap: 14px; margin-bottom: 14px; }
+.msg { max-width: 92%; min-width: 0; }
+.msg.user { align-self: flex-end; background: var(--accent); color: var(--on-accent); padding: 10px 14px; border-radius: 14px 14px 4px 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.msg.tutor { align-self: flex-start; border: 1px solid var(--line); padding: 12px 16px; border-radius: 14px 14px 14px 4px; }
+.msg.tutor .prose { gap: 10px; }
+.msg.tutor .who { display: flex; align-items: center; gap: 6px; font: 600 0.78rem var(--font-display); color: var(--accent); margin-bottom: 6px; }
+.msg.tutor .who svg { width: 18px; height: 18px; }
+.greet-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.fab {
+  position: fixed; z-index: 20;
+  right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  display: flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; padding: 10px 16px 10px 10px;
+  background: var(--accent); color: var(--on-accent); font-weight: 600; cursor: pointer; box-shadow: 0 6px 20px rgba(21, 33, 59, .25);
+}
+.fab svg { width: 26px; height: 26px; }
+.msg.note { align-self: stretch; max-width: none; color: var(--muted); font-size: 0.86rem; text-align: center; }
+.thinking { color: var(--muted); font-style: italic; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.chip { border: 1px dashed var(--line); background: none; border-radius: 999px; padding: 5px 12px; font-size: 0.84rem; cursor: pointer; }
+.chip:hover:not(:disabled) { border-color: var(--accent); border-style: solid; }
+.composer { display: flex; gap: 8px; align-items: flex-end; border: 1px solid var(--line); border-radius: 14px; padding: 8px; background: var(--paper); }
+.composer textarea { flex: 1; min-width: 0; border: 0; background: none; resize: none; padding: 6px 8px; min-height: 44px; max-height: 160px; outline: none; }
+.empty-chat { color: var(--muted); font-size: 0.92rem; margin: 0 0 12px; }
+.banner { padding: 12px 14px; border-radius: 10px; background: var(--bad-soft); font-size: 0.9rem; margin-bottom: 14px; }
+
+/* Quiz */
+.quiz { display: flex; flex-direction: column; gap: 18px; max-width: 68ch; }
+.q h4 { margin: 0 0 8px; font: 600 1rem/1.4 var(--font-body); }
+.q h4 span { font: 500 0.78rem var(--font-mono); color: var(--muted); margin-right: 6px; }
+.opts { display: flex; flex-direction: column; gap: 6px; }
+.opt { text-align: left; border: 1px solid var(--line); background: var(--sheet); border-radius: 10px; padding: 9px 12px; cursor: pointer; }
+.opt:hover:not(:disabled) { border-color: var(--accent); }
+.opt:disabled { cursor: default; }
+.opt.right { background: var(--ok-soft); border-color: var(--ok); }
+.opt.wrong { background: var(--bad-soft); border-color: var(--bad); }
+.why { margin: 8px 0 0; font-size: 0.88rem; color: var(--muted); }
+.score { font: 700 1.2rem var(--font-display); }
+
+@media (max-width: 860px) {
+  .shell { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .rail { position: static; flex-direction: row; overflow-x: auto; gap: 14px; padding-bottom: 4px; scrollbar-width: thin; }
+  .track { flex: none; }
+  .track ol { flex-direction: row; gap: 6px; }
+  .topic-btn { white-space: nowrap; border: 1px solid var(--line); background: var(--sheet); }
+  .topic-btn[aria-current="true"] { box-shadow: 0 0 0 1.5px var(--accent); }
+  .sheet-head { padding: 20px 16px 0; }
+  .tabs { padding: 12px 16px 0; }
+  .panel { padding: 18px 16px 22px; }
+  .lab { padding: 12px; }
+  .lab-grid { grid-template-columns: minmax(0, 1fr); }
+  .servers { grid-template-columns: minmax(0, 1fr); }
+  .msg { max-width: 100%; }
+  .bar { grid-template-columns: 70px minmax(0, 1fr) 46px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 34 34" aria-hidden="true">
+        <rect x="1" y="1" width="32" height="32" rx="9" style="fill:var(--accent)"/>
+        <path d="M7 9 Q17 30 27 12" fill="none" style="stroke:var(--on-accent)" stroke-width="2" stroke-linecap="round" opacity=".55"/>
+        <circle cx="10" cy="15" r="2.2" style="fill:var(--on-accent)" opacity=".45"/>
+        <circle cx="14" cy="20.5" r="2.4" style="fill:var(--on-accent)" opacity=".7"/>
+        <circle cx="18.2" cy="22.4" r="2.8" style="fill:var(--on-accent)"/>
+      </svg>
+      <div>
+        <h1>Gradient</h1>
+        <p>Learn vectors, LLMs, RAG and MCP by seeing and coding</p>
+      </div>
+    </div>
+    <div class="meter" aria-live="polite">
+      <span id="meterText">0 / 0 learned</span>
+      <div class="meter-bar"><span id="meterFill"></span></div>
+    </div>
+  </header>
+
+  <div class="shell">
+    <nav class="rail" id="rail" aria-label="Topics"></nav>
+
+    <main class="sheet">
+      <div class="sheet-head">
+        <div class="eyebrow" id="eyebrow"></div>
+        <h2 id="title"></h2>
+        <div class="steps" id="steps"></div>
+      </div>
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" aria-selected="true" data-tab="ask">💬 Gradient bot</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="learn">See it</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="code">Code it</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="quiz">Quiz</button>
+      </div>
+
+      <section class="panel" id="panel-learn" hidden>
+        <div id="visual"></div>
+        <div class="notes">
+          <div class="prose" id="lesson"></div>
+          <dl class="terms" id="terms"></dl>
+          <div class="check"><b>Check yourself</b><p id="checkQ"></p></div>
+          <div class="row actions">
+            <button class="btn primary" id="toCode">Code it in Python →</button>
+            <button class="btn" id="askCheck">Answer with the tutor</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="panel-code" hidden>
+        <div class="prose task" id="task"></div>
+        <div class="editor-wrap">
+          <div class="editor-bar"><span id="editorName">exercise.py</span><span id="attempts"></span></div>
+          <textarea class="editor" id="editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="Python code editor"></textarea>
+        </div>
+        <div class="row code-actions">
+          <button class="btn primary" id="runBtn">▶ Run tests</button>
+          <button class="btn" id="hintBtn">Hint</button>
+          <button class="btn" id="reviewBtn">Ask the tutor to review</button>
+          <button class="btn" id="solBtn">Show solution</button>
+          <button class="btn" id="resetBtn">Reset code</button>
+        </div>
+        <div class="results" id="results"></div>
+      </section>
+
+      <section class="panel" id="panel-ask">
+        <div class="banner" id="tutorOff" hidden>The tutor needs Claude, which isn't available in this view. Open this page in the Claude app or on claude.ai and allow it to use Claude. The visuals and Python exercises work without it.</div>
+        <div class="level">
+          <span>Explain it for</span>
+          <div class="seg" id="levelSeg">
+            <button data-level="beginner" aria-pressed="true">A beginner</button>
+            <button data-level="coder" aria-pressed="false">A Python coder</button>
+            <button data-level="math" aria-pressed="false">The math</button>
+          </div>
+        </div>
+        <div class="chat" id="chat" aria-live="polite"></div>
+        <div class="chips" id="chips"></div>
+        <form class="composer" id="composer">
+          <textarea id="input" rows="1" placeholder="Ask a question or explain it back in your own words…" aria-label="Message the tutor"></textarea>
+          <button class="btn primary" id="sendBtn" type="submit">Send</button>
+          <button class="btn" id="stopBtn" type="button" hidden>Stop</button>
+        </form>
+        <div class="row" style="margin-top:10px"><button class="btn small" id="clearChat" type="button">Clear this conversation</button></div>
+      </section>
+
+      <section class="panel" id="panel-quiz" hidden>
+        <div class="banner" id="quizOff" hidden>Quizzes are written by Claude, which isn't available in this view. Open this page in the Claude app or on claude.ai.</div>
+        <div id="quizBody"></div>
+      </section>
+    </main>
+  </div>
+</div>
+<button class="fab" id="fab" type="button" hidden aria-label="Ask the Gradient bot">
+  <svg viewBox="0 0 34 34" aria-hidden="true"><rect x="1" y="1" width="32" height="32" rx="9" style="fill:var(--on-accent)" opacity=".18"/><circle cx="10" cy="15" r="2.2" style="fill:var(--on-accent)" opacity=".5"/><circle cx="14" cy="20.5" r="2.4" style="fill:var(--on-accent)" opacity=".75"/><circle cx="18.2" cy="22.4" r="2.8" style="fill:var(--on-accent)"/></svg>
+  <span>Ask the bot</span>
+</button>
+
+<script>
+const py = String.raw;
+const TRACKS = ["Vectors", "LLMs", "RAG", "MCP"];
+
+const TOPICS = [
+// ---------------------------------------------------------------- VECTORS
+{ id: "vectors", track: 0, title: "Vectors and cosine similarity", visual: "vectors",
+  lesson: `A **vector** is a list of numbers, like \`[3, 4]\`. A vector with two numbers can be drawn as an arrow from the origin. AI systems turn almost everything into vectors: words, sentences, images, songs.
+
+Two operations do most of the work:
+
+- **Dot product**: multiply matching numbers and add them. \`[1, 2] · [3, 4] = 1×3 + 2×4 = 11\`
+- **Length (norm)**: how long the arrow is. \`|[3, 4]| = √(3² + 4²) = 5\`
+
+Combine them and you get **cosine similarity**. It measures the angle between two arrows and ignores how long they are:`,
+  formula: "cos θ = (a · b) / (|a| × |b|)",
+  lesson2: `It runs from **1** (same direction) through **0** (unrelated, at right angles) to **−1** (opposite). Drag the arrow tips above to get a feel for it. Search engines, recommenders and RAG systems all use this one number to decide that two things are "about the same".`,
+  terms: [["Vector", "An ordered list of numbers, drawn as an arrow."], ["Dot product", "Sum of pairwise products of two vectors."], ["Cosine similarity", "How aligned two vectors are, from −1 to 1."]],
+  check: "Two arrows point the same way, but one is ten times longer. What is their cosine similarity, and why?",
+  ex: {
+    file: "vectors.py",
+    task: `Write the three building blocks you'll reuse for the rest of the course: \`dot\`, \`norm\` and \`cosine\`. Run the tests, read what fails, fix it, and run again.`,
+    starter: py`import math
+
+def dot(a, b):
+    # Multiply matching numbers and add them up.
+    # dot([1, 2], [3, 4]) -> 1*3 + 2*4 = 11
+    pass
+
+def norm(a):
+    # The length of the arrow: the square root of dot(a, a)
+    pass
+
+def cosine(a, b):
+    # dot(a, b) divided by (norm(a) * norm(b))
+    pass
+
+print("cosine of [1, 0] and [1, 1] =", cosine([1, 0], [1, 1]))
+`,
+    tests: py`__check("dot([1, 2], [3, 4]) == 11", lambda: dot([1, 2], [3, 4]) == 11)
+__check("works in 3D: dot([1, 0, 2], [2, 5, 1]) == 4", lambda: dot([1, 0, 2], [2, 5, 1]) == 4)
+__check("norm([3, 4]) == 5", lambda: abs(norm([3, 4]) - 5) < 1e-9)
+__check("same direction gives cosine 1", lambda: abs(cosine([2, 2], [5, 5]) - 1) < 1e-9)
+__check("right angle gives cosine 0", lambda: abs(cosine([1, 0], [0, 3])) < 1e-9)
+__check("opposite gives cosine -1", lambda: abs(cosine([1, 2], [-2, -4]) + 1) < 1e-9)
+`,
+    hint: "Use `zip(a, b)` to walk through both lists together and `sum()` to add up the products. `math.sqrt()` gives a square root. `cosine` can call your `dot` and `norm`.",
+    solution: py`import math
+
+def dot(a, b):
+    return sum(x * y for x, y in zip(a, b))
+
+def norm(a):
+    return math.sqrt(dot(a, a))
+
+def cosine(a, b):
+    return dot(a, b) / (norm(a) * norm(b))
+
+print("cosine of [1, 0] and [1, 1] =", cosine([1, 0], [1, 1]))
+`
+  } },
+
+{ id: "embeddings", track: 0, title: "Embeddings: meaning as vectors", visual: "embeddings",
+  lesson: `An **embedding** is a vector a model has learned for a word, sentence or image, arranged so that **similar meanings point in similar directions**. "Cat" lands near "kitten" and far from "bus".
+
+Real embeddings have hundreds or thousands of dimensions. The map above squeezes a few words into 2D so you can see the idea. Tap a word to find its nearest neighbours by cosine similarity, the same function you just wrote.
+
+Directions can carry meaning too:`,
+  formula: "king − man + woman ≈ queen",
+  lesson2: `In Python you'd normally get embeddings from a model, for example \`model.encode("a sentence")\` with the sentence-transformers library, or an embeddings API. They come back as lists of floats, and everything you do with them afterwards is the vector maths from lesson 1.`,
+  terms: [["Embedding", "A learned vector that captures meaning."], ["Nearest neighbours", "The items with the highest similarity to a query."], ["Dimensions", "How many numbers each vector has."]],
+  check: "Why does searching with embeddings find \"How do I reset my password?\" for the query \"forgot login\" even though they share no words?",
+  ex: {
+    file: "embeddings.py", uses: ["vectors"],
+    task: `Build a tiny semantic search. \`most_similar\` should return the \`k\` words whose vectors are closest to a given word. Your \`cosine()\` from lesson 1 is already loaded.`,
+    starter: py`# cosine() from lesson 1 is loaded for you.
+# Each word is a 3D vector: [is_animal, is_small_or_cute, is_vehicle]
+words = {
+    "cat":     [0.90, 0.70, 0.00],
+    "kitten":  [0.80, 0.95, 0.00],
+    "dog":     [0.95, 0.50, 0.05],
+    "truck":   [0.00, 0.05, 0.95],
+    "bus":     [0.05, 0.20, 0.90],
+    "toy car": [0.10, 0.90, 0.60],
+}
+
+def most_similar(word, vectors, k=2):
+    # Return a list of the k OTHER words most similar to word,
+    # best match first. Don't include the word itself.
+    pass
+
+print(most_similar("cat", words))
+print(most_similar("truck", words, k=1))
+`,
+    tests: py`__check("returns a list of k words", lambda: isinstance(most_similar("cat", words, 3), list) and len(most_similar("cat", words, 3)) == 3)
+__check("never includes the word itself", lambda: "cat" not in most_similar("cat", words, 5))
+__check("cat's top 2 are dog and kitten", lambda: sorted(most_similar("cat", words, 2)) == ["dog", "kitten"])
+__check("truck's nearest is bus", lambda: most_similar("truck", words, 1) == ["bus"])
+__check("best match comes first", lambda: most_similar("kitten", words, 1) == ["cat"])
+`,
+    hint: "Loop over `vectors.items()`, skip the word itself, and collect `(score, other_word)` pairs using `cosine(vectors[word], vec)`. Sort with `reverse=True` and keep the first `k` words.",
+    solution: py`words = {
+    "cat":     [0.90, 0.70, 0.00],
+    "kitten":  [0.80, 0.95, 0.00],
+    "dog":     [0.95, 0.50, 0.05],
+    "truck":   [0.00, 0.05, 0.95],
+    "bus":     [0.05, 0.20, 0.90],
+    "toy car": [0.10, 0.90, 0.60],
+}
+
+def most_similar(word, vectors, k=2):
+    target = vectors[word]
+    scored = []
+    for other, vec in vectors.items():
+        if other != word:
+            scored.append((cosine(target, vec), other))
+    scored.sort(reverse=True)
+    return [w for _, w in scored[:k]]
+
+print(most_similar("cat", words))
+print(most_similar("truck", words, k=1))
+`
+  } },
+
+// ---------------------------------------------------------------- LLMs
+{ id: "tokens", track: 1, title: "Tokens: how LLMs read", visual: "tokens",
+  lesson: `A **large language model (LLM)** never sees letters or words directly. Text is first cut into **tokens**, chunks that are often a whole word, part of a word, or a punctuation mark. Each token has an **id**, and the model only ever sees those numbers.
+
+Type in the box above to watch text get split. Common words stay whole; rare or long words break into pieces like \`un\` + \`believ\` + \`able\`.
+
+Why it matters:
+
+- Pricing and limits are counted in tokens. In English, 1 token is roughly ¾ of a word.
+- The **context window** is the most tokens a model can see at once: your prompt, the conversation and its reply.
+- Odd behaviour, like struggling to count letters in a word, often comes from tokenisation.
+
+Real tokenizers learn their pieces from data with an algorithm called **byte-pair encoding (BPE)**. The one above is simplified.`,
+  terms: [["Token", "A chunk of text the model reads and writes."], ["Vocabulary", "Every token the model knows, each with an id."], ["Context window", "The most tokens a model can attend to at once."]],
+  check: "Why might an LLM find it harder to count the letter \"r\" in \"strawberry\" than to explain what a strawberry is?",
+  ex: {
+    file: "tokens.py",
+    task: `Write a mini tokenizer: split text into tokens, build a vocabulary of ids, and encode new text into ids. Unknown tokens become \`-1\`. You'll reuse \`tokenize\` in the RAG lessons.`,
+    starter: py`import re
+
+def tokenize(text):
+    # Lowercase the text and split it into word and punctuation tokens.
+    # "Hi, there!" -> ["hi", ",", "there", "!"]
+    # Tip: re.findall(r"\w+|[^\w\s]", ...) matches words OR single symbols.
+    pass
+
+def build_vocab(tokens):
+    # Give each unique token an id, in order of first appearance.
+    # ["a", "b", "a"] -> {"a": 0, "b": 1}
+    pass
+
+def encode(text, vocab):
+    # Turn text into a list of ids. Unknown tokens become -1.
+    pass
+
+vocab = build_vocab(tokenize("The cat sat on the mat."))
+print(vocab)
+print(encode("The mat sat.", vocab))
+`,
+    tests: py`__check('tokenize("Hi, there!") == ["hi", ",", "there", "!"]', lambda: tokenize("Hi, there!") == ["hi", ",", "there", "!"])
+__check("lowercases and splits punctuation", lambda: tokenize("LLMs read TOKENS.") == ["llms", "read", "tokens", "."])
+__check("vocab ids follow first appearance", lambda: build_vocab(["b", "a", "b", "c"]) == {"b": 0, "a": 1, "c": 2})
+__check('encode("The mat sat.") == [0, 4, 2, 5]', lambda: encode("The mat sat.", build_vocab(tokenize("The cat sat on the mat."))) == [0, 4, 2, 5])
+__check("unknown tokens become -1", lambda: encode("the dog", build_vocab(tokenize("The cat sat on the mat."))) == [0, -1])
+`,
+    hint: "`tokenize` is one line: `re.findall(r\"\\w+|[^\\w\\s]\", text.lower())`. For `build_vocab`, start with `{}` and add `vocab[t] = len(vocab)` for tokens you haven't seen. For `encode`, use `vocab.get(t, -1)`.",
+    solution: py`import re
+
+def tokenize(text):
+    return re.findall(r"\w+|[^\w\s]", text.lower())
+
+def build_vocab(tokens):
+    vocab = {}
+    for t in tokens:
+        if t not in vocab:
+            vocab[t] = len(vocab)
+    return vocab
+
+def encode(text, vocab):
+    return [vocab.get(t, -1) for t in tokenize(text)]
+
+vocab = build_vocab(tokenize("The cat sat on the mat."))
+print(vocab)
+print(encode("The mat sat.", vocab))
+`
+  } },
+
+{ id: "next-token", track: 1, title: "Next-token prediction and temperature", visual: "nexttoken",
+  lesson: `At its core an LLM does one thing: given the tokens so far, it gives every possible next token a score called a **logit**. **Softmax** turns those scores into probabilities. One token is picked, added to the text, and the loop repeats. That's how a whole answer gets written, one token at a time.
+
+**Temperature** controls how adventurous the pick is. The logits are divided by the temperature before softmax:`,
+  formula: "p_i = exp(z_i / T) / Σ_j exp(z_j / T)",
+  lesson2: `- **Low temperature (near 0)**: the top choice dominates. Answers are focused and repeatable.
+- **High temperature (above 1)**: the probabilities flatten out. Answers are more varied and creative, and more likely to wander.
+
+Build a sentence above by sampling one word at a time, then slide the temperature and watch the bars reshape. The toy model here uses a small table; a real LLM computes the logits with a transformer over the whole context.`,
+  terms: [["Logit", "A raw score for a candidate next token."], ["Softmax", "Turns scores into probabilities that sum to 1."], ["Temperature", "Sharpens (low) or flattens (high) the distribution."]],
+  check: "You want an LLM to extract dates from invoices the same way every time. Would you use a high or low temperature, and why?",
+  ex: {
+    file: "sampling.py",
+    task: `Implement \`softmax\` with a temperature. It's the exact function behind the bars in the visual, and attention uses it in the next lesson.`,
+    starter: py`import math
+
+def softmax(logits, temperature=1.0):
+    # 1. Divide every logit by the temperature.
+    # 2. Take math.exp() of each one.
+    # 3. Divide each by the total so they add up to 1.
+    pass
+
+logits = [2.0, 1.0, 0.1]
+print(softmax(logits))         # roughly [0.66, 0.24, 0.10]
+print(softmax(logits, 0.5))    # sharper
+print(softmax(logits, 2.0))    # flatter
+`,
+    tests: py`__l = [2.0, 1.0, 0.1]
+__check("probabilities add up to 1", lambda: abs(sum(softmax(__l)) - 1) < 1e-9)
+__check("softmax([2, 1, 0.1]) is about [0.66, 0.24, 0.10]", lambda: all(abs(a - b) < 0.01 for a, b in zip(softmax(__l), [0.659, 0.242, 0.099])))
+__check("biggest logit gets the biggest probability", lambda: softmax([0.5, 3.0, 1.0]).index(max(softmax([0.5, 3.0, 1.0]))) == 1)
+__check("low temperature sharpens", lambda: softmax(__l, 0.5)[0] > softmax(__l)[0])
+__check("high temperature flattens", lambda: softmax(__l, 2.0)[0] < softmax(__l)[0])
+__check("equal logits give equal probabilities", lambda: all(abs(p - 0.25) < 1e-9 for p in softmax([1, 1, 1, 1])))
+`,
+    hint: "Make a list `scaled = [z / temperature for z in logits]`, then `exps = [math.exp(s) for s in scaled]`, then divide each by `sum(exps)`. Bonus: subtract `max(scaled)` first so big logits don't overflow.",
+    solution: py`import math
+
+def softmax(logits, temperature=1.0):
+    scaled = [z / temperature for z in logits]
+    top = max(scaled)
+    exps = [math.exp(s - top) for s in scaled]
+    total = sum(exps)
+    return [e / total for e in exps]
+
+logits = [2.0, 1.0, 0.1]
+print(softmax(logits))
+print(softmax(logits, 0.5))
+print(softmax(logits, 2.0))
+`
+  } },
+
+{ id: "attention", track: 1, title: "Attention: how tokens look at each other", visual: "attention",
+  lesson: `Read this: *"The trophy didn't fit in the suitcase because it was too big."* You know "it" means the trophy. Change "big" to "small" and "it" means the suitcase. Understanding a word means looking at the words around it, and **attention** gives a model that ability.
+
+For every token, the model makes three vectors:
+
+- **Query**: what am I looking for?
+- **Key**: what do I offer?
+- **Value**: what do I pass along if I'm chosen?
+
+Each token's query is compared with every key using a dot product. Softmax turns the scores into **attention weights**, and the token gathers a weighted average of the values.`,
+  formula: "Attention(Q, K, V) = softmax(Q·Kᵀ / √d) · V",
+  lesson2: `A **transformer** stacks many layers of this, each with several **attention heads** running in parallel. Tap words in the sentence above to see where they look, and flip "big" to "small". The weights shown are illustrative, but real models learn patterns like this.`,
+  terms: [["Query / Key / Value", "Vectors used to match tokens and mix information."], ["Attention weights", "Softmax of query-key scores: where a token looks."], ["Transformer", "The architecture of stacked attention layers behind LLMs."]],
+  check: "In attention, what role does the dot product between a query and a key play?",
+  ex: {
+    file: "attention.py", uses: ["vectors", "next-token"],
+    task: `Implement scaled dot-product attention for one query. Your \`dot()\` and \`softmax()\` from earlier lessons are loaded. This is the core calculation inside every transformer.`,
+    starter: py`import math
+# dot() and softmax() from earlier lessons are loaded for you.
+
+def attention_weights(query, keys):
+    # For each key: score = dot(query, key) / sqrt(len(query))
+    # Then turn the list of scores into probabilities with softmax().
+    pass
+
+def attend(query, keys, values):
+    # A weighted average of the value vectors, using attention_weights.
+    # Result has the same length as each value vector.
+    pass
+
+q = [1.0, 0.0]
+keys = [[1.0, 0.0], [0.0, 1.0], [0.9, 0.1]]
+values = [[10, 0], [0, 10], [5, 5]]
+print(attention_weights(q, keys))
+print(attend(q, keys, values))
+`,
+    tests: py`__q = [1.0, 0.0]; __k = [[1.0, 0.0], [0.0, 1.0], [0.9, 0.1]]; __v = [[10, 0], [0, 10], [5, 5]]
+__check("one weight per key, adding up to 1", lambda: len(attention_weights(__q, __k)) == 3 and abs(sum(attention_weights(__q, __k)) - 1) < 1e-9)
+__check("the key matching the query gets the most weight", lambda: attention_weights(__q, __k).index(max(attention_weights(__q, __k))) == 0)
+__check("scores are scaled by sqrt(d)", lambda: abs(attention_weights([2.0, 0.0], [[2.0, 0.0], [0.0, 2.0]])[0] - math.exp(4 / math.sqrt(2)) / (math.exp(4 / math.sqrt(2)) + 1)) < 1e-6)
+__check("identical keys average the values", lambda: all(abs(a - b) < 1e-9 for a, b in zip(attend([1, 0], [[1, 1], [1, 1]], [[10, 0], [0, 10]]), [5, 5])))
+__check("attend returns a vector the size of a value", lambda: len(attend(__q, __k, __v)) == 2)
+`,
+    hint: "Scores: `[dot(query, k) / math.sqrt(len(query)) for k in keys]`, then `softmax(scores)`. For `attend`, for each position `j` in a value vector, add up `w[i] * values[i][j]` over all `i`.",
+    solution: py`import math
+
+def attention_weights(query, keys):
+    d = len(query)
+    scores = [dot(query, k) / math.sqrt(d) for k in keys]
+    return softmax(scores)
+
+def attend(query, keys, values):
+    w = attention_weights(query, keys)
+    size = len(values[0])
+    return [sum(w[i] * values[i][j] for i in range(len(values))) for j in range(size)]
+
+q = [1.0, 0.0]
+keys = [[1.0, 0.0], [0.0, 1.0], [0.9, 0.1]]
+values = [[10, 0], [0, 10], [5, 5]]
+print(attention_weights(q, keys))
+print(attend(q, keys, values))
+`
+  } },
+
+// ---------------------------------------------------------------- RAG
+{ id: "chunking", track: 2, title: "Chunking documents", visual: "chunking",
+  lesson: `**Retrieval-augmented generation (RAG)** gives an LLM the right facts at question time by looking them up in your documents. The first step is **chunking**: cutting documents into passages small enough to search and to fit in a prompt.
+
+Two settings matter:
+
+- **Chunk size**: too small and a chunk loses its context; too big and it's full of unrelated text that blurs its embedding.
+- **Overlap**: repeating a few words between neighbouring chunks so a sentence that straddles a boundary isn't cut in half.
+
+Drag the sliders above and watch the highlighted overlap. Real systems often chunk by tokens, sentences or headings rather than plain words, but the idea is the same.`,
+  terms: [["Chunk", "A passage of a document used for retrieval."], ["Overlap", "Words shared between neighbouring chunks."], ["Chunk size", "How long each passage is."]],
+  check: "What could go wrong if you made each chunk an entire 40-page manual?",
+  ex: {
+    file: "chunking.py",
+    task: `Write \`chunk(text, size, overlap)\`. It should return passages of \`size\` words, where each new chunk starts \`size - overlap\` words after the previous one.`,
+    starter: py`def chunk(text, size=8, overlap=2):
+    # 1. Split the text into words.
+    # 2. Take size words at a time. Each chunk starts size - overlap
+    #    words after the previous one.
+    # 3. Stop once a chunk reaches the last word.
+    # Return a list of strings.
+    pass
+
+doc = ("Retrieval augmented generation finds relevant passages "
+       "and gives them to the model before it answers the question")
+for c in chunk(doc, size=6, overlap=2):
+    print("-", c)
+`,
+    tests: py`__check('no overlap: chunk("a b c d e f g h", 4, 0)', lambda: chunk("a b c d e f g h", 4, 0) == ["a b c d", "e f g h"])
+__check('overlap 2: chunk("a b c d e f g h", 4, 2)', lambda: chunk("a b c d e f g h", 4, 2) == ["a b c d", "c d e f", "e f g h"])
+__check("short text gives one chunk", lambda: chunk("one two", 5, 1) == ["one two"])
+__check("last chunk ends with the last word", lambda: chunk("a b c d e f g", 3, 1)[-1].split()[-1] == "g")
+__check("no empty chunks", lambda: all(c.strip() for c in chunk("a b c d e f g h i j", 4, 1)))
+`,
+    hint: "`words = text.split()` and `step = size - overlap`. Loop `for start in range(0, len(words), step)`, append `\" \".join(words[start:start + size])`, and `break` once `start + size >= len(words)`.",
+    solution: py`def chunk(text, size=8, overlap=2):
+    words = text.split()
+    step = max(1, size - overlap)
+    chunks = []
+    for start in range(0, len(words), step):
+        chunks.append(" ".join(words[start:start + size]))
+        if start + size >= len(words):
+            break
+    return chunks
+
+doc = ("Retrieval augmented generation finds relevant passages "
+       "and gives them to the model before it answers the question")
+for c in chunk(doc, size=6, overlap=2):
+    print("-", c)
+`
+  } },
+
+{ id: "rag", track: 2, title: "Retrieve, augment, generate", visual: "rag",
+  lesson: `With documents chunked, a RAG system answers a question in four moves:
+
+1. **Embed** the question into a vector.
+2. **Score** every chunk by cosine similarity to the question.
+3. **Retrieve** the top *k* chunks.
+4. **Augment** the prompt with those chunks and ask the LLM to answer **using only them**.
+
+Step through the pipeline above with the example café handbook, then press **Generate** to have Claude answer from just the retrieved text. Lower *k* to 1 and ask about something that isn't in the handbook to see how grounding changes the answer.
+
+The demo uses simple word-count vectors so you can see every number. Production systems use learned embeddings and a **vector database** (such as Chroma, pgvector or FAISS) to search millions of chunks quickly.`,
+  terms: [["Retrieval", "Finding the chunks most similar to the question."], ["Top-k", "How many chunks go into the prompt."], ["Grounding", "Making the model answer from the given sources."], ["Hallucination", "A fluent answer that isn't supported by facts."]],
+  check: "A RAG bot gives a wrong answer even though the fact is in your documents. Name two places in the pipeline where it could have gone wrong.",
+  ex: {
+    file: "rag.py", uses: ["vectors", "tokens"],
+    task: `Build the retrieval half of a RAG system. \`tokenize()\` and \`cosine()\` from earlier lessons are loaded. Turn texts into word-count vectors, rank documents against the question, and build the prompt you'd send to the LLM.`,
+    starter: py`# tokenize() and cosine() from earlier lessons are loaded for you.
+docs = [
+    "Returns are accepted within 30 days with a receipt.",
+    "Our cafe opens at 7am on weekdays and 8am on weekends.",
+    "Loyalty members earn one point for every dollar spent.",
+    "Clean the grinder weekly with a dry brush.",
+]
+
+def bag_of_words(text, vocab):
+    # Count how often each vocab word appears in tokenize(text).
+    # Return one count per vocab word, in the same order as vocab.
+    pass
+
+def retrieve(query, docs, k=1):
+    # 1. vocab = every unique token in the query and all docs (sorted).
+    # 2. Turn the query and each doc into bag_of_words vectors.
+    # 3. Return the k docs with the highest cosine(), best first.
+    pass
+
+def build_prompt(query, passages):
+    # Return a prompt string that lists the passages and asks the
+    # model to answer the question using only those passages.
+    pass
+
+question = "When does the cafe open on weekends?"
+print(build_prompt(question, retrieve(question, docs, k=1)))
+`,
+    tests: py`__check('bag_of_words("the cat the", ["cat", "dog", "the"]) == [1, 0, 2]', lambda: bag_of_words("the cat the", ["cat", "dog", "the"]) == [1, 0, 2])
+__check("finds the opening-hours doc", lambda: retrieve("When does the cafe open on weekends?", docs, 1) == [docs[1]])
+__check("finds the loyalty doc", lambda: retrieve("How many points per dollar spent?", docs, 1) == [docs[2]])
+__check("k=2 returns two different docs", lambda: len(set(retrieve("cafe receipt", docs, 2))) == 2)
+__check("prompt includes the question and the passage", lambda: "weekends?" in build_prompt("When does the cafe open on weekends?", [docs[1]]) and docs[1] in build_prompt("When does the cafe open on weekends?", [docs[1]]))
+`,
+    hint: "`bag_of_words`: `tokens = tokenize(text)` then `[tokens.count(w) for w in vocab]`. `retrieve`: build `vocab = sorted(set(...))` from all tokens, then `sorted(docs, key=lambda d: cosine(q_vec, bag_of_words(d, vocab)), reverse=True)[:k]`. `build_prompt` is an f-string.",
+    solution: py`docs = [
+    "Returns are accepted within 30 days with a receipt.",
+    "Our cafe opens at 7am on weekdays and 8am on weekends.",
+    "Loyalty members earn one point for every dollar spent.",
+    "Clean the grinder weekly with a dry brush.",
+]
+
+def bag_of_words(text, vocab):
+    tokens = tokenize(text)
+    return [tokens.count(w) for w in vocab]
+
+def retrieve(query, docs, k=1):
+    all_tokens = set(tokenize(query))
+    for d in docs:
+        all_tokens.update(tokenize(d))
+    vocab = sorted(all_tokens)
+    q = bag_of_words(query, vocab)
+    ranked = sorted(docs, key=lambda d: cosine(q, bag_of_words(d, vocab)), reverse=True)
+    return ranked[:k]
+
+def build_prompt(query, passages):
+    context = "\n".join(f"[{i + 1}] {p}" for i, p in enumerate(passages))
+    return ("Answer the question using only the passages below. "
+            "If the answer isn't there, say you don't know.\n\n"
+            f"Passages:\n{context}\n\nQuestion: {query}")
+
+question = "When does the cafe open on weekends?"
+print(build_prompt(question, retrieve(question, docs, k=1)))
+`
+  } },
+
+// ---------------------------------------------------------------- MCP
+{ id: "mcp", track: 3, title: "MCP: hosts, clients and servers", visual: "mcparch",
+  lesson: `The **Model Context Protocol (MCP)** is an open standard for connecting AI apps to outside tools and data. Instead of every app writing custom code for every service, a service is wrapped once as an **MCP server**, and any MCP-aware app can plug it in. People often compare it to USB-C for AI.
+
+The pieces, as in the diagram above:
+
+- **Host**: the AI app you use, such as a chat app or code editor. It runs the LLM.
+- **Client**: a connector inside the host, one per server.
+- **Server**: a small program that offers capabilities.
+
+Servers offer three kinds of capability. Tap the chips above to explore them:
+
+- **Tools**: actions the model can call, like \`get_weather\`.
+- **Resources**: data the app can read into context, like a file.
+- **Prompts**: reusable templates a user can pick.
+
+Each tool is described by a **name**, a **description** and a **JSON Schema** for its input. The model reads those to decide when and how to call it, so a clear description matters. With the official Python SDK, a decorated function becomes a tool and the schema is generated from its type hints:`,
+  code: py`from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("weather")
+
+@mcp.tool()
+def get_weather(city: str, units: str = "celsius") -> str:
+    """Get the current temperature for a city."""
+    ...
+
+mcp.run()`,
+  terms: [["Host", "The AI app that runs the model and MCP clients."], ["MCP server", "A program exposing tools, resources and prompts."], ["Tool", "A function the model can ask the host to call."], ["JSON Schema", "A description of what inputs a tool accepts."]],
+  check: "What's the difference between an MCP tool and an MCP resource? Give an example of each.",
+  ex: {
+    file: "weather_tool.py",
+    task: `Write the descriptor an MCP server sends for a weather tool: what the model sees before it decides to call it. Fill in the description and the JSON Schema for \`city\` and \`units\`.`,
+    starter: py`def get_weather(city, units="celsius"):
+    fake = {"lisbon": 21, "oslo": 4, "tokyo": 17}
+    temp = fake.get(city.lower())
+    if temp is None:
+        return f"No weather data for {city}."
+    if units == "fahrenheit":
+        temp = round(temp * 9 / 5 + 32)
+    return f"{city}: {temp} degrees {units}"
+
+weather_tool = {
+    "name": "get_weather",
+    "description": "",   # TODO: say what it does and when to use it
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            # TODO: "city" is a string.
+            # TODO: "units" is a string, either "celsius" or "fahrenheit" (use "enum").
+        },
+        "required": [],  # TODO: which input must always be given?
+    },
+}
+
+print(weather_tool)
+print(get_weather("Oslo"))
+`,
+    tests: py`__p = lambda: weather_tool["inputSchema"]["properties"]
+__check('name is "get_weather"', lambda: weather_tool["name"] == "get_weather")
+__check("has a helpful description (20+ characters)", lambda: len(weather_tool["description"].strip()) >= 20)
+__check('"city" is a string property', lambda: __p()["city"]["type"] == "string")
+__check('"units" is a string limited to celsius/fahrenheit', lambda: __p()["units"]["type"] == "string" and set(__p()["units"]["enum"]) == {"celsius", "fahrenheit"})
+__check('only "city" is required', lambda: weather_tool["inputSchema"]["required"] == ["city"])
+`,
+    hint: "Each property is its own small dict, e.g. `\"city\": {\"type\": \"string\", \"description\": \"City name, e.g. Lisbon\"}`. For units add `\"enum\": [\"celsius\", \"fahrenheit\"]`. Set `\"required\": [\"city\"]` because units has a default.",
+    solution: py`def get_weather(city, units="celsius"):
+    fake = {"lisbon": 21, "oslo": 4, "tokyo": 17}
+    temp = fake.get(city.lower())
+    if temp is None:
+        return f"No weather data for {city}."
+    if units == "fahrenheit":
+        temp = round(temp * 9 / 5 + 32)
+    return f"{city}: {temp} degrees {units}"
+
+weather_tool = {
+    "name": "get_weather",
+    "description": "Get the current temperature for a city. Use when the user asks about weather.",
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "city": {"type": "string", "description": "City name, e.g. Lisbon"},
+            "units": {"type": "string", "enum": ["celsius", "fahrenheit"],
+                      "description": "Temperature units (default celsius)"},
+        },
+        "required": ["city"],
+    },
+}
+
+print(weather_tool)
+print(get_weather("Oslo"))
+`
+  } },
+
+{ id: "mcp-calls", track: 3, title: "A tool call, message by message", visual: "mcpflow",
+  lesson: `MCP messages use **JSON-RPC 2.0**: small JSON objects with a \`method\`, \`params\` and an \`id\` that ties each response to its request. They travel over **stdio** (for a local server) or **HTTP** (for a remote one).
+
+Step through the conversation above. Notice that the model never talks to the server directly:
+
+1. The client connects and calls \`initialize\`, then \`tools/list\` to learn what's available.
+2. The host gives those tool descriptions to the LLM along with your question.
+3. The LLM replies with a request to use a tool.
+4. The host, usually after asking you, sends \`tools/call\` to the server.
+5. The result goes back to the LLM, which writes the final answer.
+
+This loop of think, call, observe and repeat is what makes an LLM an **agent**. Keeping the host in the middle is a safety feature: it decides which servers are connected and can ask you before anything runs.`,
+  terms: [["JSON-RPC", "A tiny request/response format using JSON."], ["tools/list", "Asks a server which tools it offers."], ["tools/call", "Asks a server to run one tool with arguments."], ["Agent loop", "Think, call a tool, observe, repeat."]],
+  check: "Why does the host sit between the LLM and the MCP server instead of letting the model call the server directly?",
+  ex: {
+    file: "server.py", uses: ["mcp"],
+    task: `Write the heart of an MCP server: a \`handle(request)\` function that answers \`tools/list\` and \`tools/call\` JSON-RPC messages. Your \`get_weather\` and \`weather_tool\` from the last lesson are loaded.`,
+    starter: py`# get_weather() and weather_tool from the last lesson are loaded for you.
+TOOLS = {"get_weather": get_weather}
+
+def handle(request):
+    # request looks like:
+    #   {"jsonrpc": "2.0", "id": 1, "method": "...", "params": {...}}
+    #
+    # "tools/list" -> "result": {"tools": [weather_tool]}
+    # "tools/call" -> params has "name" and "arguments". Run the tool with
+    #                 the arguments, and return
+    #                 "result": {"content": [{"type": "text", "text": output}]}
+    # any other method -> "error": {"code": -32601, "message": "Method not found"}
+    #
+    # Every response has "jsonrpc": "2.0" and the same "id" as the request.
+    pass
+
+print(handle({"jsonrpc": "2.0", "id": 1, "method": "tools/list"}))
+print(handle({"jsonrpc": "2.0", "id": 2, "method": "tools/call",
+              "params": {"name": "get_weather", "arguments": {"city": "Oslo"}}}))
+`,
+    tests: py`__r1 = lambda: handle({"jsonrpc": "2.0", "id": 1, "method": "tools/list"})
+__r2 = lambda: handle({"jsonrpc": "2.0", "id": 7, "method": "tools/call", "params": {"name": "get_weather", "arguments": {"city": "Oslo"}}})
+__check("tools/list returns the weather tool", lambda: __r1()["result"]["tools"][0]["name"] == "get_weather")
+__check('responses echo "jsonrpc": "2.0" and the id', lambda: __r1()["jsonrpc"] == "2.0" and __r1()["id"] == 1 and __r2()["id"] == 7)
+__check("tools/call runs the tool and returns text", lambda: "Oslo: 4" in __r2()["result"]["content"][0]["text"] and __r2()["result"]["content"][0]["type"] == "text")
+__check("passes every argument through", lambda: "39" in handle({"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "get_weather", "arguments": {"city": "Oslo", "units": "fahrenheit"}}})["result"]["content"][0]["text"])
+__check("unknown method gives error -32601", lambda: handle({"jsonrpc": "2.0", "id": 4, "method": "nope"})["error"]["code"] == -32601)
+`,
+    hint: "Read `method = request.get(\"method\")` and branch on it. For a call: `fn = TOOLS[params[\"name\"]]` then `text = fn(**params[\"arguments\"])`. The `**` unpacks the arguments dict into keyword arguments.",
+    solution: py`TOOLS = {"get_weather": get_weather}
+
+def handle(request):
+    rid = request.get("id")
+    method = request.get("method")
+    if method == "tools/list":
+        return {"jsonrpc": "2.0", "id": rid, "result": {"tools": [weather_tool]}}
+    if method == "tools/call":
+        params = request.get("params", {})
+        fn = TOOLS.get(params.get("name"))
+        if fn is None:
+            return {"jsonrpc": "2.0", "id": rid,
+                    "result": {"content": [{"type": "text", "text": "Unknown tool"}], "isError": True}}
+        text = fn(**params.get("arguments", {}))
+        return {"jsonrpc": "2.0", "id": rid,
+                "result": {"content": [{"type": "text", "text": text}]}}
+    return {"jsonrpc": "2.0", "id": rid,
+            "error": {"code": -32601, "message": "Method not found"}}
+
+print(handle({"jsonrpc": "2.0", "id": 1, "method": "tools/list"}))
+print(handle({"jsonrpc": "2.0", "id": 2, "method": "tools/call",
+              "params": {"name": "get_weather", "arguments": {"city": "Oslo"}}}))
+`
+  } }
+];
+
+const LEVELS = {
+  beginner: "The student is new to AI and is learning Python. Use everyday analogies, define any jargon, and keep code tiny and well commented.",
+  coder: "The student is comfortable with Python. Use short Python snippets where they help, relate ideas to programming concepts, and keep the maths light.",
+  math: "The student wants the mathematical view. Use notation and small worked numeric examples, explain each symbol in words, and show the matching Python."
+};
+const TEACH = "Teach me this lesson step by step";
+const CHIPS = ["Explain it more simply", "Give me an analogy", "Show it in Python", "What's a common misconception?", "Quiz me with one question"];
+
+// ---------------------------------------------------------------- storage
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("gradient2:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("gradient2:" + k, JSON.stringify(v)); } catch {} }
+};
+let prog = store.get("prog", {});        // id -> {code, quiz}
+let drafts = store.get("drafts", {});    // id -> code
+let passed = store.get("passed", {});    // id -> passing code (reused by later lessons)
+let attempts = store.get("attempts", {});
+let level = store.get("level", "beginner");
+let chats = store.get("chats", {});
+let current = store.get("topic", TOPICS[0].id);
+if (!TOPICS.some(t => t.id === current)) current = TOPICS[0].id;
+const P = id => (prog[id] = prog[id] || {});
+const learned = id => !!(prog[id] && prog[id].code && prog[id].quiz);
+
+// ---------------------------------------------------------------- markdown
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function inline(s) {
+  return s.split(/(`[^`]+`)/g).map(p => /^`[^`]+`$/.test(p) ? "<code>" + esc(p.slice(1, -1)) + "</code>"
+    : esc(p).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/(^|[^*\w])\*([^*\n]+)\*(?!\w)/g, "$1<em>$2</em>")).join("");
+}
+function md(src) {
+  const lines = src.replace(/\r/g, "").split("\n"), out = [];
+  const isUl = l => /^\s*[-*•]\s+/.test(l), isOl = l => /^\s*\d+[.)]\s+/.test(l), isFence = l => /^\s*```/.test(l), isH = l => /^#{1,6}\s/.test(l);
+  let i = 0;
+  while (i < lines.length) {
+    const l = lines[i];
+    if (isFence(l)) { const buf = []; i++; while (i < lines.length && !isFence(lines[i])) buf.push(lines[i++]); i++; out.push("<pre><code>" + esc(buf.join("\n")) + "</code></pre>"); }
+    else if (isH(l)) { out.push("<h4>" + inline(l.replace(/^#+\s*/, "")) + "</h4>"); i++; }
+    else if (isUl(l) || isOl(l)) {
+      const ord = isOl(l), test = ord ? isOl : isUl, items = [];
+      while (i < lines.length && test(lines[i])) items.push(lines[i++].replace(/^\s*([-*•]|\d+[.)])\s+/, ""));
+      out.push(`<${ord ? "ol" : "ul"}>` + items.map(x => "<li>" + inline(x) + "</li>").join("") + `</${ord ? "ol" : "ul"}>`);
+    } else if (!l.trim()) i++;
+    else { const buf = []; while (i < lines.length && lines[i].trim() && !isFence(lines[i]) && !isH(lines[i]) && !isUl(lines[i]) && !isOl(lines[i])) buf.push(lines[i++]); out.push("<p>" + inline(buf.join(" ")) + "</p>"); }
+  }
+  return out.join("");
+}
+const plain = t => [t.lesson, t.formula || "", t.lesson2 || "", t.code || ""].join("\n").replace(/\*\*/g, "");
+
+// ---------------------------------------------------------------- Claude
+let sample = null;
+const sampleReady = (async () => { try { sample = window.claude ? await window.claude.use("sample") : null; } catch { sample = null; } return sample; })();
+const ERR = {
+  not_granted: "The tutor wasn't allowed to use Claude in this view. You can change that in this page's permissions.",
+  sampling_disabled: "Claude isn't available for this account.",
+  rate_limited: "That's a lot of requests in a short time. Wait a minute, then try again.",
+  session_expired: "Your Claude session expired. Sign in again, then retry.",
+  refused: "The tutor couldn't answer that one. Try rephrasing.",
+  prompt_too_large: "This conversation got too long. Clear it and start fresh.",
+  invalid_json: "The quiz came back in a format I couldn't read. Try making it again.",
+  empty_completion: "The tutor didn't produce an answer. Try asking a little differently."
+};
+const errText = e => ERR[e && e.code] || "Couldn't reach the tutor. Check your connection and try again.";
+const PERMANENT = ["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"];
+async function streamInto(el, input, opts = {}) {
+  await sampleReady;
+  if (!sample) { el.innerHTML = `<p class="muted">The tutor needs Claude, which isn't available in this view. Open this page in the Claude app or on claude.ai.</p>`; return null; }
+  el.innerHTML = `<p class="thinking">Thinking…</p>`;
+  try {
+    const r = await sample(input, { cache: false, ...opts, onText: ({ text }) => { el.innerHTML = md(text); } });
+    return r.text;
+  } catch (e) {
+    el.innerHTML = (e && e.text ? md(e.text) : "") + (e && e.code === "cancelled" ? "" : `<p class="muted">${esc(errText(e))}</p>`);
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------- Python runtime (Brython, loaded on first run)
+const BRY = "https://cdn.jsdelivr.net/npm/brython@3.14.3/";
+const RUNNER = py`from browser import window
+import sys, json, traceback
+
+class _Out:
+    def __init__(self):
+        self.buf = []
+    def write(self, s):
+        self.buf.append(str(s))
+    def flush(self):
+        pass
+
+def _run(src):
+    out = _Out()
+    old = (sys.stdout, sys.stderr)
+    sys.stdout = out
+    sys.stderr = out
+    ns = {"__name__": "__main__"}
+    err = None
+    try:
+        exec(src, ns)
+    except BaseException:
+        err = traceback.format_exc()
+    finally:
+        sys.stdout, sys.stderr = old
+    return json.dumps({"out": "".join(out.buf), "err": err, "results": ns.get("__results", [])})
+
+window.pyRun = _run
+`;
+const HARNESS = py`__results = []
+def __check(name, fn):
+    try:
+        ok = fn()
+        __results.append([name, bool(ok), "" if ok else "not quite: check the expected value"])
+    except AssertionError as e:
+        __results.append([name, False, str(e) or "assertion failed"])
+    except Exception as e:
+        __results.append([name, False, type(e).__name__ + ": " + str(e)])
+import sys as __sys
+class __Quiet:
+    def write(self, s): pass
+    def flush(self): pass
+__real_out = __sys.stdout
+`;
+let pyPromise = null;
+function loadScript(src) {
+  return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = () => rej(new Error("load")); document.head.append(s); });
+}
+function loadPython() {
+  if (pyPromise) return pyPromise;
+  pyPromise = (async () => {
+    if (!window.__BRYTHON__) await loadScript(BRY + "brython.min.js");
+    await loadScript(BRY + "brython_stdlib.js");
+    window.__BRYTHON__.runPythonSource(RUNNER, { debug: 0 });
+    for (let i = 0; i < 100 && typeof window.pyRun !== "function"; i++) await new Promise(r => setTimeout(r, 100));
+    if (typeof window.pyRun !== "function") throw new Error("init");
+    return window.pyRun;
+  })();
+  pyPromise.catch(() => { pyPromise = null; });
+  return pyPromise;
+}
+
+// ---------------------------------------------------------------- DOM helpers
+const $ = id => document.getElementById(id);
+const h = (tag, attrs = {}, html = "") => { const e = document.createElement(tag); for (const k in attrs) { if (k === "class") e.className = attrs[k]; else if (k.startsWith("on")) e[k] = attrs[k]; else e.setAttribute(k, attrs[k]); } if (html) e.innerHTML = html; return e; };
+const topic = () => TOPICS.find(t => t.id === current);
+const SVGNS = "http://www.w3.org/2000/svg";
+const s = (tag, attrs = {}) => { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+const vdot = (a, b) => a.reduce((t, x, i) => t + x * b[i], 0), vnorm = a => Math.sqrt(vdot(a, a));
+const vcos = (a, b) => { const n = vnorm(a) * vnorm(b); return n ? vdot(a, b) / n : 0; };
+const softmaxJS = (z, T = 1) => { const sc = z.map(v => v / T), m = Math.max(...sc), e = sc.map(v => Math.exp(v - m)), t = e.reduce((a, b) => a + b, 0); return e.map(v => v / t); };
+function labCard(title, kicker) { const c = h("div", { class: "lab" }); c.append(h("div", { class: "lab-head" }, `<h3>${esc(title)}</h3><span>${esc(kicker)}</span>`)); return c; }
+function svgPoint(svg, evt) { const p = svg.createSVGPoint(); p.x = evt.clientX; p.y = evt.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); }
+
+// ---------------------------------------------------------------- VISUALS
+const VISUALS = {
+  vectors(root) {
+    const card = labCard("Drag the arrow tips", "interactive · cosine similarity");
+    const grid = h("div", { class: "lab-grid" });
+    const svg = s("svg", { viewBox: "-5.4 -5.4 10.8 10.8", role: "img", "aria-label": "Two vectors a and b on a grid; drag their tips" });
+    for (let i = -5; i <= 5; i++) {
+      svg.append(s("line", { x1: i, y1: -5, x2: i, y2: 5, style: "stroke:var(--line)", "stroke-width": i === 0 ? 0.05 : 0.02 }));
+      svg.append(s("line", { x1: -5, y1: i, x2: 5, y2: i, style: "stroke:var(--line)", "stroke-width": i === 0 ? 0.05 : 0.02 }));
+    }
+    const arc = s("path", { fill: "none", style: "stroke:var(--muted)", "stroke-width": 0.05, "stroke-dasharray": "0.12 0.1" });
+    svg.append(arc);
+    const vecs = { a: { v: [3, 1], color: "var(--c1)" }, b: { v: [1, 3], color: "var(--c2)" } };
+    for (const k in vecs) {
+      const o = vecs[k];
+      o.line = s("line", { x1: 0, y1: 0, style: `stroke:${o.color}`, "stroke-width": 0.12, "stroke-linecap": "round" });
+      o.head = s("path", { style: `fill:${o.color}` });
+      o.knob = s("circle", { r: 0.42, style: `fill:${o.color}`, opacity: 0.22, cursor: "grab" });
+      o.label = s("text", { "font-size": 0.6, style: `fill:${o.color};font-family:var(--font-mono);font-weight:600` });
+      o.label.textContent = k;
+      svg.append(o.line, o.head, o.label, o.knob);
+      o.knob.addEventListener("pointerdown", e => { e.preventDefault(); drag = k; svg.setPointerCapture(e.pointerId); });
+    }
+    let drag = null;
+    svg.addEventListener("pointermove", e => {
+      if (!drag) return;
+      const p = svgPoint(svg, e);
+      let x = Math.max(-5, Math.min(5, Math.round(p.x * 2) / 2)), y = Math.max(-5, Math.min(5, Math.round(-p.y * 2) / 2));
+      if (x === 0 && y === 0) x = 0.5;
+      vecs[drag].v = [x, y]; draw();
+    });
+    const end = () => { drag = null; };
+    svg.addEventListener("pointerup", end); svg.addEventListener("pointercancel", end);
+    const side = h("div", { class: "prim" });
+    const stats = h("dl", { class: "stats" });
+    const verdict = h("div", { class: "verdict" });
+    const presets = h("div", { class: "row" });
+    [["Same direction", [2, 1], [4, 2]], ["Right angle", [3, 0], [0, 2]], ["Opposite", [2, 2], [-3, -3]], ["Close", [4, 1], [3, 2]]].forEach(([n, a, b]) =>
+      presets.append(h("button", { class: "btn small", onclick: () => { vecs.a.v = a; vecs.b.v = b; draw(); } }, esc(n))));
+    side.append(verdict, stats, h("p", { class: "muted", style: "margin:0;font-size:.86rem" }, "Tip: making one arrow longer without turning it leaves the cosine unchanged."), presets);
+    function draw() {
+      for (const k in vecs) {
+        const o = vecs[k], [x, y] = o.v, L = Math.hypot(x, y), ux = x / L, uy = y / L;
+        const bx = x - ux * 0.45, by = y - uy * 0.45;
+        o.line.setAttribute("x2", bx); o.line.setAttribute("y2", -by);
+        o.head.setAttribute("d", `M${x},${-y} L${bx - uy * 0.25},${-(by + ux * 0.25)} L${bx + uy * 0.25},${-(by - ux * 0.25)} Z`);
+        o.knob.setAttribute("cx", x); o.knob.setAttribute("cy", -y);
+        o.label.setAttribute("x", x + 0.25); o.label.setAttribute("y", -y - 0.3);
+      }
+      const a = vecs.a.v, b = vecs.b.v, c = vcos(a, b), ang = Math.acos(Math.max(-1, Math.min(1, c)));
+      const a1 = Math.atan2(a[1], a[0]), a2 = Math.atan2(b[1], b[0]);
+      let d = a2 - a1; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
+      const r = 1.1, p1 = [r * Math.cos(a1), r * Math.sin(a1)], p2 = [r * Math.cos(a1 + d), r * Math.sin(a1 + d)];
+      arc.setAttribute("d", `M${p1[0]},${-p1[1]} A${r},${r} 0 0 ${d > 0 ? 0 : 1} ${p2[0]},${-p2[1]}`);
+      stats.innerHTML = `<dt>a</dt><dd>[${a.join(", ")}]</dd><dt>b</dt><dd>[${b.join(", ")}]</dd>
+        <dt>a · b</dt><dd>${vdot(a, b).toFixed(2)}</dd><dt>|a| × |b|</dt><dd>${vnorm(a).toFixed(2)} × ${vnorm(b).toFixed(2)}</dd>
+        <dt>angle</dt><dd>${(ang * 180 / Math.PI).toFixed(0)}°</dd><dt>cosine</dt><dd><b>${c.toFixed(3)}</b></dd>`;
+      verdict.textContent = c > 0.9 ? "Very similar" : c > 0.5 ? "Somewhat similar" : c > -0.2 ? "Unrelated" : c > -0.9 ? "Pointing apart" : "Opposite";
+      verdict.style.color = c > 0.5 ? "var(--ok)" : c < -0.2 ? "var(--bad)" : "var(--muted)";
+    }
+    grid.append(svg, side); card.append(grid); root.append(card); draw();
+  },
+
+  embeddings(root) {
+    const card = labCard("A 2D map of word embeddings", "interactive · nearest neighbours");
+    const W = {
+      man: [2.2, 0.6, 1], woman: [1.8, 1.6, 1], king: [3.4, 1.4, 1], queen: [3.0, 2.4, 1], prince: [2.9, 1.0, 1], princess: [2.5, 2.1, 1],
+      cat: [-2.0, 2.4, 2], kitten: [-1.5, 2.6, 2], dog: [-2.6, 2.0, 2], puppy: [-2.1, 1.7, 2],
+      apple: [-2.6, -1.6, 3], banana: [-2.1, -2.1, 3], orange: [-3.1, -1.9, 3], grape: [-1.7, -1.4, 3],
+      car: [1.5, -2.6, 4], bus: [2.2, -2.5, 4], bike: [0.9, -3.0, 4], train: [2.8, -2.0, 4]
+    };
+    const grid = h("div", { class: "lab-grid" });
+    const svg = s("svg", { viewBox: "-4.4 -3.8 8.8 7.6", role: "img", "aria-label": "Scatter of words grouped by meaning; tap a word" });
+    svg.append(s("line", { x1: -4.4, y1: 0, x2: 4.4, y2: 0, style: "stroke:var(--line)", "stroke-width": 0.03 }), s("line", { x1: 0, y1: -3.8, x2: 0, y2: 3.8, style: "stroke:var(--line)", "stroke-width": 0.03 }));
+    const layer = s("g"); svg.append(layer);
+    const pts = s("g"); svg.append(pts);
+    const nodes = {};
+    for (const w in W) {
+      const [x, y, c] = W[w];
+      const g = s("g", { cursor: "pointer", tabindex: 0, role: "button", "aria-label": w });
+      const dot = s("circle", { cx: x, cy: -y, r: 0.13, style: `fill:var(--c${c})` });
+      const t = s("text", { x: x + 0.18, y: -y + 0.11, "font-size": 0.3, style: "fill:var(--ink);font-family:var(--font-body)" }); t.textContent = w;
+      const hit = s("circle", { cx: x, cy: -y, r: 0.38, fill: "transparent" });
+      g.append(dot, t, hit); pts.append(g); nodes[w] = { g, dot };
+      g.onclick = () => pick(w); g.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(w); } };
+    }
+    const side = h("div", { class: "prim" });
+    const info = h("div");
+    const btn = h("button", { class: "btn small", onclick: analogy }, "Try king − man + woman");
+    side.append(info, h("div", { class: "row" }, ""), btn);
+    side.querySelector(".row").append(btn);
+    function clear() { layer.innerHTML = ""; for (const w in nodes) { nodes[w].dot.setAttribute("r", 0.13); nodes[w].g.style.opacity = 1; } }
+    function ray(x, y, color, width = 0.03, dash = "0.1 0.08") { layer.append(s("line", { x1: 0, y1: 0, x2: x, y2: -y, style: `stroke:${color}`, "stroke-width": width, "stroke-dasharray": dash })); }
+    function pick(w) {
+      clear();
+      const v = W[w].slice(0, 2);
+      const ranked = Object.keys(W).filter(o => o !== w).map(o => [o, vcos(v, W[o].slice(0, 2))]).sort((a, b) => b[1] - a[1]);
+      ray(v[0], v[1], "var(--ink)", 0.04, "none");
+      ranked.slice(0, 3).forEach(([o]) => { ray(W[o][0], W[o][1], "var(--accent)"); layer.append(s("line", { x1: v[0], y1: -v[1], x2: W[o][0], y2: -W[o][1], style: "stroke:var(--accent)", "stroke-width": 0.05 })); });
+      nodes[w].dot.setAttribute("r", 0.2);
+      const far = ranked[ranked.length - 1];
+      info.innerHTML = `<p style="margin:0 0 6px">Nearest to <b>${esc(w)}</b> by cosine:</p>` + bars(ranked.slice(0, 3)) +
+        `<p class="muted" style="margin:8px 0 0;font-size:.86rem">Least similar: ${esc(far[0])} (${far[1].toFixed(2)}). The dashed rays show that cosine compares directions from the origin.</p>`;
+    }
+    function analogy() {
+      clear();
+      const r = [W.king[0] - W.man[0] + W.woman[0], W.king[1] - W.man[1] + W.woman[1]];
+      const ranked = Object.keys(W).filter(o => !["king", "man", "woman"].includes(o)).map(o => [o, vcos(r, W[o].slice(0, 2))]).sort((a, b) => b[1] - a[1]);
+      const arrow = (a, b, col) => layer.append(s("line", { x1: a[0], y1: -a[1], x2: b[0], y2: -b[1], style: `stroke:${col}`, "stroke-width": 0.06, "stroke-linecap": "round" }));
+      const mid = [W.king[0] - W.man[0], W.king[1] - W.man[1]];
+      arrow(W.king, mid, "var(--c2)"); arrow(mid, r, "var(--c3)");
+      layer.append(s("circle", { cx: r[0], cy: -r[1], r: 0.26, fill: "none", style: "stroke:var(--accent)", "stroke-width": 0.06 }));
+      ["king", "man", "woman"].forEach(w => nodes[w].dot.setAttribute("r", 0.19));
+      info.innerHTML = `<p style="margin:0 0 6px"><b>king − man + woman</b> lands at [${r.map(v => v.toFixed(1)).join(", ")}]. The closest word is:</p>` + bars(ranked.slice(0, 3)) +
+        `<p class="muted" style="margin:8px 0 0;font-size:.86rem">The orange arrow subtracts "man", the green one adds "woman". The direction between them acts like a "gender" axis.</p>`;
+    }
+    const bars = list => `<div class="bars">` + list.map(([o, c], i) => `<div class="bar${i === 0 ? " hit" : ""}"><span class="lbl">${esc(o)}</span><div class="track-b"><div class="fill" style="width:${Math.max(0, c) * 100}%"></div></div><span class="pct">${c.toFixed(3)}</span></div>`).join("") + `</div>`;
+    grid.append(svg, side); card.append(grid); root.append(card); pick("cat");
+  },
+
+  tokens(root) {
+    const card = labCard("Watch text become tokens", "interactive · simplified tokenizer");
+    const inp = h("input", { type: "text", id: "tokInput", "aria-label": "Text to tokenize", value: "Tokenizers split unbelievable words into pieces, but common words stay whole!" });
+    const out = h("div", { class: "tok-out", "aria-live": "polite" }), ids = h("div", { class: "tok-ids" }), stats = h("dl", { class: "stats" });
+    const SUF = ["ization", "ations", "ation", "ingly", "ness", "ment", "able", "ible", "less", "ing", "ers", "est", "ful", "ous", "ive", "ize", "ed", "er", "ly", "s"];
+    const PRE = ["un", "re", "pre", "dis", "over", "under", "micro", "trans", "inter", "anti"];
+    const COMMON = new Set("the a an and or but of to in on at for with is are was were be it this that these those you i we they he she my your our their as by from not have has had do does did can will would should could so if then than very just about into over under also more most some any all no yes what when where who why how which there here up down out new old good bad big small words word text model models stay whole common split".split(" "));
+    function pieces(word) {
+      const lw = word.toLowerCase();
+      if (word.length <= 4 || COMMON.has(lw)) return [word];
+      const res = []; let core = word, tail = [];
+      for (const p of PRE) if (lw.startsWith(p) && word.length - p.length >= 4) { res.push(word.slice(0, p.length)); core = word.slice(p.length); break; }
+      for (let guard = 0; guard < 2; guard++) {
+        const lc = core.toLowerCase(); let hit = false;
+        for (const sf of SUF) if (lc.endsWith(sf) && core.length - sf.length >= 3) { tail.unshift(core.slice(-sf.length)); core = core.slice(0, -sf.length); hit = true; break; }
+        if (!hit) break;
+      }
+      while (core.length > 6) { res.push(core.slice(0, 5)); core = core.slice(5); }
+      res.push(core);
+      return res.concat(tail);
+    }
+    function tokenize(text) {
+      const raw = text.match(/\s*[A-Za-z]+|\s*\d{1,3}|\s*[^\sA-Za-z\d]|\s+$/g) || [];
+      const toks = [];
+      raw.forEach(r => { const lead = r.match(/^\s*/)[0], body = r.slice(lead.length); if (!body) return; pieces(body).forEach((p, i) => toks.push((i === 0 ? lead.replace(/\s+/g, " ") : "") + p)); });
+      return toks;
+    }
+    const idOf = t => { let x = 7; for (const ch of t) x = (x * 31 + ch.charCodeAt(0)) % 50257; return x; };
+    function draw() {
+      const text = inp.value, toks = tokenize(text);
+      out.innerHTML = toks.map((t, i) => `<span class="tok" style="background:var(--t${(i % 5) + 1})">${esc(t.replace(/ /g, "·"))}<small>${idOf(t)}</small></span>`).join("") || `<span class="muted">Type something above.</span>`;
+      ids.textContent = toks.length ? "ids: [" + toks.map(idOf).join(", ") + "]" : "";
+      const words = (text.match(/[A-Za-z0-9']+/g) || []).length;
+      stats.innerHTML = `<dt>characters</dt><dd>${text.length}</dd><dt>words</dt><dd>${words}</dd><dt>tokens</dt><dd><b>${toks.length}</b></dd><dt>tokens / word</dt><dd>${words ? (toks.length / words).toFixed(2) : "–"}</dd>`;
+    }
+    inp.oninput = draw;
+    const presets = h("div", { class: "row" });
+    ["Retrieval-augmented generation", "strawberry", "The cat sat on the mat.", "internationalization is unbelievable", "print(cosine(a, b))"].forEach(p => presets.append(h("button", { class: "btn small", onclick: () => { inp.value = p; draw(); } }, esc(p))));
+    card.append(inp, presets, out, ids, stats,
+      h("p", { class: "muted", style: "margin:0;font-size:.84rem" }, "· marks a space, which real tokenizers usually attach to the start of the next word. Small numbers are token ids."));
+    root.append(card); draw();
+  },
+
+  nexttoken(root) {
+    const card = labCard("Build a sentence one token at a time", "interactive · softmax + temperature");
+    const NEXT = {
+      the: { cat: 2.0, model: 1.7, robot: 1.3, river: 0.6, idea: 0.3 },
+      a: { cat: 1.4, robot: 1.6, model: 1.2, song: 1.0, idea: 1.3 },
+      cat: { sat: 2.1, slept: 1.6, chased: 1.2, coded: -0.4, ".": 0.2 },
+      model: { predicts: 2.2, learned: 1.5, wrote: 1.1, slept: -0.6, ".": 0.1 },
+      robot: { walked: 1.9, learned: 1.4, beeped: 1.3, sat: 0.5, ".": 0.0 },
+      river: { flowed: 2.3, sang: 0.1, sat: -0.5, ".": 0.6, learned: -1.0 },
+      idea: { grew: 1.8, flowed: 0.4, learned: 0.2, ".": 0.9, sat: -0.8 },
+      song: { played: 2.0, flowed: 0.9, grew: 0.6, ".": 1.0, sat: -0.9 },
+      sat: { on: 2.4, down: 1.6, quietly: 1.2, ".": 1.0, still: 0.6 },
+      slept: { quietly: 1.4, soundly: 1.6, on: 1.3, ".": 1.8, all: 1.0 },
+      chased: { the: 2.5, a: 1.8, mice: 1.0, shadows: 0.8, ".": -0.5 },
+      coded: { quietly: 0.8, all: 1.0, the: 0.9, a: 0.7, ".": 1.6 },
+      predicts: { the: 2.1, words: 1.9, tokens: 1.7, a: 0.8, ".": -0.5 },
+      learned: { patterns: 1.9, the: 1.4, quickly: 1.3, a: 0.6, ".": 0.7 },
+      wrote: { code: 1.8, a: 1.6, poems: 1.4, the: 1.2, ".": 0.3 },
+      walked: { to: 1.8, home: 1.7, on: 1.2, quietly: 1.0, ".": 1.1 },
+      beeped: { twice: 1.8, loudly: 1.3, quietly: 1.2, at: 1.0, ".": 1.7 },
+      flowed: { past: 1.5, to: 1.6, quietly: 1.3, on: 0.7, ".": 1.4 },
+      grew: { stronger: 1.6, quickly: 1.7, into: 1.2, on: 0.5, ".": 1.5 },
+      played: { softly: 1.6, all: 1.0, on: 1.1, loudly: 1.2, ".": 1.5 },
+      on: { the: 2.6, a: 1.9, and: -0.5, ".": -1.0, quietly: -1.5 },
+      to: { the: 2.3, a: 1.6, ".": -1.0, and: -0.8, home: 0.4 },
+      at: { the: 2.2, a: 1.5, ".": -0.5, night: 1.1, home: 0.6 },
+      into: { the: 2.1, a: 1.8, ".": -1.0, something: 1.0, and: -1.0 },
+      past: { the: 2.3, a: 1.2, ".": 0.2, and: 0.5, quietly: 0.1 },
+      and: { the: 1.8, then: 1.4, a: 1.2, slept: 0.6, ".": -1.0 },
+      then: { the: 1.4, slept: 1.2, learned: 1.0, a: 0.8, ".": 0.2 }
+    };
+    const DEFAULT = { ".": 1.8, and: 1.2, the: 1.0, then: 0.7, quietly: 0.5 };
+    let words = ["The"], T = 1.0, lastNew = -1, finished = false;
+    const sentence = h("div", { class: "sentence", "aria-live": "polite" });
+    const temp = h("input", { type: "range", min: "0.1", max: "2", step: "0.05", value: "1", id: "tempRange" });
+    const tv = h("span", { class: "readout" }, "1.00");
+    const lab = h("label", { for: "tempRange" }, "Temperature "); lab.append(temp, tv);
+    const barsEl = h("div", { class: "bars" });
+    const note = h("p", { class: "muted", style: "margin:0;font-size:.86rem" });
+    const row = h("div", { class: "row" });
+    const sBtn = h("button", { class: "btn primary small", onclick: () => step(false) }, "Sample next token");
+    const gBtn = h("button", { class: "btn small", onclick: () => step(true) }, "Pick the top one");
+    const rBtn = h("button", { class: "btn small", onclick: () => { words = ["The"]; finished = false; lastNew = -1; draw(); } }, "Start over");
+    row.append(sBtn, gBtn, rBtn);
+    const dist = () => { const last = words[words.length - 1].toLowerCase(), m = words.length >= 12 ? { ".": 5, and: 0, the: 0, then: 0, quietly: 0 } : (NEXT[last] || DEFAULT); const ks = Object.keys(m); return { ks, z: ks.map(k => m[k]) }; };
+    function step(greedy) {
+      if (finished) return;
+      const { ks, z } = dist(), p = softmaxJS(z, T);
+      let idx = 0;
+      if (greedy) idx = p.indexOf(Math.max(...p));
+      else { let r = Math.random(), acc = 0; for (idx = 0; idx < p.length; idx++) { acc += p[idx]; if (r <= acc) break; } idx = Math.min(idx, p.length - 1); }
+      words.push(ks[idx]); lastNew = words.length - 1;
+      if (ks[idx] === ".") finished = true;
+      draw();
+    }
+    function draw() {
+      sentence.innerHTML = words.map((w, i) => `<span class="${i === lastNew ? "new" : ""}">${esc(w)}</span>`).join(" ").replace(/ <span class="(new)?">\.<\/span>/, '<span class="$1">.</span>');
+      const { ks, z } = dist(), p = softmaxJS(z, T), order = ks.map((k, i) => i).sort((a, b) => p[b] - p[a]);
+      barsEl.innerHTML = finished ? `<p class="muted" style="margin:0">The model picked "." so the sentence is finished. Start over to try again.</p>` :
+        order.map(i => `<div class="bar"><span class="lbl">${esc(ks[i])}</span><div class="track-b"><div class="fill" style="width:${(p[i] * 100).toFixed(1)}%"></div></div><span class="pct">${(p[i] * 100).toFixed(1)}%</span></div>`).join("");
+      note.textContent = finished ? "" : `Candidates after "${words[words.length - 1]}". Logits: ${ks.map((k, i) => k + " " + z[i].toFixed(1)).join(", ")}.`;
+      sBtn.disabled = gBtn.disabled = finished;
+    }
+    temp.oninput = () => { T = parseFloat(temp.value); tv.textContent = T.toFixed(2); draw(); };
+    card.append(sentence, lab, barsEl, note, row); root.append(card); draw();
+  },
+
+  attention(root) {
+    const card = labCard("Where does each word look?", "interactive · attention weights");
+    const base = ["The", "trophy", "didn't", "fit", "in", "the", "suitcase", "because", "it", "was", "too", "big"];
+    let variant = "big", sel = 8;
+    const wordsEl = h("div", { class: "words" });
+    const cap = h("p", { style: "margin:0" });
+    const row = h("div", { class: "row" });
+    const tog = h("button", { class: "btn small", onclick: () => { variant = variant === "big" ? "small" : "big"; draw(); } });
+    row.append(tog);
+    const svg = s("svg", { viewBox: "0 0 120 26", role: "img", "aria-label": "Attention weights as arcs" });
+    function weights(i) {
+      const n = base.length, w = new Array(n).fill(0.02);
+      const T = 1, S = 6, IT = 8, LAST = 11;
+      if (i === IT) { w[variant === "big" ? T : S] = 0.55; w[variant === "big" ? S : T] = 0.12; w[LAST] = 0.12; w[IT] = 0.06; }
+      else if (i === LAST) { w[variant === "big" ? T : S] = 0.38; w[IT] = 0.25; w[10] = 0.12; w[LAST] = 0.08; }
+      else if (i === 3) { w[T] = 0.3; w[S] = 0.3; w[3] = 0.1; w[2] = 0.12; }
+      else if (i === T || i === S) { w[i] = 0.3; w[3] = 0.25; w[i === T ? S : T] = 0.15; }
+      else { w[i] = 0.35; if (i > 0) w[i - 1] += 0.2; if (i < n - 1) w[i + 1] += 0.2; }
+      const t = w.reduce((a, b) => a + b, 0); return w.map(v => v / t);
+    }
+    function draw() {
+      const ws = base.slice(); ws[11] = variant;
+      const w = weights(sel), max = Math.max(...w);
+      wordsEl.innerHTML = "";
+      ws.forEach((word, i) => {
+        const b = h("button", { class: "word" + (i === sel ? " sel" : ""), "aria-pressed": i === sel ? "true" : "false" }, `${esc(word)}<small>${(w[i] * 100).toFixed(0)}%</small>`);
+        b.style.background = `color-mix(in srgb, var(--accent) ${Math.round(w[i] / max * 70)}%, var(--sheet))`;
+        if (w[i] / max > 0.55) b.style.color = "var(--on-accent)";
+        b.onclick = () => { sel = i; draw(); };
+        wordsEl.append(b);
+      });
+      svg.innerHTML = "";
+      const xs = ws.map((_, i) => 5 + i * (110 / (ws.length - 1)));
+      ws.forEach((_, i) => {
+        if (i === sel) return;
+        const x1 = xs[sel], x2 = xs[i], mid = (x1 + x2) / 2, hgt = Math.min(22, 4 + Math.abs(x2 - x1) * 0.35);
+        svg.append(s("path", { d: `M${x1},24 Q${mid},${24 - hgt * 1.6} ${x2},24`, fill: "none", style: "stroke:var(--accent)", "stroke-width": (0.2 + w[i] * 5).toFixed(2), opacity: (0.15 + w[i] / max * 0.85).toFixed(2) }));
+      });
+      xs.forEach((x, i) => svg.append(s("circle", { cx: x, cy: 24, r: i === sel ? 1.3 : 0.7, style: `fill:${i === sel ? "var(--ink)" : "var(--muted)"}` })));
+      const top = w.map((v, i) => [v, i]).filter(([, i]) => i !== sel).sort((a, b) => b[0] - a[0])[0];
+      cap.innerHTML = `<b>"${esc(ws[sel])}"</b> pays most attention to <b>"${esc(ws[top[1]])}"</b> (${(top[0] * 100).toFixed(0)}%). Tap another word.`;
+      tog.textContent = `Change "${variant}" to "${variant === "big" ? "small" : "big"}"`;
+    }
+    card.append(wordsEl, svg, cap, row); root.append(card); draw();
+  },
+
+  chunking(root) {
+    const card = labCard("Slice a document into chunks", "interactive · size + overlap");
+    const text = "Our café opens at seven on weekdays and eight on weekends. Returns are accepted within thirty days if you bring a receipt. Loyalty members earn one point for every dollar they spend, and ten points buys a free drink. Clean the grinder every week with a dry brush, and never use water on the burrs. Wi-Fi is free for customers, and the password is printed on every receipt.";
+    const words = text.split(/\s+/);
+    const size = h("input", { type: "range", min: "6", max: "40", step: "1", value: "16", id: "chunkSize" });
+    const ov = h("input", { type: "range", min: "0", max: "10", step: "1", value: "4", id: "chunkOverlap" });
+    const sv = h("span", { class: "readout" }), ovv = h("span", { class: "readout" });
+    const l1 = h("label", { for: "chunkSize" }, "Chunk size (words) "); l1.append(size, sv);
+    const l2 = h("label", { for: "chunkOverlap" }, "Overlap (words) "); l2.append(ov, ovv);
+    const summary = h("p", { class: "readout", style: "margin:0" });
+    const list = h("div", { class: "chunks" });
+    function draw() {
+      const n = +size.value, o = Math.min(+ov.value, n - 1), step = n - o;
+      sv.textContent = n; ovv.textContent = o;
+      const chunks = [];
+      for (let st = 0; st < words.length; st += step) { chunks.push([st, Math.min(st + n, words.length)]); if (st + n >= words.length) break; }
+      list.innerHTML = chunks.map(([a, b], ci) => {
+        const prevEnd = ci ? chunks[ci - 1][1] : 0;
+        return `<div class="chunk" style="border-left:4px solid var(--c${(ci % 5) + 1})"><b>chunk ${ci + 1} · words ${a + 1}–${b}</b>` +
+          words.slice(a, b).map((w, k) => (ci && a + k < prevEnd) ? `<mark>${esc(w)}</mark>` : esc(w)).join(" ") + `</div>`;
+      }).join("");
+      summary.textContent = `${words.length} words → ${chunks.length} chunks · highlighted words repeat from the previous chunk`;
+    }
+    size.oninput = ov.oninput = draw;
+    card.append(l1, l2, summary, list); root.append(card); draw();
+  },
+
+  rag(root) {
+    const card = labCard("Step through a RAG pipeline", "interactive · example café handbook");
+    const DOCS = [
+      "Returns are accepted within 30 days with a receipt.",
+      "Our cafe opens at 7am on weekdays and 8am on weekends.",
+      "Loyalty members earn one point for every dollar spent. Ten points buys a free drink.",
+      "Clean the grinder weekly with a dry brush. Never use water on the burrs.",
+      "Wi-Fi is free for customers. The password is printed on your receipt.",
+      "Oat, soy and almond milk are available for no extra charge."
+    ];
+    const STOP = new Set("a an the is are was were be to of and or in on at for with do does did i my me you your we our it this that how what when where which who can".split(" "));
+    const toks = t => (t.toLowerCase().match(/[a-z0-9]+/g) || []).map(w => w.length > 3 && w.endsWith("s") ? w.slice(0, -1) : w).filter(w => !STOP.has(w));
+    const sel = h("select", { id: "ragQ", "aria-label": "Pick a question" });
+    ["When does the cafe open on weekends?", "How do I get a free drink?", "Can I use water to clean the grinder?", "What's the wifi password?", "Do you have oat milk?", "Who founded the cafe?"].forEach(q => sel.append(h("option", {}, esc(q))));
+    const custom = h("input", { type: "text", id: "ragCustom", placeholder: "…or type your own question", "aria-label": "Your own question" });
+    const kIn = h("input", { type: "range", min: "1", max: "3", step: "1", value: "2", id: "ragK" });
+    const kv = h("span", { class: "readout" }, "2");
+    const kl = h("label", { for: "ragK" }, "Top-k "); kl.append(kIn, kv);
+    const stagesEl = h("div", { class: "pipeline" });
+    const STAGES = [["1 · Embed", "the question"], ["2 · Score", "every chunk"], ["3 · Retrieve", "the top k"], ["4 · Augment", "the prompt"], ["5 · Generate", "an answer"]];
+    let stage = 0;
+    STAGES.forEach(([a, b], i) => stagesEl.append(h("button", { class: "stage", onclick: () => { stage = i; draw(); } }, `<b>${a}</b>${b}`)));
+    const view = h("div", { class: "prim" });
+    const nav = h("div", { class: "row" });
+    const prev = h("button", { class: "btn small", onclick: () => { stage = Math.max(0, stage - 1); draw(); } }, "← Back");
+    const next = h("button", { class: "btn primary small", onclick: () => { stage = Math.min(4, stage + 1); draw(); } }, "Next step →");
+    nav.append(prev, next);
+    const q = () => custom.value.trim() || sel.value;
+    function compute() {
+      const vocab = [...new Set([...toks(q()), ...DOCS.flatMap(toks)])].sort();
+      const bow = t => { const ts = toks(t); return vocab.map(w => ts.filter(x => x === w).length); };
+      const qv = bow(q());
+      const scores = DOCS.map((d, i) => ({ i, d, s: vcos(qv, bow(d)) })).sort((a, b) => b.s - a.s);
+      const k = +kIn.value, top = scores.slice(0, k);
+      const prompt = `Answer the question using only the passages below. If the answer isn't there, say you don't know.\n\nPassages:\n${top.map((t, j) => `[${j + 1}] ${t.d}`).join("\n")}\n\nQuestion: ${q()}`;
+      return { qt: toks(q()), scores, top, prompt };
+    }
+    let lastPrompt = "";
+    function draw() {
+      [...stagesEl.children].forEach((c, i) => c.classList.toggle("on", i === stage));
+      const r = compute(); lastPrompt = r.prompt;
+      prev.disabled = stage === 0; next.disabled = stage === 4;
+      if (stage === 0) view.innerHTML = `<p style="margin:0">The question becomes a vector. Here each dimension counts a meaningful word (filler words like "the" are dropped):</p><div class="vec-chips">${r.qt.map(t => `<span class="vec-chip">${esc(t)}: 1</span>`).join("") || '<span class="muted">No meaningful words yet.</span>'}</div><p class="muted" style="margin:0;font-size:.86rem">A real system calls an embedding model here and gets back hundreds of floats.</p>`;
+      if (stage === 1 || stage === 2) view.innerHTML = `<p style="margin:0">${stage === 1 ? "Every chunk is scored by cosine similarity with the question:" : `The top ${r.top.length} chunk${r.top.length > 1 ? "s are" : " is"} kept (green). Everything else is ignored.`}</p><div class="bars">` +
+        r.scores.map((x, j) => `<div class="bar${stage === 2 && j < r.top.length ? " hit" : ""}" style="${stage === 2 && j >= r.top.length ? "opacity:.4" : ""}"><span class="lbl" title="${esc(x.d)}">doc ${x.i + 1}</span><div class="track-b"><div class="fill" style="width:${(x.s * 100).toFixed(1)}%"></div></div><span class="pct">${x.s.toFixed(2)}</span></div>`).join("") +
+        `</div><div class="chunks">${r.scores.slice(0, stage === 2 ? r.top.length : 6).map(x => `<div class="chunk"><b>doc ${x.i + 1}</b>${esc(x.d)}</div>`).join("")}</div>`;
+      if (stage === 3) view.innerHTML = `<p style="margin:0">The retrieved chunks are pasted into the prompt, with an instruction to stick to them:</p><pre class="block">${esc(r.prompt)}</pre>`;
+      if (stage === 4) {
+        view.innerHTML = `<p style="margin:0">Send the augmented prompt to Claude. It only sees the ${r.top.length} retrieved chunk${r.top.length > 1 ? "s" : ""}.</p>`;
+        const box = h("div", { class: "answer-box prose" }, `<p class="muted">Press Generate to get an answer.</p>`);
+        const gen = h("button", { class: "btn primary small" }, "Generate");
+        gen.onclick = async () => { gen.disabled = true; await streamInto(box, lastPrompt, { modelTier: "quick" }); gen.disabled = false; };
+        view.append(h("div", { class: "row" }), box); view.querySelector(".row").append(gen);
+        view.append(h("p", { class: "muted", style: "margin:0;font-size:.86rem" }, `Try "Who founded the cafe?". The answer isn't in the handbook, so a grounded model should say it doesn't know.`));
+      }
+    }
+    sel.onchange = () => { custom.value = ""; stage = 0; draw(); };
+    custom.oninput = () => { if (stage === 4) stage = 0; draw(); };
+    kIn.oninput = () => { kv.textContent = kIn.value; draw(); };
+    const grid = h("div", { class: "lab-grid" });
+    const left = h("div", { class: "prim" }); left.append(sel, custom, kl);
+    const docsEl = h("div", { class: "chunks" }, DOCS.map((d, i) => `<div class="chunk"><b>doc ${i + 1}</b>${esc(d)}</div>`).join(""));
+    const right = h("div", { class: "prim" }, `<span class="readout">The handbook (6 chunks)</span>`); right.append(docsEl);
+    grid.append(left, right);
+    card.append(grid, stagesEl, view, nav); root.append(card); draw();
+  },
+
+  mcparch(root) {
+    const card = labCard("How an AI app plugs into tools", "interactive · tap any chip");
+    const SERVERS = [
+      { name: "Files server", tools: ["read_file", "search_files"], resources: ["file:///notes.md"], prompts: ["summarize_folder"] },
+      { name: "GitHub server", tools: ["create_issue", "list_pull_requests"], resources: ["repo://README.md"], prompts: ["review_pr"] },
+      { name: "Weather server", tools: ["get_weather"], resources: [], prompts: [] }
+    ];
+    const DESC = {
+      tool: n => `<b>Tool · ${esc(n)}</b><br>An action the <b>model</b> decides to call, with arguments matching the tool's JSON Schema. The host usually asks you before running it. Tools can fetch live data (like the weather) or change things (like opening an issue).`,
+      resource: n => `<b>Resource · ${esc(n)}</b><br>Read-only data identified by a URI. The <b>app or user</b> chooses to pull it into the model's context, like attaching a file. Resources don't do anything; they're there to be read.`,
+      prompt: n => `<b>Prompt · ${esc(n)}</b><br>A reusable template the <b>user</b> picks, often shown as a slash command. The server fills it in with the right instructions and context.`,
+      host: () => `<b>Host</b><br>The AI app you're using: a chat app, an IDE or an agent. It runs the LLM, holds the conversation, and decides which servers to connect. It's the gatekeeper that asks for your permission.`,
+      client: () => `<b>MCP client</b><br>A connector inside the host that keeps one connection to one server. It speaks JSON-RPC: <code class="inline-code">initialize</code>, <code class="inline-code">tools/list</code>, <code class="inline-code">tools/call</code>, <code class="inline-code">resources/read</code> and so on.`,
+      llm: () => `<b>LLM</b><br>The model sees the tool names, descriptions and schemas as text. When a tool would help, it replies with a structured request to call it, and the host carries that out.`
+    };
+    const detail = h("div", { class: "detail", "aria-live": "polite" });
+    const arch = h("div", { class: "arch" });
+    const host = h("div", { class: "box host" }, `<h4>Host: your AI app</h4>`);
+    const inner = h("div", { class: "host-inner" });
+    const mk = (label, key) => { const b = h("button", { class: "pchip tool", style: "background:var(--accent-soft)" }, esc(label)); b.onclick = () => show(b, DESC[key]()); return b; };
+    inner.append(mk("LLM", "llm"), mk("MCP client 1", "client"), mk("MCP client 2", "client"), mk("MCP client 3", "client"));
+    host.querySelector("h4").style.cursor = "pointer"; host.querySelector("h4").onclick = () => show(null, DESC.host());
+    host.append(inner);
+    const wire = h("div", { class: "wire" }, "JSON-RPC over stdio (local) or HTTP (remote)");
+    const servers = h("div", { class: "servers" });
+    SERVERS.forEach(sv => {
+      const b = h("div", { class: "box" }, `<h4>${esc(sv.name)}</h4>`);
+      const pr = h("div", { class: "prim" });
+      [["tools", "tool"], ["resources", "resource"], ["prompts", "prompt"]].forEach(([k, kind]) => {
+        const r = h("div", { class: "prim-row" }, `<span>${k}</span>`);
+        if (!sv[k].length) r.append(h("em", { class: "muted", style: "font-size:.8rem" }, "none"));
+        sv[k].forEach(n => { const c = h("button", { class: "pchip " + kind }, esc(n)); c.onclick = () => show(c, DESC[kind](n)); r.append(c); });
+        pr.append(r);
+      });
+      b.append(pr); servers.append(b);
+    });
+    let selEl = null;
+    function show(el, html) { if (selEl) selEl.classList.remove("sel"); selEl = el; if (el) el.classList.add("sel"); detail.innerHTML = html; }
+    arch.append(host, wire, servers);
+    card.append(arch, detail); root.append(card);
+    show(servers.querySelector(".pchip.tool"), DESC.tool("read_file"));
+  },
+
+  mcpflow(root) {
+    const card = labCard("Follow one question through MCP", "step through · JSON-RPC messages");
+    const L = ["You", "Host + LLM", "Weather server"];
+    const STEPS = [
+      { from: 0, to: 1, cap: "You ask the app a question.", body: `"What's the weather in Lisbon?"` },
+      { from: 1, to: 2, cap: "The client opens the connection.", body: { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18", clientInfo: { name: "my-ai-app", version: "1.0" }, capabilities: {} } } },
+      { from: 2, to: 1, cap: "The server says what it supports.", body: { jsonrpc: "2.0", id: 1, result: { protocolVersion: "2025-06-18", serverInfo: { name: "weather", version: "0.1" }, capabilities: { tools: {} } } } },
+      { from: 1, to: 2, cap: "The client asks which tools exist.", body: { jsonrpc: "2.0", id: 2, method: "tools/list" } },
+      { from: 2, to: 1, cap: "The server describes its tools.", body: { jsonrpc: "2.0", id: 2, result: { tools: [{ name: "get_weather", description: "Get the current temperature for a city.", inputSchema: { type: "object", properties: { city: { type: "string" } }, required: ["city"] } }] } } },
+      { from: 1, to: 1, cap: "The LLM reads your question and the tool list, then asks to use a tool.", body: { type: "tool_use", name: "get_weather", input: { city: "Lisbon" } } },
+      { from: 1, to: 2, cap: "After your OK, the host calls the tool.", body: { jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "get_weather", arguments: { city: "Lisbon" } } } },
+      { from: 2, to: 1, cap: "The server runs get_weather and returns the result.", body: { jsonrpc: "2.0", id: 3, result: { content: [{ type: "text", text: "Lisbon: 21 degrees celsius" }] } } },
+      { from: 1, to: 0, cap: "The LLM turns the result into an answer for you.", body: `"It's about 21 °C in Lisbon right now. T-shirt weather!"` }
+    ];
+    let i = 0, timer = null;
+    const lanes = h("div", { class: "lanes" });
+    const counter = h("span", { class: "readout" });
+    const capEl = h("p", { class: "flow-cap", style: "margin:0" });
+    const pre = h("pre", { class: "block" });
+    const row = h("div", { class: "row" });
+    const prev = h("button", { class: "btn small", onclick: () => { stop(); i = Math.max(0, i - 1); draw(); } }, "← Back");
+    const next = h("button", { class: "btn primary small", onclick: () => { stop(); i = Math.min(STEPS.length - 1, i + 1); draw(); } }, "Next message →");
+    const play = h("button", { class: "btn small" }, "▶ Play all");
+    play.onclick = () => { if (timer) { stop(); return; } i = 0; draw(); play.textContent = "■ Stop"; timer = setInterval(() => { if (i >= STEPS.length - 1) { stop(); return; } i++; draw(); }, 2200); };
+    function stop() { clearInterval(timer); timer = null; play.textContent = "▶ Play all"; }
+    row.append(prev, next, play, counter);
+    function draw() {
+      const st = STEPS[i];
+      lanes.innerHTML = L.map((n, k) => `<div class="lane-h${k === st.from || k === st.to ? " on" : ""}">${esc(n)}</div>`).join("");
+      const ar = h("div", { class: "arrow-row" });
+      if (st.from === st.to) { const d = h("span", { class: "self-dot" }, "thinking…"); d.style.gridColumn = String(st.from + 1); ar.append(d); }
+      else { const a = Math.min(st.from, st.to), b = Math.max(st.from, st.to); const el = h("div", { class: "arrow " + (st.to > st.from ? "r" : "l") }); el.style.gridColumn = `${a + 1} / ${b + 2}`; ar.append(el); }
+      lanes.append(ar);
+      capEl.textContent = st.cap;
+      pre.textContent = typeof st.body === "string" ? st.body : JSON.stringify(st.body, null, 2);
+      counter.textContent = `message ${i + 1} of ${STEPS.length}`;
+      prev.disabled = i === 0; next.disabled = i === STEPS.length - 1;
+    }
+    card.append(lanes, capEl, pre, row); root.append(card); draw();
+  }
+};
+
+// ---------------------------------------------------------------- rendering
+function renderRail() {
+  const rail = $("rail"); rail.innerHTML = "";
+  TRACKS.forEach((name, ti) => {
+    const sec = h("section", { class: "track" }, `<h2>${esc(name)}</h2>`);
+    const ol = h("ol");
+    TOPICS.filter(t => t.track === ti).forEach(t => {
+      const p = prog[t.id] || {};
+      const b = h("button", { class: "topic-btn" + (learned(t.id) ? " done" : (p.code || p.quiz) ? " partial" : ""), "aria-current": t.id === current ? "true" : "false" },
+        `<span class="dot"></span><span>${esc(t.title)}</span>`);
+      b.onclick = () => selectTopic(t.id);
+      const li = h("li"); li.append(b); ol.append(li);
+    });
+    sec.append(ol); rail.append(sec);
+  });
+  const n = TOPICS.filter(t => learned(t.id)).length;
+  $("meterText").textContent = `${n} / ${TOPICS.length} learned`;
+  $("meterFill").style.width = (100 * n / TOPICS.length) + "%";
+}
+function renderHead() {
+  const t = topic(), p = prog[t.id] || {}, idx = TOPICS.indexOf(t);
+  $("eyebrow").textContent = `${TRACKS[t.track]} · lesson ${idx + 1} of ${TOPICS.length}`;
+  $("title").textContent = t.title;
+  $("steps").innerHTML = `<span class="pill${p.code ? " on" : ""}">${p.code ? "✓" : "○"} code passes</span><span class="pill${p.quiz ? " on" : ""}">${p.quiz ? "✓" : "○"} quiz passed</span>` +
+    (learned(t.id) ? `<span>Learned. Nice work.</span>` : `<span>Pass both to complete this lesson.</span>`);
+}
+function renderLearn() {
+  const t = topic();
+  const v = $("visual"); v.innerHTML = "";
+  try { VISUALS[t.visual](v); } catch (e) { console.error(e); v.innerHTML = `<p class="muted">This visual couldn't load.</p>`; }
+  let html = md(t.lesson);
+  if (t.formula) html += `<div class="formula">${esc(t.formula)}</div>`;
+  if (t.lesson2) html += md(t.lesson2);
+  if (t.code) html += `<pre><code>${esc(t.code)}</code></pre>`;
+  $("lesson").innerHTML = html;
+  $("terms").innerHTML = t.terms.map(([k, d]) => `<div class="term"><dt>${esc(k)}</dt><dd>${esc(d)}</dd></div>`).join("");
+  $("checkQ").textContent = t.check;
+}
+function selectTopic(id) {
+  current = id; store.set("topic", id);
+  renderRail(); renderHead(); renderLearn(); renderCode(); renderChat(); resetQuiz();
+  if (window.innerWidth <= 860) document.querySelector(".sheet").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function setTab(name) {
+  document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === name ? "true" : "false"));
+  ["learn", "code", "ask", "quiz"].forEach(p => $("panel-" + p).hidden = p !== name);
+  $("fab").hidden = name === "ask";
+}
+$("fab").onclick = () => { setTab("ask"); document.querySelector(".sheet").scrollIntoView({ behavior: "smooth", block: "start" }); setTimeout(() => $("input").focus({ preventScroll: true }), 300); };
+document.querySelectorAll(".tab").forEach(b => b.onclick = () => setTab(b.dataset.tab));
+$("toCode").onclick = () => { setTab("code"); $("editor").focus({ preventScroll: true }); document.querySelector(".sheet").scrollIntoView({ behavior: "smooth", block: "start" }); };
+$("askCheck").onclick = () => { setTab("ask"); $("input").placeholder = "Type your answer to: " + topic().check; $("input").focus(); };
+function markProgress(id, key) { P(id)[key] = true; store.set("prog", prog); renderRail(); renderHead(); }
+
+// ---------------------------------------------------------------- code exercises
+function renderCode() {
+  const t = topic(), ex = t.ex;
+  const uses = (ex.uses || []).map(u => TOPICS.find(x => x.id === u));
+  $("task").innerHTML = md(ex.task) + (uses.length ? `<p class="muted" style="font-size:.88rem">Builds on: ${uses.map(u => `<b>${esc(u.title)}</b>${passed[u.id] ? " (your code)" : " (reference code until you pass it)"}`).join(", ")}.</p>` : "");
+  $("editorName").textContent = ex.file;
+  $("editor").value = drafts[t.id] != null ? drafts[t.id] : ex.starter;
+  $("attempts").textContent = attempts[t.id] ? `run ${attempts[t.id]}` : "";
+  $("results").innerHTML = prog[t.id] && prog[t.id].code ? `<div class="success">✓ You've already passed this exercise. Change the code and run it again to experiment.</div>` : "";
+}
+const ed = $("editor");
+ed.addEventListener("input", () => { drafts[current] = ed.value; store.set("drafts", drafts); });
+ed.addEventListener("keydown", e => {
+  if (e.key === "Tab" && !e.shiftKey) { e.preventDefault(); const st = ed.selectionStart; ed.setRangeText("    ", st, ed.selectionEnd, "end"); ed.dispatchEvent(new Event("input")); }
+  else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); runTests(); }
+  else if (e.key === "Enter") {
+    const st = ed.selectionStart, line = ed.value.slice(0, st).split("\n").pop(), ind = line.match(/^\s*/)[0] + (/:\s*$/.test(line) ? "    " : "");
+    if (ind) { e.preventDefault(); ed.setRangeText("\n" + ind, st, ed.selectionEnd, "end"); ed.dispatchEvent(new Event("input")); }
+  }
+});
+function helperSource(ex) {
+  return (ex.uses || []).map(u => { const t = TOPICS.find(x => x.id === u); return `# --- from lesson: ${t.title}\n` + (passed[u] || t.ex.solution); }).join("\n");
+}
+function cleanTrace(err, offset, userLines) {
+  if (!err) return "";
+  const lines = err.split("\n"), out = [];
+  let keep = false;
+  for (const l of lines) {
+    const m = l.match(/File "<string>", line (\d+)(.*)/);
+    if (m) { keep = true; const n = +m[1] - offset; out.push(n <= 0 ? `  (in code from an earlier lesson)${m[2]}` : n > userLines ? `  (in the tests)${m[2]}` : `  line ${n} of your code${m[2]}`); continue; }
+    if (/^\s*File "/.test(l)) { keep = false; continue; }
+    if (keep || (!/^\s/.test(l) && l.trim() && !/^Traceback/.test(l))) out.push(l);
+  }
+  const final = out.filter(Boolean);
+  return final.length ? final.join("\n") : err;
+}
+let lastRun = null;
+async function runTests() {
+  const t = topic(), id = t.id, ex = t.ex, code = ed.value;
+  const res = $("results");
+  res.innerHTML = `<p class="thinking">${pyPromise ? "Running…" : "Loading Python in your browser (first run only, a few seconds)…"}</p>`;
+  $("runBtn").disabled = true;
+  let run;
+  try { run = await loadPython(); }
+  catch {
+    $("runBtn").disabled = false;
+    res.innerHTML = `<div class="banner">Python couldn't start in this view. You can still use <b>Ask the tutor to review</b>: Claude will read your code and tell you whether it passes.</div>`;
+    return;
+  }
+  attempts[id] = (attempts[id] || 0) + 1; store.set("attempts", attempts);
+  if (id === current) $("attempts").textContent = `run ${attempts[id]}`;
+  const pre = HARNESS + "\n__sys.stdout = __Quiet()\n" + helperSource(ex) + "\n__sys.stdout = __real_out\n";
+  const offset = pre.split("\n").length - 1;
+  const src = pre + code + "\n\n__sys.stdout = __Quiet()\n" + ex.tests + "\n__sys.stdout = __real_out\n";
+  let r;
+  await new Promise(r => setTimeout(r, 30));
+  try { r = JSON.parse(run(src)); } catch (e) { r = { out: "", err: String(e), results: [] }; }
+  $("runBtn").disabled = false;
+  if (id !== current) return;
+  const total = (ex.tests.match(/__check\(/g) || []).length;
+  const results = r.results || [], passN = results.filter(x => x[1]).length;
+  const allPass = !r.err && results.length === total && passN === total;
+  const trace = cleanTrace(r.err, offset, code.split("\n").length);
+  lastRun = { code, results, out: r.out, err: trace, allPass };
+  res.innerHTML = "";
+  const head = h("div", { class: "result-head" }, `<span class="score">${passN} / ${total} tests pass</span>`);
+  res.append(head);
+  if (results.length) res.append(h("ul", { class: "tests" }, results.map(([n, ok, msg]) => `<li class="${ok ? "pass" : "fail"}"><span><code>${esc(n)}</code>${ok ? "" : `<br><span class="err">${esc(msg)}</span>`}</span></li>`).join("")));
+  if (r.err) res.append(h("pre", { class: "block out err" }, esc(trace)), h("p", { class: "muted", style: "margin:0;font-size:.86rem" }, "Your code stopped with an error before the tests could run. Read the last line first; it names the problem."));
+  if (r.out && r.out.trim()) res.append(h("div", {}, `<span class="readout">printed output</span>`), h("pre", { class: "block out" }, esc(r.out.slice(0, 4000))));
+  if (allPass) {
+    passed[id] = code; store.set("passed", passed);
+    markProgress(id, "code");
+    const nextUser = TOPICS.find(x => (x.ex.uses || []).includes(id));
+    const ok = h("div", { class: "success" }, `<b>All tests pass on run ${attempts[id]}.</b> ${nextUser ? `Your code will be reused in <b>${esc(nextUser.title)}</b>.` : ""} Next, take the quiz or ask the tutor for a stretch challenge.`);
+    const row = h("div", { class: "row", style: "margin-top:10px" });
+    row.append(h("button", { class: "btn primary small", onclick: () => setTab("quiz") }, "Take the quiz →"), h("button", { class: "btn small", onclick: () => review(true) }, "Give me a stretch challenge"));
+    ok.append(row); res.append(ok);
+  } else if (passN < total && attempts[id] >= 3) {
+    res.append(h("p", { class: "muted", style: "margin:0;font-size:.88rem" }, "Stuck? Try the hint, or ask the tutor to review your code. It will point at the problem without giving the whole answer away."));
+  }
+}
+$("runBtn").onclick = runTests;
+$("hintBtn").onclick = () => { const t = topic(); const box = h("div", { class: "review prose" }, `<h4>Hint</h4>${md(t.ex.hint)}`); const r = $("results"); r.querySelectorAll(".hint-box").forEach(x => x.remove()); box.classList.add("hint-box"); r.prepend(box); };
+$("solBtn").onclick = () => {
+  const r = $("results"); r.querySelectorAll(".sol-box").forEach(x => x.remove());
+  const box = h("div", { class: "review sol-box" }, `<h4>Reference solution</h4><p class="muted" style="margin:0 0 8px;font-size:.88rem">Try typing it yourself rather than pasting. You'll remember it better.</p>`);
+  box.append(h("pre", { class: "block" }, esc(topic().ex.solution)));
+  const use = h("button", { class: "btn small", style: "margin-top:8px", onclick: () => { ed.value = topic().ex.solution; ed.dispatchEvent(new Event("input")); } }, "Put it in the editor");
+  box.append(use); r.prepend(box);
+};
+$("resetBtn").onclick = () => { ed.value = topic().ex.starter; ed.dispatchEvent(new Event("input")); $("results").innerHTML = ""; };
+async function review(stretch) {
+  const t = topic(), ex = t.ex, code = ed.value;
+  const r = $("results"); r.querySelectorAll(".ai-review").forEach(x => x.remove());
+  const box = h("div", { class: "review ai-review" }, `<h4>${stretch ? "Stretch challenge" : "Tutor review"}</h4>`);
+  const body = h("div", { class: "prose" }); box.append(body); r.prepend(box);
+  const ran = lastRun && lastRun.code === code;
+  const runInfo = ran ? `Test results from actually running it:\n${lastRun.results.map(([n, ok, m]) => `${ok ? "PASS" : "FAIL"}: ${n}${ok ? "" : " (" + m + ")"}`).join("\n")}${lastRun.err ? "\nError:\n" + lastRun.err : ""}${lastRun.out ? "\nPrinted output:\n" + lastRun.out.slice(0, 1500) : ""}`
+    : `The code has not been run. Work out whether it would pass these tests:\n${ex.tests}`;
+  const prompt = stretch
+    ? `You are Gradient, a friendly Python and AI tutor. The student just passed this exercise on "${t.title}".\nTask: ${ex.task}\nTheir code:\n\`\`\`python\n${code}\n\`\`\`\nGive them ONE short stretch challenge that extends their code a little further and deepens the concept (for example a new feature, an edge case, or connecting to a real library). Describe it in 2-4 sentences, then list 2 example inputs with expected outputs. Don't write the solution. Use Markdown.`
+    : `You are Gradient, a friendly Python and AI tutor reviewing a student's exercise on "${t.title}". ${LEVELS[level]}\nTask: ${ex.task}\nTheir code:\n\`\`\`python\n${code}\n\`\`\`\n${runInfo}\n\nReply in Markdown, under 170 words:\n1. One sentence on what they did well.\n2. The single most important problem, pointing to the specific line or idea, and why it fails.\n3. A nudge toward the fix, with a tiny snippet if needed, but do NOT give the full solution.\nIf everything passes, say so, then suggest one improvement for style or robustness.`;
+  await streamInto(body, prompt);
+}
+$("reviewBtn").onclick = () => review(false);
+
+// ---------------------------------------------------------------- chat
+function renderLevel() { document.querySelectorAll("#levelSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.level === level ? "true" : "false")); }
+document.querySelectorAll("#levelSeg button").forEach(b => b.onclick = () => { level = b.dataset.level; store.set("level", level); renderLevel(); });
+const chatOf = id => (chats[id] = chats[id] || []);
+function bubble(role, content) {
+  if (role === "user") return h("div", { class: "msg user" }, esc(content));
+  if (role === "note") return h("div", { class: "msg note" }, esc(content));
+  return h("div", { class: "msg tutor" }, BOT_TAG + `<div class="prose">${md(content)}</div>`);
+}
+const BOT_TAG = `<div class="who"><svg viewBox="0 0 34 34" aria-hidden="true"><rect x="1" y="1" width="32" height="32" rx="9" style="fill:var(--accent)"/><circle cx="10" cy="15" r="2.2" style="fill:var(--on-accent)" opacity=".5"/><circle cx="14" cy="20.5" r="2.4" style="fill:var(--on-accent)" opacity=".75"/><circle cx="18.2" cy="22.4" r="2.8" style="fill:var(--on-accent)"/></svg>Gradient</div>`;
+function greeting() {
+  const t = topic(), idx = TOPICS.indexOf(t), p = prog[t.id] || {};
+  const first = t.lesson.replace(/\*\*/g, "").split(/(?<=[.!?])\s/)[0];
+  const status = learned(t.id) ? "You've already completed this one. Want to go deeper?" : p.code ? "Your code already passes. A quiz will finish the lesson." : "";
+  const el = h("div", { class: "msg tutor" }, BOT_TAG + `<div class="prose"><p>${idx === 0 && !Object.keys(prog).length ? "Hi! I'm <b>Gradient</b>, your AI tutor. We'll learn vectors, LLMs, RAG and MCP together by playing with visuals and writing Python. " : ""}Lesson ${idx + 1}: <b>${esc(t.title)}</b>.</p><p>${inline(first)}</p>${status ? `<p>${esc(status)}</p>` : ""}<p>How do you want to start?</p></div>`);
+  const acts = h("div", { class: "greet-actions" });
+  acts.append(
+    h("button", { class: "btn primary small", onclick: () => send(TEACH) }, "Teach me step by step"),
+    h("button", { class: "btn small", onclick: () => setTab("learn") }, "Show me the visual"),
+    h("button", { class: "btn small", onclick: () => setTab("code") }, "Let's code"),
+    h("button", { class: "btn small", onclick: () => setTab("quiz") }, "Quiz me"));
+  el.append(acts);
+  return el;
+}
+function renderChat() {
+  const turns = chatOf(current), box = $("chat");
+  box.innerHTML = ""; box.append(greeting()); turns.forEach(m => box.append(bubble(m.role, m.content)));
+  const chips = $("chips"); chips.innerHTML = "";
+  CHIPS.forEach(c => chips.append(h("button", { type: "button", class: "chip", onclick: () => send(c) }, esc(c))));
+  $("input").placeholder = "Ask a question or explain it back in your own words…";
+}
+function rules() {
+  const t = topic();
+  return `You are Gradient, a warm, patient tutor teaching AI concepts (vectors, embeddings, LLMs, RAG and MCP) with Python. You're tutoring one student through a hands-on course where each lesson has an interactive visual and a Python exercise.
+
+Current lesson: "${t.title}".
+Lesson notes the student has read:
+"""
+${plain(t)}
+"""
+Self-check question: "${t.check}"
+The lesson's Python exercise: ${t.ex.task}
+What's currently in the student's code editor:
+\`\`\`python
+${ed.value.slice(0, 3000)}
+\`\`\`
+
+How to explain: ${LEVELS[level]}
+
+How to tutor:
+- Keep replies short, usually under 170 words, unless asked for depth.
+- Prefer one concrete example. When code helps, use short, runnable Python in a fenced block.
+- Use Markdown: **bold** key terms, short lists, \`inline code\`.
+- If the student answers a question, say clearly what's right, then correct or extend what's missing. Be encouraging and honest.
+- Don't hand over the full exercise solution unless they explicitly ask for it; give hints instead.
+- End most replies with one short question that checks understanding or suggests the next step.
+- Never invent citations or claim certainty you don't have.
+- The page has tabs the student can open: "See it" (an interactive visual for this lesson), "Code it" (the Python exercise with a Run tests button) and "Quiz". Point them there when it helps, e.g. "Open See it and drag the arrows until the cosine is 0."
+
+If the student asks you to teach the lesson step by step, act as a guide through a short interactive session: teach ONE small idea per message (under 120 words), connect it to the visual or a tiny Python snippet, then give them a small task or question and stop to wait for their reply. Move to the next idea only after they respond. Cover the lesson in about 4 to 6 steps, finishing by sending them to the Code it tab.
+
+The conversation follows.`;
+}
+let ctl = null, busy = false;
+async function send(text) {
+  text = (text || "").trim();
+  if (!text || busy) return;
+  const id = current, turns = chatOf(id);
+  turns.push({ role: "user", content: text });
+  $("input").value = ""; autoGrow(); renderChat();
+  const out = h("div", { class: "msg tutor" }, `<div class="prose"><p class="thinking">Thinking…</p></div>`);
+  $("chat").append(out);
+  setBusy(true);
+  await sampleReady;
+  if (!sample) { out.remove(); turns.pop(); renderChat(); $("tutorOff").hidden = false; setBusy(false); return; }
+  ctl = new AbortController();
+  try {
+    const res = await sample([{ role: "user", content: rules() }, ...turns.slice(-16)], { cache: false, signal: ctl.signal, onText: ({ text }) => { out.querySelector(".prose").innerHTML = md(text); } });
+    turns.push({ role: "assistant", content: res.text + (res.truncated ? "\n\n*(Cut short. Ask me to continue.)*" : "") });
+    store.set("chats", chats); if (id === current) renderChat();
+  } catch (e) {
+    if (e && e.text) turns.push({ role: "assistant", content: e.text + "\n\n*(Interrupted.)*" });
+    store.set("chats", chats);
+    if (id === current) { renderChat(); if (!e || e.code !== "cancelled") $("chat").append(bubble("note", errText(e))); }
+    if (e && PERMANENT.includes(e.code)) $("tutorOff").hidden = false;
+  } finally { setBusy(false); ctl = null; }
+}
+function setBusy(v) { busy = v; $("sendBtn").hidden = v; $("stopBtn").hidden = !v; document.querySelectorAll(".chip").forEach(c => c.disabled = v); }
+$("composer").addEventListener("submit", e => { e.preventDefault(); send($("input").value); });
+$("stopBtn").onclick = () => ctl && ctl.abort();
+$("input").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); send($("input").value); } });
+function autoGrow() { const t = $("input"); t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 160) + "px"; }
+$("input").addEventListener("input", autoGrow);
+$("clearChat").onclick = () => { if (busy) return; chats[current] = []; store.set("chats", chats); renderChat(); };
+
+// ---------------------------------------------------------------- quiz
+function resetQuiz() {
+  $("quizBody").innerHTML = `<p class="empty-chat">Three fresh multiple-choice questions on <b>${esc(topic().title)}</b>, including one about reading Python. Score 2 or more to pass. Take as many quizzes as you like.</p>`;
+  $("quizBody").append(h("button", { class: "btn primary", onclick: makeQuiz }, "Make my quiz"));
+}
+async function makeQuiz() {
+  const t = topic(), id = t.id;
+  $("quizBody").innerHTML = `<p class="thinking">Writing your quiz…</p>`;
+  await sampleReady;
+  if (!sample) { $("quizOff").hidden = false; resetQuiz(); return; }
+  const prompt = `Write a 3-question multiple-choice quiz for a learner on "${t.title}". ${LEVELS[level]}
+Base it on this lesson:
+"""
+${plain(t)}
+"""
+and this Python exercise: ${t.ex.task}
+Question 1 checks a key idea. Question 2 is an applied scenario. Question 3 shows a short Python snippet (3-6 lines, inside the "q" text using \\n for newlines) and asks what it prints or what's wrong with it. Each question has exactly 4 options with one correct; make wrong options plausible and vary the correct position.
+Reply with only JSON in this shape:
+{"questions":[{"q":"question text","options":["A","B","C","D"],"answer":0,"why":"one sentence explaining the right answer"}]}`;
+  try {
+    const data = await sample.json(prompt, { cache: false });
+    const qs = (data && Array.isArray(data.questions) ? data.questions : []).filter(q => q && q.q && Array.isArray(q.options) && q.options.length >= 2 && Number.isInteger(q.answer) && q.answer >= 0 && q.answer < q.options.length).slice(0, 3);
+    if (!qs.length) throw { code: "invalid_json" };
+    if (id === current) renderQuiz(qs);
+  } catch (e) {
+    if (id !== current) return;
+    if (e && PERMANENT.includes(e.code)) $("quizOff").hidden = false;
+    $("quizBody").innerHTML = `<p class="empty-chat">${esc(errText(e))}</p>`;
+    $("quizBody").append(h("button", { class: "btn primary", onclick: makeQuiz }, "Try again"));
+  }
+}
+function quizText(q) {
+  const parts = String(q).split(/```(?:python)?\n?/);
+  if (parts.length >= 3) return inline(parts[0]) + `<pre class="block" style="margin:8px 0">${esc(parts[1].replace(/\n$/, ""))}</pre>` + inline(parts.slice(2).join(""));
+  const lines = String(q).split("\n");
+  if (lines.length > 1) { const first = lines.shift(); return inline(first) + `<pre class="block" style="margin:8px 0">${esc(lines.join("\n"))}</pre>`; }
+  return inline(String(q));
+}
+function renderQuiz(qs) {
+  const body = $("quizBody"); body.innerHTML = "";
+  const wrap = h("div", { class: "quiz" }), result = h("div");
+  let answered = 0, right = 0;
+  qs.forEach((q, qi) => {
+    const box = h("div", { class: "q" }, `<h4><span>Q${qi + 1}</span>${quizText(q.q)}</h4>`);
+    const opts = h("div", { class: "opts" }), why = h("p", { class: "why" }); why.hidden = true; why.textContent = String(q.why || "");
+    q.options.forEach((o, oi) => {
+      const b = h("button", { class: "opt" }); b.textContent = String(o);
+      b.onclick = () => {
+        opts.querySelectorAll("button").forEach((x, xi) => { x.disabled = true; if (xi === q.answer) x.classList.add("right"); });
+        if (oi === q.answer) right++; else b.classList.add("wrong");
+        why.hidden = false; if (++answered === qs.length) finish();
+      };
+      opts.append(b);
+    });
+    box.append(opts, why); wrap.append(box);
+  });
+  function finish() {
+    const pass = right >= 2;
+    if (pass) markProgress(current, "quiz");
+    const p = prog[current] || {};
+    result.innerHTML = `<div class="row"><span class="score">${right} / ${qs.length}</span><span>${pass ? (p.code ? "Passed. This lesson is complete." : "Passed. Now make the code exercise pass to complete the lesson.") : "Not yet. Review the misses with the tutor, then try a new quiz."}</span></div>`;
+    const row = result.querySelector(".row");
+    row.append(h("button", { class: "btn", onclick: makeQuiz }, "New quiz"));
+    row.append(h("button", { class: "btn primary", onclick: () => {
+      const missed = qs.filter((q, i) => wrap.children[i].querySelector(".wrong")).map(q => q.q);
+      setTab("ask");
+      send(missed.length ? "I just took a quiz and got these wrong. Can you help me understand them?\n- " + missed.join("\n- ") : "I got every quiz question right. What should I explore next to go deeper?");
+    } }, "Review with the tutor"));
+    const i = TOPICS.indexOf(topic());
+    if (pass && i < TOPICS.length - 1) row.append(h("button", { class: "btn", onclick: () => { selectTopic(TOPICS[i + 1].id); setTab("learn"); } }, "Next lesson →"));
+  }
+  body.append(wrap, result);
+}
+
+// ---------------------------------------------------------------- boot
+renderLevel(); renderRail(); renderHead(); renderLearn(); renderCode(); renderChat(); resetQuiz(); setTab("ask");
+sampleReady.then(x => { if (!x) { $("tutorOff").hidden = false; $("quizOff").hidden = false; } });
+</script>
