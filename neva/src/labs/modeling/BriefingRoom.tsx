@@ -63,7 +63,7 @@ export default function BriefingRoom() {
           onToolCall={name => { const e = TOOL_EVIDENCE[name]; if (e) { addEvidence(ID, e); award(`${ID}:ev:${e}`, 15, `Evidence: ${e}`); } }} />
       </LabCard>
 
-      <LabCard title="2. Brief the director" sub="Two numbers are checked against their defensible ranges; Professor Neva grades the whole briefing.">
+      <LabCard title="2. Brief the director" sub="Two numbers are checked against their defensible ranges; Otto grades the whole briefing.">
         <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <div><label className="lbl" htmlFor="r0">Your R0 estimate</label><input id="r0" className="field" inputMode="decimal" value={r0} onChange={e => { setR0(e.target.value); setCheck(null); }} placeholder="e.g. 1.6" /></div>
           <div><label className="lbl" htmlFor="pk">Unmitigated peak (day number)</label><input id="pk" className="field" inputMode="numeric" value={peak} onChange={e => { setPeak(e.target.value); setCheck(null); }} placeholder="e.g. 120" /></div>
@@ -73,7 +73,7 @@ export default function BriefingRoom() {
         <div style={{ marginTop: 12 }}><label className="lbl" htmlFor="why">Your reasoning</label><textarea id="why" className="answer" value={reasoning} onChange={e => setReasoning(e.target.value)} placeholder="Which window did you fit, which evidence gave the durations, how did you get R0, what are the main uncertainties?" /></div>
         {aiOn === false && <div className="banner warn" style={{ marginTop: 10 }}>Grading needs Claude (ANTHROPIC_API_KEY on the server).</div>}
         <div className="row" style={{ marginTop: 12 }}>
-          <button className="btn yellow" onClick={submit} disabled={!ready || busy || !aiOn}>{busy ? "Professor Neva is reading your briefing…" : "Submit briefing"}</button>
+          <button className="btn yellow" onClick={submit} disabled={!ready || busy || !aiOn}>{busy ? "Otto is reading your briefing…" : "Submit briefing"}</button>
           {!ready && <span className="muted" style={{ fontSize: ".85rem" }}>Fill every field.</span>}
         </div>
         {err && <div className="banner err" style={{ marginTop: 10 }}>{err}</div>}

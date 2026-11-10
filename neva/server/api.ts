@@ -1,9 +1,10 @@
 // Neva API: every Claude call lives here, on the server, so the API key never reaches the browser.
 // Every POST body carries `path` (a learning-path id); path-specific data lives in server/paths/.
 //   GET  /api/status          -> { ai: boolean }
-//   POST /api/professor       -> NDJSON stream: Professor Neva (Socratic tutor, lesson-aware)
+//   POST /api/professor       -> NDJSON stream: Otto (Socratic tutor, lesson-aware)
 //   POST /api/grade           -> JSON: rubric grading of a seminar answer (structured output)
 //   POST /api/quiz            -> JSON: a fresh case-based multiple-choice question (structured output)
+//   POST /api/coldcall        -> JSON: Otto's cold-call question + 3-point rubric for one lecture segment
 //   POST /api/screen          -> JSON: Claude screens abstracts against inclusion criteria (structured output)
 //   POST /api/rag             -> NDJSON stream: answer grounded ONLY in the chunks the learner packed, with citations
 //   POST /api/agent           -> NDJSON stream: lab assistant agent that calls the path's tools (manual tool loop)
@@ -18,8 +19,8 @@ import { serverPath } from "./paths";
 if (existsSync(".env")) process.loadEnvFile(".env");
 
 export const MODEL = "claude-opus-5-5";
-// Server-side refusal fallback: if a safety classifier declines (pathogen content can trip the
-// bio classifier on legitimate surveillance questions), the API re-runs the request on Anthropic's
+// Server-side refusal fallback: if a safety classifier declines (life-science content can occasionally
+// trip a classifier on legitimate research questions), the API re-runs the request on Anthropic's
 // recommended fallback model inside the same call.
 const FALLBACK = { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const };
 
@@ -32,11 +33,11 @@ type Msg = Anthropic.Beta.BetaMessageParam;
 // ------------------------------------------------------------------ prompts
 export const MARKUP = `Formatting: write short paragraphs and use Markdown lists, **bold** and \`code\`. Colour-code key words with this markup, which the site renders as coloured highlights. Use it for the 2-5 terms that matter most in a reply, not every noun:
 [[c|...]] a core AI or methods concept (e.g. [[c|embedding]], [[c|retrieval]], [[c|context window]], [[c|basic reproduction number]])
-[[b|...]] a domain term or data item from biology, epidemiology or the research literature (e.g. [[b|ST258]], [[b|SNP distance]], [[b|serial interval]], [[b|risk of bias]])
+[[b|...]] a domain term or data item from biology, epidemiology or the research literature (e.g. [[b|VAF]], [[b|NPM1]], [[b|subclone]], [[b|serial interval]], [[b|risk of bias]])
 [[t|...]] a tool, API, protocol or system (e.g. [[t|vector database]], [[t|MCP server]], [[t|tools/call]])
-[[w|...]] a pitfall, risk or common mistake (e.g. [[w|hallucination]], [[w|same ST is not transmission]])`;
+[[w|...]] a pitfall, risk or common mistake (e.g. [[w|hallucination]], [[w|germline is not somatic]])`;
 
-const PROFESSOR = `You are Professor Neva, a university professor who teaches how modern AI (LLMs, vector databases, retrieval-augmented generation and the Model Context Protocol) is used in the life sciences. The course has three paths, each teaching the same AI ideas through casework in one field: Pathogen Genomics, Outbreak Modeling and Research Intelligence. The lesson context below names the path, the case and what the lesson teaches.
+const PROFESSOR = `You are Otto, the AI professor of the Neva course: a university professor who teaches how modern AI (LLMs, vector databases, retrieval-augmented generation and the Model Context Protocol) is used in the life sciences. The course has three paths, each teaching the same AI ideas through casework in one field: Cancer Genomics, Outbreak Modeling and Research Intelligence. The lesson context below names the path, the case and what the lesson teaches.
 
 How you teach:
 - Like a real professor running a case-method seminar. Anchor every explanation in the current case, then generalise.
@@ -44,10 +45,10 @@ How you teach:
 - Precise and honest. Distinguish what the case data shows from what it does not. Name uncertainty. Correct misconceptions explicitly and kindly ("A common mix-up is... In fact...").
 - Only state things that are true. If you are not sure about a fact, say so rather than guessing. Cases, people and data in the course are fictional; general scientific and technical facts you state must be accurate.
 - Brief. Usually 60-180 words. End with one question that checks understanding or pushes the case forward, unless the learner asked you to stop.
-- Reward good reasoning specifically ("Good: you linked the SNP distance to the transfer date").
+- Reward good reasoning specifically ("Good: you linked the rising VAF to the subclone's expansion").
 - Use the learner's known misconceptions (given in the lesson context) to target your questions.
 
-Boundaries: stay at the level of public-health surveillance, epidemiology, research methods and data analysis. Do not give individual treatment advice; say treatment is decided by the clinical team. Do not discuss making organisms more dangerous.
+Boundaries: stay at the level of molecular profiling, public-health surveillance, epidemiology, research methods and data analysis. Do not give individual treatment advice; say treatment is decided by the clinical team. Do not discuss making organisms more dangerous.
 
 ${MARKUP}`;
 
@@ -77,7 +78,7 @@ function errMessage(e: unknown): string {
   if (e instanceof Error && /credentials|api key/i.test(e.message)) return "No Anthropic API key is configured on the server.";
   return "Couldn't reach Claude. Check the server log and your connection.";
 }
-const REFUSAL = "Professor Neva can't help with that request. Try rephrasing it around the case.";
+const REFUSAL = "Otto can't help with that request. Try rephrasing it around the case.";
 
 // ------------------------------------------------------------------ /api/professor
 type ProfessorReq = { context: string; messages: Msg[] };
@@ -129,7 +130,7 @@ async function grade(req: IncomingMessage, res: ServerResponse) {
       max_tokens: 16000,
       ...FALLBACK,
       output_config: { effort: "medium", format: betaZodOutputFormat(Grade) },
-      system: `You are Professor Neva grading a seminar answer in the ${p.title} path (${p.setting}). Grade against the rubric only, generously for correct ideas in the learner's own words, strictly for factual errors. Use the colour markup [[c|...]], [[b|...]], [[t|...]], [[w|...]] for at most two key terms in your sentences.`,
+      system: `You are Otto grading a seminar answer in the ${p.title} path (${p.setting}). Grade against the rubric only, generously for correct ideas in the learner's own words, strictly for factual errors. Use the colour markup [[c|...]], [[b|...]], [[t|...]], [[w|...]] for at most two key terms in your sentences.`,
       messages: [{ role: "user", content: `Lesson: ${g.lesson}\nQuestion: ${g.question}\nRubric (each point is one idea a strong answer includes):\n${(g.rubric || []).map((x, i) => `${i + 1}. ${x}`).join("\n")}\n\nLearner's answer:\n"""${String(g.answer).slice(0, 4000)}"""` }],
     });
     if (r.stop_reason === "refusal" || !r.parsed_output) return json(res, 502, { error: REFUSAL });
@@ -165,6 +166,33 @@ async function quiz(req: IncomingMessage, res: ServerResponse) {
     json(res, 200, out);
   } catch (e) {
     console.error("[quiz]", e);
+    json(res, 502, { error: errMessage(e) });
+  }
+}
+
+// ------------------------------------------------------------------ /api/coldcall
+const ColdCall = z.object({
+  question: z.string().describe("One open question a professor would cold-call a student with, anchored in the case"),
+  rubric: z.array(z.string()).describe("Exactly three ideas a strong answer includes"),
+});
+type ColdCallReq = { path: string; lesson: string; caseTitle: string; segmentTitle: string; segmentBody: string };
+async function coldcall(req: IncomingMessage, res: ServerResponse) {
+  const c = await body<ColdCallReq>(req);
+  const p = serverPath(c.path);
+  try {
+    const r = await ai().beta.messages.parse({
+      model: MODEL,
+      max_tokens: 16000,
+      ...FALLBACK,
+      output_config: { effort: "low", format: betaZodOutputFormat(ColdCall) },
+      system: `You are Otto running a case-method class in the ${p.title} path (${p.setting}). After a short lecture segment, you cold-call one student with a single open question. It must require applying the segment to the case (why/what would happen if/how would you check), be answerable in 2-4 sentences, and never be answerable by copying a sentence from the segment. Give exactly three rubric ideas. Every factual statement must be true. Use at most two colour-markup terms: [[c|...]] concept, [[b|...]] domain term, [[t|...]] tool, [[w|...]] pitfall.`,
+      messages: [{ role: "user", content: `Lesson: ${c.lesson}\nCase: ${c.caseTitle}\nSegment: ${c.segmentTitle}\n"""${String(c.segmentBody).slice(0, 4000)}"""` }],
+    });
+    const out = r.parsed_output;
+    if (r.stop_reason === "refusal" || !out || out.rubric.length < 2) return json(res, 502, { error: "The cold call came back malformed. Try again." });
+    json(res, 200, { question: out.question, rubric: out.rubric.slice(0, 3) });
+  } catch (e) {
+    console.error("[coldcall]", e);
     json(res, 502, { error: errMessage(e) });
   }
 }
@@ -325,11 +353,12 @@ export async function handleApi(req: IncomingMessage, res: ServerResponse) {
   const path = (req.url || "").split("?")[0];
   if (path === "/api/status") return json(res, 200, { ai: hasKey(), model: MODEL });
   if (req.method !== "POST") return json(res, 405, { error: "POST only" });
-  if (!hasKey()) return json(res, 503, { error: "AI is off: set ANTHROPIC_API_KEY on the server to enable Professor Neva." });
+  if (!hasKey()) return json(res, 503, { error: "AI is off: set ANTHROPIC_API_KEY on the server to enable Otto." });
   switch (path) {
     case "/api/professor": return professor(req, res);
     case "/api/grade": return grade(req, res);
     case "/api/quiz": return quiz(req, res);
+    case "/api/coldcall": return coldcall(req, res);
     case "/api/screen": return screen(req, res);
     case "/api/rag": return rag(req, res);
     case "/api/agent": return agent(req, res);

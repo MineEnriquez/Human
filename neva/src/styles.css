@@ -1,45 +1,51 @@
-/* Neva design system: warm "paper" theme for comfortable reading.
-   Low blue light: no blue or cool hues anywhere, warm off-white paper instead of bright white,
-   warm near-black ink instead of pure black (less glare, still well above WCAG AA contrast).
+/* Neva design system: clean neutral theme.
+   Neutral greys and near-black/near-white (no beige or brown), yellow as the brand accent, and no blue hues.
+   Off-white instead of pure white and near-black instead of pure black keep glare down; text stays above WCAG AA.
    Layout and typography inspired by pratt.edu; Hanken Grotesk (UI) + Source Serif 4 (reading text). */
 :root {
-  --paper: #f3ebdf; --sheet: #faf5ec; --ink: #2b231d; --muted: #6a5d52; --line: #e0d4c3;
-  --accent: #2b231d; --on-accent: #f6efe4; --yellow: #ecb340; --yellow-soft: #f7e8cb; --on-yellow: #2b231d;
-  --ok: #4a6a1f; --ok-soft: #e5ebd2; --bad: #a3392b; --bad-soft: #f5dcd1;
-  /* dark band (top bar, hero, case-file headers): warm espresso, not black */
-  --band: #2f2620; --band-card: #3b3029; --band-line: #54473d; --on-band: #f1e8db; --on-band-muted: #c7b8a6;
-  /* keyword colours: concept / biology / tool / warning (all warm: plum, olive, amber, brick) */
-  --k-c: #86375a; --k-c-bg: #f1dde3; --k-b: #4a6a1f; --k-b-bg: #e5ebd2; --k-t: #2b231d; --k-t-bg: #f1c463; --k-w: #a3392b; --k-w-bg: #f5dcd1;
+  /* Neutral greys (no beige/brown), off-white instead of pure white, near-black ink; still no blue hues. */
+  --paper: #f2f2f2; --sheet: #fbfbfb; --ink: #1a1a1a; --muted: #5c5c5c; --line: #e0e0e0;
+  --accent: #1a1a1a; --on-accent: #fafafa; --yellow: #ffc21a; --yellow-soft: #fff4d1; --on-yellow: #1a1a1a;
+  --ok: #1f7a3d; --ok-soft: #e2f3e7; --bad: #c4282f; --bad-soft: #fde5e4;
+  /* dark band (top bar, hero, case-file headers): neutral charcoal */
+  --band: #161616; --band-card: #232323; --band-line: #3a3a3a; --on-band: #f2f2f2; --on-band-muted: #a8a8a8;
+  /* keyword colours: concept / biology / tool / warning (raspberry, green, yellow, red) */
+  --k-c: #b02a6a; --k-c-bg: #fbe3ee; --k-b: #1f7a3d; --k-b-bg: #e2f3e7; --k-t: #1a1a1a; --k-t-bg: #ffd24d; --k-w: #c4282f; --k-w-bg: #fde5e4;
   /* sequence-type colours in the vector map */
-  --st-258: #2b231d; --st-307: #b0641f; --st-11: #a3392b; --st-147: #86375a;
-  --font-ui: "Hanken Grotesk", "Helvetica Neue", Arial, system-ui, sans-serif;
-  --font-read: "Source Serif 4", Georgia, serif;
+  --st-258: #1a1a1a; --st-307: #e0662a; --st-11: #c4282f; --st-147: #b02a6a;
+  /* Typefaces follow pratt.edu's roles: Graphik for UI and headings, Tiempos Text for reading text, Tiempos Fine
+     (light italic) for emphasised words in headlines. Graphik and Tiempos are commercial fonts: they're used when
+     installed on the reader's machine or when licensed files are added to src/assets/fonts/ (see the README there).
+     Otherwise the free stand-ins after them in each stack are used. */
+  --font-ui: "Graphik", "Graphik Web", "Hanken Grotesk", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --font-read: "Tiempos Text", "TiemposText", "Source Serif 4", Georgia, serif;
+  --font-fine: "Tiempos Fine", "TiemposFine", "Newsreader", "Source Serif 4", Georgia, serif;
   --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
-  --accent-hover: #3d332b;
-  --r: 14px; --shadow: 0 1px 0 rgba(60,40,20,.05), 0 8px 24px rgba(60,40,20,.07);
+  --accent-hover: #333333;
+  --r: 14px; --shadow: 0 1px 0 rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.06);
   color-scheme: light;
 }
-/* Dark theme: warm espresso, no blue, off-white text (never pure white) to limit glare.
+/* Dark theme: neutral charcoal, no blue, off-white text (never pure white) to limit glare.
    Applies when the system prefers dark (unless the reader picked Light), or when the reader picks Dark. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-  --paper: #1a1613; --sheet: #231e1a; --ink: #e9dfd1; --muted: #a8998a; --line: #3a322b;
-    --accent: #e9dfd1; --accent-hover: #d6cab9; --on-accent: #1a1613; --yellow: #d9a441; --yellow-soft: #3a2e1a; --on-yellow: #1a1613;
-    --ok: #a3c27a; --ok-soft: #263019; --bad: #e8907a; --bad-soft: #3d231d;
-    --band: #120f0c; --band-card: #1f1a16; --band-line: #3a322b; --on-band: #e9dfd1; --on-band-muted: #a8998a;
-    --k-c: #e2a3bd; --k-c-bg: #3a2230; --k-b: #a3c27a; --k-b-bg: #263019; --k-t: #1a1613; --k-t-bg: #d9a441; --k-w: #e8907a; --k-w-bg: #3d231d;
-    --st-258: #e9dfd1; --st-307: #d98b4a; --st-11: #e8907a; --st-147: #d690b0;
+    --paper: #121212; --sheet: #1c1c1c; --ink: #ececec; --muted: #a3a3a3; --line: #333333;
+    --accent: #ececec; --accent-hover: #d4d4d4; --on-accent: #121212; --yellow: #f2b50f; --yellow-soft: #26241d; --on-yellow: #121212;
+    --ok: #5fcf83; --ok-soft: #173322; --bad: #f2716b; --bad-soft: #3d1c1c;
+    --band: #0b0b0b; --band-card: #1c1c1c; --band-line: #333333; --on-band: #ececec; --on-band-muted: #a3a3a3;
+    --k-c: #f084b8; --k-c-bg: #3d1a2c; --k-b: #5fcf83; --k-b-bg: #173322; --k-t: #121212; --k-t-bg: #f2b50f; --k-w: #f2716b; --k-w-bg: #3d1c1c;
+    --st-258: #ececec; --st-307: #f08a52; --st-11: #f2716b; --st-147: #f084b8;
     --shadow: 0 1px 0 rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --paper: #1a1613; --sheet: #231e1a; --ink: #e9dfd1; --muted: #a8998a; --line: #3a322b;
-  --accent: #e9dfd1; --accent-hover: #d6cab9; --on-accent: #1a1613; --yellow: #d9a441; --yellow-soft: #3a2e1a; --on-yellow: #1a1613;
-  --ok: #a3c27a; --ok-soft: #263019; --bad: #e8907a; --bad-soft: #3d231d;
-  --band: #120f0c; --band-card: #1f1a16; --band-line: #3a322b; --on-band: #e9dfd1; --on-band-muted: #a8998a;
-  --k-c: #e2a3bd; --k-c-bg: #3a2230; --k-b: #a3c27a; --k-b-bg: #263019; --k-t: #1a1613; --k-t-bg: #d9a441; --k-w: #e8907a; --k-w-bg: #3d231d;
-  --st-258: #e9dfd1; --st-307: #d98b4a; --st-11: #e8907a; --st-147: #d690b0;
+  --paper: #121212; --sheet: #1c1c1c; --ink: #ececec; --muted: #a3a3a3; --line: #333333;
+  --accent: #ececec; --accent-hover: #d4d4d4; --on-accent: #121212; --yellow: #f2b50f; --yellow-soft: #26241d; --on-yellow: #121212;
+  --ok: #5fcf83; --ok-soft: #173322; --bad: #f2716b; --bad-soft: #3d1c1c;
+  --band: #0b0b0b; --band-card: #1c1c1c; --band-line: #333333; --on-band: #ececec; --on-band-muted: #a3a3a3;
+  --k-c: #f084b8; --k-c-bg: #3d1a2c; --k-b: #5fcf83; --k-b-bg: #173322; --k-t: #121212; --k-t-bg: #f2b50f; --k-w: #f2716b; --k-w-bg: #3d1c1c;
+  --st-258: #ececec; --st-307: #f08a52; --st-11: #f2716b; --st-147: #f084b8;
   --shadow: 0 1px 0 rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
   color-scheme: dark;
 }
@@ -60,7 +66,8 @@ h1, h2, h3, h4 { font-family: var(--font-ui); letter-spacing: -0.02em; margin: 0
 .topbar { position: sticky; top: 0; z-index: 40; background: var(--band); color: var(--on-band); }
 .topbar-in { max-width: 1240px; margin: 0 auto; padding: 0 24px; height: 64px; display: flex; align-items: center; gap: 28px; }
 .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; font: 800 1.35rem var(--font-ui); letter-spacing: -0.03em; }
-.logo-mark { width: 30px; height: 30px; border-radius: 8px; background: var(--yellow); color: var(--on-yellow); display: grid; place-items: center; font-size: 1rem; }
+/* Site logo: the Neva-and-owl line art (public/logo-mask.png), drawn in the theme yellow on the dark top bar */
+.logo-mark { width: 38px; height: 44px; background: var(--yellow); -webkit-mask: url(/logo-mask.png) center / contain no-repeat; mask: url(/logo-mask.png) center / contain no-repeat; }
 .nav { display: flex; gap: 4px; }
 .nav a { text-decoration: none; padding: 8px 12px; border-radius: 999px; font-weight: 600; font-size: 0.95rem; color: var(--on-band-muted); }
 .nav a:hover { color: var(--on-band); }
@@ -95,7 +102,9 @@ h1, h2, h3, h4 { font-family: var(--font-ui); letter-spacing: -0.02em; margin: 0
 .hero { background: var(--band); color: var(--on-band); }
 .hero-in { max-width: 1240px; margin: 0 auto; padding: 72px 24px 88px; display: grid; grid-template-columns: 1.3fr 1fr; gap: 48px; align-items: center; }
 .hero h1 { font-size: clamp(2.6rem, 6vw, 5rem); line-height: 0.98; font-weight: 800; letter-spacing: -0.04em; }
-.hero h1 em { font-style: normal; background: var(--yellow); color: var(--on-yellow); padding: 0 .12em; }
+/* Emphasis inside headlines uses the fine serif italic, as pratt.edu does (h1 em, h2 em). */
+h1 em, h2 em { font-family: var(--font-fine); font-style: italic; font-weight: 300; letter-spacing: -0.01em; }
+.hero h1 em { background: var(--yellow); color: var(--on-yellow); padding: 0 .12em; }
 .hero p.lede { font: 400 1.25rem/1.5 var(--font-read); color: var(--on-band); max-width: 36ch; margin: 22px 0 30px; }
 .hero .stat-row { display: flex; gap: 28px; margin-top: 34px; color: var(--on-band-muted); font-size: .9rem; }
 .hero .stat-row b { display: block; color: var(--on-band); font-size: 1.6rem; }
@@ -202,7 +211,7 @@ h1, h2, h3, h4 { font-family: var(--font-ui); letter-spacing: -0.02em; margin: 0
 .drag { touch-action: none; user-select: none; cursor: grab; background: var(--sheet); border: 1.5px solid var(--ink); border-radius: 10px; padding: 9px 12px; display: flex; gap: 10px; align-items: center; font-size: .93rem; box-shadow: 0 2px 0 var(--ink); }
 .drag:active { cursor: grabbing; }
 .drag.dragging { opacity: .35; }
-.drag.overlay { box-shadow: 0 14px 30px rgba(60,40,20,.22); transform: rotate(-1.5deg); }
+.drag.overlay { box-shadow: 0 14px 30px rgba(0,0,0,.22); transform: rotate(-1.5deg); }
 .drag .grip { font: 700 .9rem var(--font-mono); color: var(--muted); letter-spacing: -2px; }
 .drag.right { border-color: var(--ok); box-shadow: 0 2px 0 var(--ok); background: var(--ok-soft); }
 .drag.wrong { border-color: var(--bad); box-shadow: 0 2px 0 var(--bad); background: var(--bad-soft); }
@@ -246,15 +255,15 @@ table.t th { font: 600 .72rem var(--font-mono); text-transform: uppercase; lette
 .tool-ev.err .lbl { color: var(--bad); }
 
 /* professor drawer */
-.prof-fab { position: fixed; right: 22px; bottom: 22px; z-index: 50; display: flex; align-items: center; gap: 10px; background: var(--yellow); border: 2px solid var(--ink); border-radius: 999px; padding: 10px 18px 10px 10px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 24px rgba(60,40,20,.2); }
-.drawer { position: fixed; top: 64px; right: 0; bottom: 0; width: min(460px, 100vw); z-index: 60; background: var(--sheet); border-left: 2px solid var(--ink); display: flex; flex-direction: column; box-shadow: -16px 0 40px rgba(60,40,20,.12); }
+.prof-fab { position: fixed; right: 22px; bottom: 22px; z-index: 50; display: flex; align-items: center; gap: 10px; background: var(--yellow); border: 2px solid var(--ink); border-radius: 999px; padding: 10px 18px 10px 10px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 24px rgba(0,0,0,.2); }
+.drawer { position: fixed; top: 64px; right: 0; bottom: 0; width: min(460px, 100vw); z-index: 60; background: var(--sheet); border-left: 2px solid var(--ink); display: flex; flex-direction: column; box-shadow: -16px 0 40px rgba(0,0,0,.12); }
 .drawer-h { padding: 16px 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; }
 .drawer-b { flex: 1; overflow-y: auto; padding: 18px 20px; }
 .drawer-f { padding: 14px 20px 18px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
 
 /* gamification */
 .toasts { position: fixed; left: 50%; top: 78px; transform: translateX(-50%); z-index: 80; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
-.toast { background: var(--band); color: var(--on-band); padding: 10px 18px; border-radius: 999px; font-weight: 700; display: flex; gap: 10px; align-items: center; animation: pop .35s cubic-bezier(.2,1.6,.4,1), fade 3.2s ease forwards; box-shadow: 0 10px 30px rgba(60,40,20,.25); }
+.toast { background: var(--band); color: var(--on-band); padding: 10px 18px; border-radius: 999px; font-weight: 700; display: flex; gap: 10px; align-items: center; animation: pop .35s cubic-bezier(.2,1.6,.4,1), fade 3.2s ease forwards; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
 .toast .plus { background: var(--yellow); color: var(--on-yellow); border-radius: 999px; padding: 1px 9px; }
 .toast.badge .plus { background: var(--on-band); }
 @keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -299,3 +308,44 @@ input[type=range] { accent-color: var(--ink); }
 /* text on yellow and on ink stays legible in both themes */
 .avatar, .prof-fab { color: var(--on-yellow); }
 .step.done .dot, .mod.done .node { color: var(--on-accent); }
+
+/* ---------- case dossier, scene, missions, cold call ---------- */
+.dossier { border: 2px solid var(--ink); border-radius: var(--r); background: var(--sheet); overflow: hidden; }
+.dossier-h { list-style: none; cursor: pointer; background: var(--band); color: var(--on-band); padding: 14px 22px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.dossier-h::-webkit-details-marker { display: none; }
+.dossier-h b { display: block; font-size: 1.15rem; }
+.dossier-h::after { content: "▾"; margin-left: 8px; }
+.dossier:not([open]) .dossier-h::after { content: "▸"; }
+.deadline { font: 600 .8rem var(--font-mono); background: var(--yellow); color: var(--on-yellow); border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
+.dossier-b { padding: 22px; display: grid; grid-template-columns: 1.15fr 1fr; gap: 26px; }
+.stakes { background: var(--k-w-bg); border-radius: 10px; padding: 12px 16px; }
+.stakes .read { font-size: .98rem; }
+.timeline { list-style: none; margin: 0; padding: 0 0 0 14px; border-left: 3px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+.timeline li { position: relative; display: grid; grid-template-columns: 118px 1fr; gap: 10px; font-size: .9rem; }
+.timeline li::before { content: ""; position: absolute; left: -21px; top: 4px; width: 11px; height: 11px; border-radius: 50%; background: var(--line); border: 2px solid var(--sheet); }
+.timeline li.case::before { background: var(--yellow); }
+.timeline li.done::before { background: var(--ok); }
+.timeline li.now::before { background: var(--ink); box-shadow: 0 0 0 4px var(--yellow); }
+.timeline li.now { font-weight: 600; }
+.timeline .when { font: 500 .76rem var(--font-mono); color: var(--muted); padding-top: 2px; }
+.timeline a.tag { text-decoration: none; }
+.cast { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+.person-card { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--paper); font-size: .9rem; }
+.avatar.person { background: var(--band); color: var(--on-band); width: 32px; height: 32px; flex: none; font-size: .72rem; border-color: var(--band); }
+.scene { display: flex; gap: 12px; align-items: flex-start; background: var(--yellow-soft); border-radius: 12px; padding: 12px 14px; }
+.hook { display: flex; gap: 12px; align-items: flex-start; border-left: 4px solid var(--yellow); background: var(--sheet); border-radius: 0 12px 12px 0; padding: 12px 16px; box-shadow: var(--shadow); }
+.hook .read { font-size: 1.12rem; font-style: italic; }
+.deliverable { border: 1.5px dashed var(--ink); border-radius: 12px; padding: 12px 14px; }
+.missions { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--paper); }
+.mission { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 5px 0; border-bottom: 1px dashed var(--line); font-size: .9rem; font-weight: 600; }
+.mission:last-child { border-bottom: 0; }
+.mission small { display: block; font-weight: 400; color: var(--muted); font-size: .76rem; }
+.mission b { color: var(--ok); white-space: nowrap; }
+.coldcall { margin-top: 12px; border: 1.5px solid var(--ink); border-radius: 12px; padding: 12px 14px; background: var(--yellow-soft); display: flex; flex-direction: column; gap: 8px; }
+@media (max-width: 960px) { .dossier-b { grid-template-columns: 1fr; } .timeline li { grid-template-columns: 1fr; } }
+
+/* Otto's avatar: the owl line art (public/otto-mask.png) drawn in the theme's ink on the yellow badge */
+.avatar.bot { position: relative; width: 30px; height: 30px; font-size: 0; }
+.avatar.bot::before { content: ""; position: absolute; inset: 3px 5px 4px; background: var(--on-yellow); -webkit-mask: url(/otto-mask.png) center / contain no-repeat; mask: url(/otto-mask.png) center / contain no-repeat; }
+.prof-fab .avatar.bot, .hook .avatar.bot { width: 36px; height: 36px; }
+.drawer-h .avatar.bot { width: 40px; height: 40px; }

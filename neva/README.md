@@ -1,17 +1,25 @@
 # Neva: AI for the life sciences
 
 A case-based course site that teaches how modern AI works (LLMs, vector databases, RAG and MCP)
-through casework in three fields. Professor Neva, an AI tutor, teaches Socratically, grades open
+through casework in three fields. Otto, an AI tutor, teaches Socratically, grades open
 answers, writes new questions and coaches you through a live investigation.
 
 | Path | Field | Case setting (all fictional) |
 |---|---|---|
-| **Pathogen Genomics** | Genetics | A carbapenem-resistant *Klebsiella* cluster at St. Aurelia Medical Center |
+| **Cancer Genomics** | Genetics | A relapsed acute myeloid leukemia at the Cascade Ridge Cancer Research Center: tumor sequencing and a single-cell atlas |
 | **Outbreak Modeling** | Disease modeling | A new respiratory virus in Port Calder; the city must decide on school closures |
 | **Research Intelligence** | Research | A systematic review at the Meridian Evidence Unit |
 
 Each path has five cases teaching the same AI stack in order: LLMs → vector databases → RAG → MCP → a capstone
 where you lead an investigation with a tool-using AI agent.
+
+## Fonts
+
+Typefaces follow pratt.edu's roles: **Graphik** for UI and headings, **Tiempos Text** for reading text, and
+**Tiempos Fine** light italic for emphasised words in headlines. They are commercial fonts and are not included.
+Readers who have them installed see them; to serve them to everyone, add licensed WOFF2 files to
+`src/assets/fonts/` (see the README there; the files are git-ignored). Until then the free stand-ins are Hanken
+Grotesk, Source Serif 4 and Newsreader.
 
 ## Run it
 
@@ -29,18 +37,19 @@ Production: `npm run build && npm start` serves `dist/` and the API on port 8787
 
 ## The paths
 
-### Pathogen Genomics
+### Cancer Genomics
 
-The whole path follows one case: a fictional carbapenem-resistant *Klebsiella pneumoniae* outbreak at
-St. Aurelia Medical Center.
+The whole path follows one fictional patient, AML-0412, whose acute myeloid leukemia relapsed after induction
+chemotherapy. The lab sequenced marrow at diagnosis, remission and relapse plus a skin germline control, and
+annotates single cells against a healthy bone-marrow reference atlas. Research-level interpretation only.
 
 | # | AI topic | Case | Lab (drag-and-drop + live AI) |
 |---|---|---|---|
-| 1 | LLMs | The Midnight Report | Tokenizer bench, temperature sampler, sort the draft's sentences into fact or fabrication |
-| 2 | Vector databases | Who's Related? | Build a record (id / vector / metadata), embedding map, drag filter chips into the query |
-| 3 | RAG | The Protocol Question | Order the pipeline, BM25 retrieval, pack a 200-token context window, Claude answers **with citations** |
+| 1 | LLMs | The Overnight Variant Report | Tokenizer bench on HGVS notation, temperature sampler, sort the draft's sentences into fact or fabrication |
+| 2 | Vector databases | Which Cell Is This? | Build a reference-cell record, k-nearest-neighbour label transfer on a single-cell map, drag-in metadata filters |
+| 3 | RAG | The Tiering Question | Order the pipeline, BM25 retrieval over the lab's SOPs, pack a 200-token context window, Claude answers **with citations** |
 | 4 | MCP | Wire Up the Lab | Order the host/client/server messages, sort tools by approval policy, watch a live tool-using host |
-| 5 | Capstone | The Outbreak Room | Direct a tool-using agent, sort all 12 isolates, file a report graded by the professor |
+| 5 | Capstone | The Tumor Board | Direct a tool-using agent, classify every variant (founder, lost, relapse, germline, artifact), file a report graded by Otto |
 
 ### Outbreak Modeling
 
@@ -67,9 +76,33 @@ computed from the model, not typed in.
 
 Each case runs the same way: **case file → lecture with checks → lab → AI-graded seminar → quiz → debrief.**
 
+## The Cancer Genomics case dossier
+
+Every case in the path follows one fictional dossier (`src/content/cancer/dossier.ts`). Patient AML-0412, a
+58-year-old at the fictional Cascade Ridge Cancer Research Center, has acute myeloid leukemia that relapsed about
+six months after remission. Over three days before the molecular tumor board (Thu 10 Sep 2026, 08:00) you are
+the lab's AI lead:
+
+| When | Brought by | Case | You hand over |
+|---|---|---|---|
+| Tue 8 Sep, 02:10 | Dr. Ines Varga, molecular pathology fellow | The Overnight Variant Report | A fact-checked LLM summary |
+| Tue 8 Sep, 14:00 | Dr. Kenji Albright, hematopathologist | Which Cell Is This? | Cell-type labels with neighbour agreement and caveats |
+| Wed 9 Sep, 10:30 | Dr. Ines Varga | The Tiering Question | Three SOP answers with citations |
+| Wed 9 Sep, 16:00 | Omar Haddad, research informatics | Wire Up the Lab | A tool policy and an audited live trace |
+| Thu 10 Sep, 08:00 | Dr. Mara Ellison, tumor board chair | The Tumor Board | The full tumor board report |
+
+The path page shows the dossier: summary, stakes, key facts, timeline with your progress, and who's involved. Each
+case file shows:
+- the scene: who asks, when, and their exact request
+- Otto's opening hook
+- the deliverable and how you'll be judged
+- the missions and the XP each stage is worth
+
 ## How it teaches
 
-- **Professor, not chatbot.** Professor Neva runs a case-method seminar: guiding questions first,
+- **Cold calls.** After each lecture segment, Otto can cold-call you: an AI-written question that applies
+  the segment to the case, graded against a 3-point rubric.
+- **Professor, not chatbot.** Otto runs a case-method seminar: guiding questions first,
   explicit correction of misconceptions, and short answers that end with a question. Misconceptions found
   while grading are saved and fed back into later tutoring.
 - **Gamification.** XP for checks, evidence, seminar points and quiz answers. Five levels from Lab Intern
@@ -85,13 +118,14 @@ Each case runs the same way: **case file → lecture with checks → lab → AI-
 | `/api/professor` | Socratic tutor that knows the lesson | streaming, prompt caching |
 | `/api/grade` | Grades seminar answers against a rubric and spots misconceptions | structured outputs (Zod) |
 | `/api/quiz` | Writes a new case-based challenge question | structured outputs |
+| `/api/coldcall` | Writes a cold-call question + rubric for a lecture segment | structured outputs |
 | `/api/screen` | Second reviewer for abstract screening | structured outputs |
 | `/api/rag` | Answers only from the chunks the learner packed | document blocks + **citations** |
 | `/api/agent` | Each path's lab assistant, calling that path's tools | tool use loop, strict schemas, eager input streaming |
 | `/api/capstone-grade` | Grades the outbreak report | structured outputs |
 
-Every call uses `claude-opus-5-5` with server-side refusal fallback (`fallbacks: "default"`). Pathogen
-content can occasionally trip a safety classifier on legitimate surveillance questions, and the fallback
+Every call uses `claude-opus-5-5` with server-side refusal fallback (`fallbacks: "default"`). Life-science
+content can occasionally trip a safety classifier on legitimate research questions, and the fallback
 reruns the request on Anthropic's recommended fallback model. Conversation history is sent back exactly as
 the API returned it, so it is only ever appended to.
 
@@ -130,5 +164,5 @@ e2e/smoke.ts              browser smoke test
 To add a path: create `src/content/<path>/lessons.ts` (export `PATH`), labs in `src/labs/<path>/`
 (export a lab map), `server/paths/<path>.ts` (export a `ServerPath`), and register each one.
 
-All hospitals, cities, patients, isolates, studies and documents are fictional teaching material. Gene names,
-sequence types and methods (SEIR, GRADE, PRISMA, MCP...) are real and described accurately. This is not medical advice.
+All institutions, cities, patients, samples, studies and documents are fictional teaching material. Gene names,
+variant notation, marker genes and methods (SEIR, GRADE, PRISMA, MCP...) are real and described accurately. This is not medical advice.

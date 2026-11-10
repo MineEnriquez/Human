@@ -220,7 +220,7 @@ export const LESSONS: Lesson[] = [
     },
     lecture: [
       {
-        title: "Briefing from Professor Neva",
+        title: "Briefing from Otto",
         body: `Everything comes together here. Your assistant is an [[c|LLM]] that calls [[t|tools]]: \`search_studies\`, \`get_study\`, \`get_risk_of_bias\` and \`search_protocol\`. Every call and result appears in the trace, the way an MCP host logs them.\n\nA disciplined review:\n1. Search broadly and list every record. Don't stop at the first page.\n2. Check each record against **all** criteria: population, intervention (molecular, on positive culture broth), comparator, outcome (time to optimal therapy), and design.\n3. For included studies, look at the result **and** the risk of bias (RoB 2 for trials, ROBINS-I for non-randomized studies).\n4. Rate certainty with [[b|GRADE]]. Randomized evidence starts high. Observational evidence starts low in traditional GRADE; when it is assessed with ROBINS-I (as here) it starts high and is usually rated down for risk of bias. Downgrade for risk of bias, inconsistency, indirectness, imprecision or publication bias, consider the upgrading criteria (large effect, dose-response, plausible confounding that would reduce the effect), and rate the two bodies of evidence separately.\n5. Write a conclusion that says what the evidence shows and how sure you are.\n\nThe assistant won't hand you the answer. [[w|Agreement with the AI isn't the goal; a defensible review is.]]`,
       },
     ],
@@ -233,7 +233,7 @@ export const LESSONS: Lesson[] = [
 ];
 
 export const PATH: Path = {
-  id: "research-intelligence", area: "Research", title: "Research Intelligence", color: "#86375a", status: "live",
+  id: "research-intelligence", area: "Research", title: "Research Intelligence", color: "#b02a6a", status: "live",
   tagline: "Use AI to screen, search and synthesise the literature, with receipts.",
   blurb: "Run a systematic review on rapid molecular diagnostics for bloodstream infection: LLM-assisted screening with agreement statistics, semantic and hybrid search, citation-grounded answers and MCP connectors to the research stack.",
   cases: ["The Abstract Screen", "Semantic Search", "The Grounded Review", "Library Connectors", "The Review Board"],

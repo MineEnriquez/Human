@@ -29,7 +29,7 @@ export function Dashboard() {
       </div>))}
 
       <div className="card pad">
-        <h3 style={{ marginBottom: 8 }}>What Professor Neva has noticed</h3>
+        <h3 style={{ marginBottom: 8 }}>What Otto has noticed</h3>
         <p className="muted" style={{ marginTop: 0 }}>Misconceptions spotted while grading your seminar answers. The professor uses these to target questions.</p>
         {p.misconceptions.length ? <ul className="read">{p.misconceptions.map(m => <li key={m}>{m}</li>)}</ul> : <p className="muted">Nothing yet.</p>}
       </div>

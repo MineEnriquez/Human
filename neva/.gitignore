@@ -2,3 +2,7 @@ node_modules
 dist
 .env
 *.tsbuildinfo
+.DS_Store
+# Licensed font files must not be published
+src/assets/fonts/*.woff2
+src/assets/fonts/*.woff

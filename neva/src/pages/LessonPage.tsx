@@ -4,6 +4,7 @@ import { askProfessor, ProfessorChat } from "../components/ProfessorChat";
 import { CaseBrief, Debrief, Lecture, Quiz, Seminar } from "../components/stages";
 import { findLesson, type Lesson, type Path } from "../content/paths";
 import { LABS } from "../labs/registry";
+import { stageRewards } from "../lib/rewards";
 import { levelOf, lessonDone, useProgress, type StageId } from "../lib/progress";
 
 
@@ -17,14 +18,18 @@ const STAGES: { id: StageId; label: string; sub: string }[] = [
 ];
 const BOSS_STAGES: { id: StageId; label: string; sub: string }[] = [
   { id: "brief", label: "Case file", sub: "The situation" },
-  { id: "lecture", label: "Briefing", sub: "From the professor" },
+  { id: "lecture", label: "Briefing", sub: "From Otto" },
   { id: "lab", label: "Capstone", sub: "Investigate + report" },
   { id: "debrief", label: "Debrief", sub: "Takeaways" },
 ];
 
+const plain = (t: string) => t.replace(/\[\[\w\|([^\]]+)\]\]/g, "$1").replace(/\*\*/g, "");
 function lessonContext(p: Path, l: Lesson, level: string, misconceptions: string[]) {
+  const b = l.brief;
   return [
     `Path: ${p.title} (${p.area}). ${p.setting}`,
+    p.dossier ? `Case dossier: ${p.dossier.headline} ${plain(p.dossier.summary)} People: ${p.dossier.cast.map(c => `${c.name} (${c.role})`).join("; ")}. Deadline: ${p.dossier.deadline}.` : "",
+    b.from ? `This case's scene (${b.when}): ${b.from.name}, ${b.from.role}, asks: "${b.from.ask}" Deliverable: ${b.deliverable} Judged on: ${(b.success || []).join("; ")}.` : "",
     `Lesson ${l.n}: ${l.title} (topic: ${l.topic}). Case: "${l.caseTitle}".`,
     `Situation: ${l.brief.situation.replace(/\[\[\w\|([^\]]+)\]\]/g, "$1")}`,
     `Case question: ${l.brief.question}`,
@@ -48,6 +53,7 @@ export function LessonPage() {
   const prev = path.lessons[idx - 1];
   const next = path.lessons[idx + 1];
   const unlocked = !prev || lessonDone(p, prev.id, prev.boss);
+  const rewards = stageRewards(lesson);
   const stages = lesson.boss ? BOSS_STAGES.map(s => (s.id === "lab" ? { ...s, label: lesson.title } : s)) : STAGES;
   const st = p.lessons[lesson.id]?.stages || {};
   const stage = stageSel || stages.find(s => !st[s.id])?.id || "brief";
@@ -73,7 +79,7 @@ export function LessonPage() {
         <nav className="stepper" aria-label="Lesson stages">
           {stages.map((s, i) => (
             <button key={s.id} className={`step ${stage === s.id ? "on" : ""} ${st[s.id] ? "done" : ""}`} onClick={() => go(s.id)} aria-current={stage === s.id ? "step" : undefined}>
-              <span className="dot">{st[s.id] ? "✓" : i + 1}</span><span>{s.label}<small>{s.sub}</small></span>
+              <span className="dot">{st[s.id] ? "✓" : i + 1}</span><span>{s.label}<small>{s.sub}{rewards[s.id] ? ` · +${rewards[s.id]!.xp} XP` : ""}</small></span>
             </button>
           ))}
         </nav>
@@ -81,8 +87,8 @@ export function LessonPage() {
           <div className="lesson-title"><div className="eyebrow">{lesson.topic} · Case {lesson.n}: {lesson.caseTitle}</div><h1>{lesson.title}</h1></div>
           <section className="card pad">
             <div className="stage-h"><h2>{stages.find(s => s.id === stage)!.label}</h2>{stage === "lab" && <span className="muted" style={{ fontSize: ".9rem" }}>Collect every piece of evidence to complete the lab</span>}</div>
-            {stage === "brief" && <CaseBrief lesson={lesson} onNext={() => go(nextOf("brief"))} />}
-            {stage === "lecture" && <Lecture lesson={lesson} onNext={() => go(nextOf("lecture"))} onAsk={ask} />}
+            {stage === "brief" && <CaseBrief path={path} lesson={lesson} onNext={() => go(nextOf("brief"))} />}
+            {stage === "lecture" && <Lecture pathId={path.id} lesson={lesson} onNext={() => go(nextOf("lecture"))} onAsk={ask} />}
             {stage === "lab" && <Suspense fallback={<p className="thinking">Loading the lab…</p>}><Lab /></Suspense>}
             {stage === "lab" && !lesson.boss && <div className="row" style={{ marginTop: 18 }}><button className="btn primary" disabled={!st.lab} onClick={() => go("seminar")}>{st.lab ? "To the seminar →" : "Finish all lab parts to continue"}</button></div>}
             {stage === "seminar" && <Seminar pathId={path.id} lesson={lesson} onNext={() => go("quiz")} />}
@@ -92,14 +98,14 @@ export function LessonPage() {
         </div>
       </div>
 
-      {!drawer && <button className="prof-fab" onClick={() => setDrawer(true)}><span className="avatar">N</span>Ask Professor Neva</button>}
+      {!drawer && <button className="prof-fab" onClick={() => setDrawer(true)}><span className="avatar bot" role="img" aria-label="Otto" />Ask Otto</button>}
       {drawer && (
-        <aside className="drawer" aria-label="Professor Neva">
-          <div className="drawer-h"><div className="who" style={{ margin: 0 }}><span className="avatar">N</span><div><b>Professor Neva</b><div className="muted" style={{ fontWeight: 500 }}>Office hours · {lesson.caseTitle}</div></div></div><button className="btn sm ghost" onClick={() => setDrawer(false)} aria-label="Close">✕</button></div>
+        <aside className="drawer" aria-label="Otto">
+          <div className="drawer-h"><div className="who" style={{ margin: 0 }}><span className="avatar bot" role="img" aria-label="Otto" /><div><b>Otto</b><div className="muted" style={{ fontWeight: 500 }}>Office hours · {lesson.caseTitle}</div></div></div><button className="btn sm ghost" onClick={() => setDrawer(false)} aria-label="Close">✕</button></div>
           <div className="drawer-b">
             <ProfessorChat convoKey={convoKey} context={context} note={`[Learner is on the ${stage} stage]`}
               intro={`We're on **${lesson.caseTitle}**. Ask about anything in the case, or explain an idea back to me and I'll tell you where it holds and where it doesn't.`}
-              starters={["Explain this lesson like I'm a microbiologist new to AI", "Quiz me with one question", "What's the most common mistake here?", "How does this show up in a real lab?"]} />
+              starters={["Explain this lesson like I know the science but am new to AI", "Quiz me with one question", "What's the most common mistake here?", "How does this show up in a real lab?"]} />
           </div>
         </aside>
       )}
