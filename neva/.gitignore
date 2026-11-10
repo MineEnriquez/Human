@@ -6,3 +6,4 @@ dist
 # Licensed font files must not be published
 src/assets/fonts/*.woff2
 src/assets/fonts/*.woff
+.vercel

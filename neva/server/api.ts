@@ -14,7 +14,7 @@ import { existsSync } from "node:fs";
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
-import { serverPath } from "./paths";
+import { serverPath } from "./paths/index.js";
 
 if (existsSync(".env")) process.loadEnvFile(".env");
 

@@ -1,5 +1,5 @@
 // What each learning path plugs into the shared API.
-import type { Chunk, Hit } from "../../src/content/search";
+import type { Chunk, Hit } from "../../src/content/search.js";
 
 /** A tool the lab agent can call, as an MCP server would list it in tools/list. */
 export type ToolDef = { name: string; description: string; input_schema: Record<string, unknown> };

@@ -1,8 +1,8 @@
 // FICTIONAL document library for the Meridian Evidence Unit: the review protocol plus every study
 // abstract, chunked by section (methods vs results), which is how you'd chunk structured abstracts.
 // Used by the RAG lab and the capstone agent's search tools.
-import { makeSearch, type Chunk } from "../search";
-import { STUDIES } from "./papers";
+import { makeSearch, type Chunk } from "../search.js";
+import { STUDIES } from "./papers.js";
 
 export const PROTOCOL: Chunk[] = [
   { id: "PR-1", doc: "Protocol", title: "Protocol: review question", text: "Meridian Evidence Unit review protocol (fictional). Question: in adults with bloodstream infection, does rapid molecular identification from positive blood cultures, compared with conventional culture-based identification, reduce time to optimal antibiotic therapy? Two reviewers screen every record independently and resolve disagreements by discussion with a third reviewer." },

@@ -1,8 +1,8 @@
 // Cancer Genomics: lab agent tools over the fictional Cascade Ridge AML-0412 dataset.
 import { z } from "zod";
-import { CHUNKS, search } from "../../src/content/cancer/corpus";
-import { QC, SAMPLES, VARIANTS, ccf, sample, type SampleId } from "../../src/content/cancer/dataset";
-import type { ServerPath, ToolDef, ToolResult } from "./types";
+import { CHUNKS, search } from "../../src/content/cancer/corpus.js";
+import { QC, SAMPLES, VARIANTS, ccf, sample, type SampleId } from "../../src/content/cancer/dataset.js";
+import type { ServerPath, ToolDef, ToolResult } from "./types.js";
 
 const SAMPLE_IDS = SAMPLES.map(s => s.id);
 

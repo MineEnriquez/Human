@@ -1,7 +1,7 @@
 // FICTIONAL evidence library of the Port Calder Health Department modeling cell, already chunked.
 // Every study, team and number here is invented for teaching. General definitions are real.
 // Used by the RAG lab and by the capstone agent's search_evidence tool.
-import { makeSearch, type Chunk } from "../search";
+import { makeSearch, type Chunk } from "../search.js";
 
 export const CHUNKS: Chunk[] = [
   // HHS: fictional household transmission study

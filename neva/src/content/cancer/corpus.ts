@@ -4,7 +4,7 @@
 // and workflows are invented for the case.
 // Used by the RAG lab (learner retrieves + packs chunks; Claude answers with citations) and by the capstone agent's search_sops tool.
 
-import { makeSearch, type Chunk } from "../search";
+import { makeSearch, type Chunk } from "../search.js";
 
 export const CHUNKS: Chunk[] = [
   // VC-SOP-02: somatic variant classification
