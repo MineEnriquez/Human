@@ -32,7 +32,7 @@ const CODE = [
   { id: "k5", label: "`dE = beta * S * I / N - sigma * E`", bucket: "ok", why: "New infections enter E and leave at rate σ." },
   { id: "k6", label: "`dI = sigma * E - gamma * S`", bucket: "bug", why: "Recovery removes infectious people: `- gamma * I`, not `S`." },
   { id: "k7", label: "`dR = gamma * I`", bucket: "ok", why: "Recovered people come from I at rate γ." },
-  { id: "k8", label: "`assert abs(S + E + I + R - N) < 1e-6`", bucket: "ok", why: "A conservation check that would have caught the bugs above." },
+  { id: "k8", label: "`assert abs(S + E + I + R - N) < 1e-6`", bucket: "ok", why: "A conservation check: it catches the mismatched `/N` and the `gamma * S` term, but not a wrong parameter value like `sigma = latent_days` (a wrong rate still conserves people)." },
 ];
 
 const W = 560, H = 260, PAD = 34;

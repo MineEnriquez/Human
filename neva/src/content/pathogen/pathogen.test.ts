@@ -34,7 +34,7 @@ describe("answer key", () => {
       expect(Math.min(...cluster.filter(o => o !== id).map(o => snpDistance(id, o)))).toBeLessThanOrEqual(20);
     }
   });
-  it("the sink drain (KP-12) is 1-5 SNPs from every ICU case", () => {
+  it("the sink drain (KP-12) is 1-5 SNPs from every ICU ST258 case", () => {
     for (const i of ISOLATES.filter(x => x.ward === "ICU" && cluster.includes(x.id))) {
       const d = snpDistance("KP-12", i.id);
       expect(d).toBeGreaterThanOrEqual(1);

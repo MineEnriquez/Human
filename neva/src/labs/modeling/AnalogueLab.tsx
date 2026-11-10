@@ -71,7 +71,7 @@ export default function AnalogueLab() {
             <table className="t">
               <thead><tr><th>rank</th><th>outbreak</th><th>curve</th><th>{m.higherIsCloser ? "similarity" : "distance"}</th><th>metadata</th></tr></thead>
               <tbody>{results.map((r, i) => (
-                <tr key={r.a.id}><td>{i + 1}</td><td><b>{r.a.name}</b><div className="muted" style={{ fontSize: ".78rem" }}>{r.a.outcome}</div></td><td><Spark v={r.a.vec} /></td><td className="mono">{r.s.toFixed(4)}</td><td style={{ fontSize: ".8rem" }}>{r.a.family}, {r.a.setting}, {r.a.population.toLocaleString()}, {r.a.year}</td></tr>
+                <tr key={r.a.id}><td>{i + 1}</td><td><b>{r.a.name}</b><div className="muted" style={{ fontSize: ".78rem" }}>{r.a.outcome}</div></td><td><Spark v={r.a.vec} /></td><td className="mono">{r.s.toFixed(5)}</td><td style={{ fontSize: ".8rem" }}>{r.a.family}, {r.a.setting}, {r.a.population.toLocaleString()}, {r.a.year}</td></tr>
               ))}</tbody>
             </table>
             {!results.length && <p className="feedback bad">No records pass these filters.</p>}

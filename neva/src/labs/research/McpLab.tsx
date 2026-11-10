@@ -1,7 +1,7 @@
 import { McpLabView } from "../shared/McpLabView";
 
 const HANDSHAKE = [
-  { id: "h1", label: "[[t|Host]] starts an MCP client and launches the bibliographic server (stdio)", why: "One client per server, inside the host app." },
+  { id: "h1", label: "[[t|Host]] starts an MCP client and connects to the unit's shared bibliographic server (Streamable HTTP)", why: "One client per server, inside the host app." },
   { id: "h2", label: "Client → Server: `initialize` (protocol version, capabilities, client info)", why: "The session always starts by negotiating version and capabilities." },
   { id: "h3", label: "Server → Client: initialize result (its capabilities: tools, resources)", why: "The server says what it offers." },
   { id: "h4", label: "Client → Server: `notifications/initialized`", why: "A notification (no id, no response): the client is ready for normal operation." },

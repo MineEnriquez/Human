@@ -49,7 +49,7 @@ export default function ScreenLab() {
       setClaude(ds);
       finishPart(ID, EVIDENCE[1], EVIDENCE);
       const k = cohenKappa(mine, ds.map(d => d.decision));
-      if (k >= 0.61) earnBadge("second-reviewer");
+      if (k > 0.6) earnBadge("second-reviewer");
     } catch (e) { setErr((e as Error).message); }
     setBusy(false);
   };
@@ -108,7 +108,7 @@ export default function ScreenLab() {
               {claude && <span className="tag">κ you vs Claude = <b>{fmt(kYouAi)}</b> ({kappaLabel(kYouAi)})</span>}
               {claude && <span className="tag">κ Claude vs key = <b>{fmt(kAiKey)}</b></span>}
               <span className="tag">κ you vs key = <b>{fmt(kYouKey)}</b></span>
-              {claude && kYouAi >= 0.61 && <span className="tag live">🧾 Substantial agreement</span>}
+              {claude && kYouAi > 0.6 && <span className="tag live">🧾 Substantial agreement</span>}
             </div>
             <p className="read" style={{ fontSize: ".95rem", marginTop: 10 }}>
               <RichInline text={`Eligible studies you excluded: **${missed(mine).join(", ") || "none"}**${claude ? `. Eligible studies Claude excluded: **${missed(claude.map(d => d.decision)).join(", ") || "none"}**` : ""}. That's the error that matters most. "Unsure" counts as disagreement in kappa here, but in a real screen it sends the record to full-text review, which is the safe choice.`} />

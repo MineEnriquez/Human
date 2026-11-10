@@ -3,6 +3,8 @@ import { McpLabView } from "../shared/McpLabView";
 const HANDSHAKE = [
   { id: "h1", label: "[[t|Host]] starts an MCP client for the lab server", why: "One client per server, inside the host app." },
   { id: "h2", label: "Client → Server: `initialize`", why: "Agree protocol version and capabilities first." },
+  { id: "h2b", label: "Server → Client: `initialize` result with its capabilities", why: "The server says what it supports (tools, resources, prompts)." },
+  { id: "h2c", label: "Client → Server: `notifications/initialized`", why: "The client confirms; normal requests can start." },
   { id: "h3", label: "Client → Server: `tools/list`", why: "Discover what the server offers." },
   { id: "h4", label: "Server → Client: tool names, descriptions, **input schemas**", why: "The schema tells the model what arguments are valid." },
   { id: "h5", label: "Host gives the tool definitions + the user's question to the [[c|LLM]]", why: "Now the model knows the tools exist." },

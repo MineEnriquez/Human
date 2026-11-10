@@ -58,7 +58,7 @@ export default function VectorDbLab() {
         <SortIntoBuckets items={FIELDS} columns={3} buckets={[{ id: "id", title: "id" }, { id: "vec", title: "vector" }, { id: "meta", title: "metadata" }]} onSolved={() => finishPart(ID, EV[0], EV)} />
       </LabCard>
 
-      <LabCard title="B. Search the genome database" done={ev.includes(EV[1]) && ev.includes(EV[2])} sub={<RichInline text="Query: the new isolate **KP-13** (ICU, 22 March). First search with no filters, then drag filter chips into the query and search again. Toy 2-D [[c|embeddings]]; real ones have hundreds of dimensions." />}>
+      <LabCard title="B. Search the genome database" done={ev.includes(EV[1]) && ev.includes(EV[2])} sub={<RichInline text="Query: the new isolate **KP-13** (ICU, 22 March). First search with no filters, then drag filter chips into the query and search again. Toy 2-D [[c|embeddings]]; real ones have hundreds to thousands of dimensions." />}>
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.2fr) minmax(0, 1fr)", gap: 20 }} className="vdb-grid">
           <svg viewBox="0 0 500 400" className="svgbox" role="img" aria-label="Embedding map of isolates">
             {[0.25, 0.5, 0.75].map(g => <g key={g}><line x1={X(g)} x2={X(g)} y1={Y(0)} y2={Y(1)} style={{ stroke: "var(--line)" }} strokeDasharray="3 5" /><line y1={Y(g)} y2={Y(g)} x1={X(0)} x2={X(1)} style={{ stroke: "var(--line)" }} strokeDasharray="3 5" /></g>)}
@@ -90,7 +90,7 @@ export default function VectorDbLab() {
             {!ran.ids.length && <p className="feedback bad">No records pass these filters.</p>}
             <p className="read" style={{ fontSize: ".95rem", marginTop: 10 }}>
               <RichInline text={ran.filtered
-                ? "Filters removed candidates **before** ranking. Did KP-13's best match survive? A filter answers *where/when*; similarity answers *what is it like*."
+                ? "Here the filters removed candidates **before** ranking (real databases filter before or during the search). Did KP-13's best match survive? A filter answers *where/when*; similarity answers *what is it like*."
                 : "The nearest neighbours are all [[b|ST258]] and include the sink drain, KP-12. That's a **lead**. [[w|Similar is not transmitted]]: next you'd check SNP distance and epidemiology."} />
             </p>
           </div>

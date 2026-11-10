@@ -4,11 +4,14 @@ A case-based course site that teaches how modern AI works (LLMs, vector database
 through casework in three fields. Professor Neva, an AI tutor, teaches Socratically, grades open
 answers, writes new questions and coaches you through a live investigation.
 
-| Path | Field | Status |
+| Path | Field | Case setting (all fictional) |
 |---|---|---|
-| **Pathogen Genomics** | Genetics | Built: 5 cases |
-| Outbreak Modeling | Disease modeling | Syllabus only |
-| Research Intelligence | Research | Syllabus only |
+| **Pathogen Genomics** | Genetics | A carbapenem-resistant *Klebsiella* cluster at St. Aurelia Medical Center |
+| **Outbreak Modeling** | Disease modeling | A new respiratory virus in Port Calder; the city must decide on school closures |
+| **Research Intelligence** | Research | A systematic review at the Meridian Evidence Unit |
+
+Each path has five cases teaching the same AI stack in order: LLMs → vector databases → RAG → MCP → a capstone
+where you lead an investigation with a tool-using AI agent.
 
 ## Run it
 
@@ -24,7 +27,9 @@ AI features show an "AI is off" notice.
 
 Production: `npm run build && npm start` serves `dist/` and the API on port 8787 (`PORT` to change).
 
-## The Pathogen Genomics path
+## The paths
+
+### Pathogen Genomics
 
 The whole path follows one case: a fictional carbapenem-resistant *Klebsiella pneumoniae* outbreak at
 St. Aurelia Medical Center.
@@ -36,6 +41,29 @@ St. Aurelia Medical Center.
 | 3 | RAG | The Protocol Question | Order the pipeline, BM25 retrieval, pack a 200-token context window, Claude answers **with citations** |
 | 4 | MCP | Wire Up the Lab | Order the host/client/server messages, sort tools by approval policy, watch a live tool-using host |
 | 5 | Capstone | The Outbreak Room | Direct a tool-using agent, sort all 12 isolates, file a report graded by the professor |
+
+### Outbreak Modeling
+
+The case data comes from a deterministic SEIR model with known parameters, so the capstone answer is
+computed from the model, not typed in.
+
+| # | AI topic | Case | Lab |
+|---|---|---|---|
+| 1 | LLMs | The Parameter Hunt | Sort an LLM's extracted parameters (unit errors, hallucinated values), fit an SEIR curve with sliders, review LLM-written model code |
+| 2 | Vector databases | Similar Epidemics | Past outbreaks as curve vectors: cosine vs Euclidean vs normalised distance, drag-in filters |
+| 3 | RAG | Evidence-Based Priors | Retrieve incubation, serial-interval and contact evidence with citations |
+| 4 | MCP | The Simulation Server | Handshake order, tool approval policy, live simulation tools |
+| 5 | Capstone | The Briefing Room | Agent with `get_case_counts`, `fit_growth_rate`, `run_seir`, `search_evidence`; R0 and peak day checked exactly |
+
+### Research Intelligence
+
+| # | AI topic | Case | Lab |
+|---|---|---|---|
+| 1 | LLMs | The Abstract Screen | Screen abstracts by drag and drop, compare with Claude as second reviewer (Cohen's kappa), PRISMA 2020 flow |
+| 2 | Vector databases | Semantic Search | BM25 vs vector results side by side, reciprocal rank fusion, metadata filters |
+| 3 | RAG | The Grounded Review | Cited answers over the protocol and abstracts chunked by section |
+| 4 | MCP | Library Connectors | Bibliographic and reference-manager tools and their approval policy |
+| 5 | Capstone | The Review Board | Agent with `search_studies`, `get_study`, `get_risk_of_bias`, `search_protocol`; inclusion set, direction and GRADE certainty checked exactly |
 
 Each case runs the same way: **case file → lecture with checks → lab → AI-graded seminar → quiz → debrief.**
 
@@ -57,8 +85,9 @@ Each case runs the same way: **case file → lecture with checks → lab → AI-
 | `/api/professor` | Socratic tutor that knows the lesson | streaming, prompt caching |
 | `/api/grade` | Grades seminar answers against a rubric and spots misconceptions | structured outputs (Zod) |
 | `/api/quiz` | Writes a new case-based challenge question | structured outputs |
+| `/api/screen` | Second reviewer for abstract screening | structured outputs |
 | `/api/rag` | Answers only from the chunks the learner packed | document blocks + **citations** |
-| `/api/agent` | Lab assistant that calls `search_isolates`, `get_snp_distances`, `get_ward_transfers`, `search_protocols` | tool use loop, strict schemas, eager input streaming |
+| `/api/agent` | Each path's lab assistant, calling that path's tools | tool use loop, strict schemas, eager input streaming |
 | `/api/capstone-grade` | Grades the outbreak report | structured outputs |
 
 Every call uses `claude-opus-5-5` with server-side refusal fallback (`fallbacks: "default"`). Pathogen
@@ -66,21 +95,40 @@ content can occasionally trip a safety classifier on legitimate surveillance que
 reruns the request on Anthropic's recommended fallback model. Conversation history is sent back exactly as
 the API returned it, so it is only ever appended to.
 
+## Tests
+
+```bash
+npm test           # unit tests (vitest): no network, no API key
+npm run test:e2e   # browser smoke test: every path, lesson, lecture, lab and quiz in Chrome (no AI calls)
+```
+
+The unit tests check:
+- content integrity for every lesson: depth, quiz answer indices and colour markup
+- that each answer key is consistent with its case data
+- the simulators and statistics: SEIR, growth fit, Cohen's kappa, RRF
+- retrieval: each RAG question's source chunk ranks in the top 3
+- server tools and input validation, plus API routing and guards
+- the markup renderer, including HTML injection
+- the progress store
+
 ## Code map
 
 ```
-server/api.ts           all /api routes (prompts, tools, grading schemas)
-server/index.ts         production static + API server
-src/content/paths.ts    paths, cases, lectures, checks, seminars, quizzes
-src/content/dataset.ts  fictional isolates, SNP model, transfers, answer key
-src/content/corpus.ts   fictional hospital documents (chunked) + BM25
-src/labs/*              one lab per case
-src/components/dnd.tsx  drag-and-drop: SortableSequence, BucketBoard, SortIntoBuckets
-src/lib/progress.ts     XP, levels, badges, streak, evidence, misconceptions
+server/api.ts             all /api routes (prompts, grading schemas, agent loop)
+server/paths/<path>.ts    each path's agent tools, agent prompt and capstone key
+server/index.ts           production static + API server; api/*.ts are the Vercel functions
+src/content/paths.ts      path registry
+src/content/<path>/       lessons, case data, documents for each path
+src/content/search.ts     shared BM25 retrieval
+src/labs/<path>/          one lab per case; src/labs/shared/ has the RAG and MCP lab views
+src/labs/registry.ts      lesson lab key -> component
+src/components/dnd.tsx    drag-and-drop: SortableSequence, BucketBoard, SortIntoBuckets
+src/lib/progress.ts       XP, levels, badges, streak, evidence, misconceptions
+e2e/smoke.ts              browser smoke test
 ```
 
-To add a path, add a `Path` with `lessons` to `PATHS` in `src/content/paths.ts`, plus labs in
-`src/labs/`. To build one of the planned paths, reuse the drag-and-drop components and the agent console.
+To add a path: create `src/content/<path>/lessons.ts` (export `PATH`), labs in `src/labs/<path>/`
+(export a lab map), `server/paths/<path>.ts` (export a `ServerPath`), and register each one.
 
-All hospitals, patients, isolates and documents are fictional teaching material. Gene names and sequence
-types are real names used for realism. This is not medical advice.
+All hospitals, cities, patients, isolates, studies and documents are fictional teaching material. Gene names,
+sequence types and methods (SEIR, GRADE, PRISMA, MCP...) are real and described accurately. This is not medical advice.

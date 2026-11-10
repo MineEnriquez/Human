@@ -48,12 +48,13 @@ const MUT: Record<string, string[]> = {
   "KP-11": [...A, "c1", "c2", "e1", "e2", "f1", "f2", "f3", "g1", "g2", "g3"],
   "KP-08": Array.from({ length: 61 }, (_, i) => "h" + i),
 };
-// Isolates of a different sequence type are thousands of SNPs away.
-const FAR: Record<string, number> = { "KP-06": 2412, "KP-07": 3087, "KP-10": 2795 };
+// Isolates of a different sequence type are far away (values illustrative). ST11 shares clonal group CC258
+// with ST258, so KP-07 is the closest of the three; unrelated lineages (ST307, ST147) are much further.
+const FAR: Record<string, number> = { "KP-06": 11240, "KP-07": 1480, "KP-10": 10870 };
 
 export function snpDistance(a: string, b: string): number {
   if (a === b) return 0;
-  if (FAR[a] || FAR[b]) return FAR[a] && FAR[b] ? 2600 + ((FAR[a] + FAR[b]) % 400) : FAR[a] || FAR[b];
+  if (FAR[a] || FAR[b]) return FAR[a] && FAR[b] ? Math.max(FAR[a], FAR[b]) + 900 : FAR[a] || FAR[b];
   const x = new Set(MUT[a]), y = new Set(MUT[b]);
   let d = 0;
   for (const m of x) if (!y.has(m)) d++;
@@ -73,6 +74,6 @@ export const TRANSFERS: Record<string, { date: string; from: string; to: string 
 export const OUTBREAK_KEY = {
   cluster: ["KP-01", "KP-02", "KP-03", "KP-04", "KP-05", "KP-09", "KP-11", "KP-12"],
   excluded: { "KP-06": "different ST (ST307) and gene (blaKPC-2)", "KP-07": "different ST (ST11) and mechanism (blaNDM-1); low coverage, re-sequence", "KP-08": "same ST258 but 61+ SNPs away: not recent transmission", "KP-10": "different ST (ST147) and gene (blaOXA-48)" },
-  reservoir: "ICU bay 3 handwash sink drain (KP-12 is 1-5 SNPs from every ICU case)",
+  reservoir: "ICU bay 3 handwash sink drain (KP-12 is 1-5 SNPs from every ICU ST258 case)",
   route: "ICU to Surgical via the KP-04 patient's transfer on 2026-03-08, then onward within Surgical",
 };

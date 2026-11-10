@@ -23,7 +23,7 @@ export const BADGES: Record<string, { icon: string; name: string; how: string }>
   "case-closed": { icon: "🏆", name: "Case Closed", how: "Solve the Outbreak Room capstone" },
   "curve-shaper": { icon: "📈", name: "Curve Shaper", how: "Fit an epidemic model to the observed cases" },
   "briefing-done": { icon: "🏛️", name: "Briefing Delivered", how: "Pass the Briefing Room capstone" },
-  "second-reviewer": { icon: "🧾", name: "Second Reviewer", how: "Reach substantial agreement (κ ≥ 0.61) with Claude when screening" },
+  "second-reviewer": { icon: "🧾", name: "Second Reviewer", how: "Reach substantial agreement (κ > 0.60) with Claude when screening" },
   "review-board": { icon: "📚", name: "Review Board", how: "Pass the Review Board capstone" },
 };
 

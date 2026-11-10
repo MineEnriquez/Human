@@ -36,7 +36,7 @@ O (outcome): reports time to optimal antibiotic therapy (time from blood culture
 Design: original research with patient-level data comparing the two approaches (randomized trial, cohort, or before-after study). Exclude reviews, editorials, conference abstracts without outcome data, single-arm studies, modelling studies and laboratory studies.`;
 
 type Criterion = "population" | "intervention" | "comparator" | "outcome" | "design";
-/** Answer key: included studies, and for every excluded study the first criterion it fails. */
+/** Answer key: included studies, and for every excluded study the decisive criterion it fails (others may also fail). */
 export const KEY: { included: string[]; excluded: Record<string, { fails: Criterion; reason: string }> } = {
   included: ["MS-01", "MS-02", "MS-04", "MS-06", "MS-09", "MS-12"],
   excluded: {
@@ -59,7 +59,7 @@ export const KEY: { included: string[]; excluded: Record<string, { fails: Criter
 export const SYNTHESIS_KEY = {
   direction: "reduces",
   certainty: "moderate",
-  rationale: "Three RCTs (MS-01, MS-02, MS-09; 962 patients) start at high certainty. Risk of bias is not serious overall (two low, one some concerns). Downgrade one level for inconsistency: MS-09 found a small, non-significant difference while MS-01 and MS-02 found large reductions (fictional I² = 64%). Imprecision and indirectness not serious; no evidence of publication bias with so few studies (cannot be assessed reliably). Observational studies (MS-04, MS-06, MS-12) agree in direction but start low and carry serious/moderate risk of bias, so they don't raise certainty.",
+  rationale: "Three RCTs (MS-01, MS-02, MS-09; 962 patients) start at high certainty. Risk of bias is not serious overall (two low, one some concerns). Downgrade one level for inconsistency: MS-09 found a small, non-significant difference while MS-01 and MS-02 found large reductions (fictional I² = 64%). Imprecision and indirectness not serious; publication bias not suspected, though with only three trials it cannot be assessed reliably (funnel-plot methods need about 10 or more studies). Observational studies (MS-04, MS-06, MS-12) agree in direction, but after rating down for their serious/moderate risk of bias (ROBINS-I) they are lower certainty than the trials, so they don't raise it.",
 };
 
 const F = "(fictional)";
