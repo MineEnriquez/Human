@@ -14,7 +14,7 @@ export function Home() {
         <div className="hero-in">
           <div>
             <div className="eyebrow" style={{ color: "var(--on-band-muted)" }}>AI for the life sciences</div>
-            <h1>Learn AI by <em>solving real cases</em>.</h1>
+            <h1>Learn AI by <em>solving real scenarios</em>.</h1>
             <p className="lede">LLMs, vector databases, retrieval-augmented generation and MCP, taught by an AI professor through casework in genomics, disease modeling and research.</p>
             <div className="row">
               <Link className="btn yellow" to={`/lesson/${next.id}`}>{done ? "Continue your case" : "Open your first case"} →</Link>
@@ -33,7 +33,7 @@ export function Home() {
       </section>
 
       <div className="page">
-        <div className="section-h"><h2>Choose a path</h2><Legend /></div>
+        <div className="section-h"><h2>Choose a <em>path</em></h2><Legend /></div>
         <div className="grid paths">
           {PATHS.map(path => {
             const n = path.lessons.filter(l => lessonDone(p, l.id, l.boss)).length;
@@ -55,7 +55,7 @@ export function Home() {
           })}
         </div>
 
-        <div className="section-h" style={{ marginTop: 56 }}><h2>How a case works</h2></div>
+        <div className="section-h" style={{ marginTop: 56 }}><h2>How a case <em>works</em></h2></div>
         <div className="grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
           {[
             ["📂", "Case file", "A realistic situation, your role, the question you must answer, and the evidence to collect."],

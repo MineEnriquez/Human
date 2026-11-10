@@ -7,7 +7,10 @@ import { Home } from "./pages/Home";
 import { LessonPage } from "./pages/LessonPage";
 import { OfficeHours } from "./pages/OfficeHours";
 import { PathPage } from "./pages/PathPage";
+import { registerLicensedFonts } from "./lib/fonts";
 import "./styles.css";
+
+registerLicensedFonts();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

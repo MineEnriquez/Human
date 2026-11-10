@@ -13,6 +13,14 @@ answers, writes new questions and coaches you through a live investigation.
 Each path has five cases teaching the same AI stack in order: LLMs → vector databases → RAG → MCP → a capstone
 where you lead an investigation with a tool-using AI agent.
 
+## Fonts
+
+Typefaces follow pratt.edu's roles: **Graphik** for UI and headings, **Tiempos Text** for reading text, and
+**Tiempos Fine** light italic for emphasised words in headlines. They are commercial fonts and are not included.
+Readers who have them installed see them; to serve them to everyone, add licensed WOFF2 files to
+`src/assets/fonts/` (see the README there; the files are git-ignored). Until then the free stand-ins are Hanken
+Grotesk, Source Serif 4 and Newsreader.
+
 ## Run it
 
 ```bash
