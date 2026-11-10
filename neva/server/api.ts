@@ -1,22 +1,23 @@
 // Neva API: every Claude call lives here, on the server, so the API key never reaches the browser.
+// Every POST body carries `path` (a learning-path id); path-specific data lives in server/paths/.
 //   GET  /api/status          -> { ai: boolean }
 //   POST /api/professor       -> NDJSON stream: Professor Neva (Socratic tutor, lesson-aware)
 //   POST /api/grade           -> JSON: rubric grading of a seminar answer (structured output)
 //   POST /api/quiz            -> JSON: a fresh case-based multiple-choice question (structured output)
+//   POST /api/screen          -> JSON: Claude screens abstracts against inclusion criteria (structured output)
 //   POST /api/rag             -> NDJSON stream: answer grounded ONLY in the chunks the learner packed, with citations
-//   POST /api/agent           -> NDJSON stream: lab assistant agent that calls genomic tools (manual tool loop)
-//   POST /api/capstone-grade  -> JSON: grades the outbreak conclusion
+//   POST /api/agent           -> NDJSON stream: lab assistant agent that calls the path's tools (manual tool loop)
+//   POST /api/capstone-grade  -> JSON: grades the capstone report against the path's answer key
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { existsSync } from "node:fs";
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
-import { CHUNKS, search } from "../src/content/corpus";
-import { ISOLATES, TRANSFERS, snpDistance } from "../src/content/dataset";
+import { serverPath } from "./paths";
 
 if (existsSync(".env")) process.loadEnvFile(".env");
 
-const MODEL = "claude-opus-5-5";
+export const MODEL = "claude-opus-5-5";
 // Server-side refusal fallback: if a safety classifier declines (pathogen content can trip the
 // bio classifier on legitimate surveillance questions), the API re-runs the request on Anthropic's
 // recommended fallback model inside the same call.
@@ -29,23 +30,24 @@ const hasKey = () => Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHRO
 type Msg = Anthropic.Beta.BetaMessageParam;
 
 // ------------------------------------------------------------------ prompts
-const MARKUP = `Formatting: write short paragraphs and use Markdown lists, **bold** and \`code\`. Colour-code key words with this markup, which the site renders as coloured highlights. Use it for the 2-5 terms that matter most in a reply, not every noun:
-[[c|...]] a core AI concept (e.g. [[c|embedding]], [[c|retrieval]], [[c|context window]])
-[[b|...]] a biology or genomics term or data item (e.g. [[b|ST258]], [[b|SNP distance]], [[b|blaKPC-3]])
+export const MARKUP = `Formatting: write short paragraphs and use Markdown lists, **bold** and \`code\`. Colour-code key words with this markup, which the site renders as coloured highlights. Use it for the 2-5 terms that matter most in a reply, not every noun:
+[[c|...]] a core AI or methods concept (e.g. [[c|embedding]], [[c|retrieval]], [[c|context window]], [[c|basic reproduction number]])
+[[b|...]] a domain term or data item from biology, epidemiology or the research literature (e.g. [[b|ST258]], [[b|SNP distance]], [[b|serial interval]], [[b|risk of bias]])
 [[t|...]] a tool, API, protocol or system (e.g. [[t|vector database]], [[t|MCP server]], [[t|tools/call]])
 [[w|...]] a pitfall, risk or common mistake (e.g. [[w|hallucination]], [[w|same ST is not transmission]])`;
 
-const PROFESSOR = `You are Professor Neva, a university professor who teaches how modern AI (LLMs, vector databases, retrieval-augmented generation and the Model Context Protocol) is used in the life sciences. This course is the Pathogen Genomics path: every idea is taught through a genomic surveillance case at the fictional St. Aurelia Medical Center, where the infection prevention team is investigating carbapenem-resistant Klebsiella pneumoniae.
+const PROFESSOR = `You are Professor Neva, a university professor who teaches how modern AI (LLMs, vector databases, retrieval-augmented generation and the Model Context Protocol) is used in the life sciences. The course has three paths, each teaching the same AI ideas through casework in one field: Pathogen Genomics, Outbreak Modeling and Research Intelligence. The lesson context below names the path, the case and what the lesson teaches.
 
 How you teach:
 - Like a real professor running a case-method seminar. Anchor every explanation in the current case, then generalise.
 - Socratic first: when a learner asks for an answer they could reason out, ask one guiding question before explaining. If they are stuck after a try, explain directly and clearly.
 - Precise and honest. Distinguish what the case data shows from what it does not. Name uncertainty. Correct misconceptions explicitly and kindly ("A common mix-up is... In fact...").
+- Only state things that are true. If you are not sure about a fact, say so rather than guessing. Cases, people and data in the course are fictional; general scientific and technical facts you state must be accurate.
 - Brief. Usually 60-180 words. End with one question that checks understanding or pushes the case forward, unless the learner asked you to stop.
 - Reward good reasoning specifically ("Good: you linked the SNP distance to the transfer date").
 - Use the learner's known misconceptions (given in the lesson context) to target your questions.
 
-Boundaries: the hospital, patients, isolates and documents are fictional teaching material. Stay at the level of public-health surveillance, infection prevention and data analysis. Do not give individual treatment advice; say treatment is decided by the clinical team with susceptibility testing. Do not discuss making organisms more dangerous.
+Boundaries: stay at the level of public-health surveillance, epidemiology, research methods and data analysis. Do not give individual treatment advice; say treatment is decided by the clinical team. Do not discuss making organisms more dangerous.
 
 ${MARKUP}`;
 
@@ -75,7 +77,7 @@ function errMessage(e: unknown): string {
   if (e instanceof Error && /credentials|api key/i.test(e.message)) return "No Anthropic API key is configured on the server.";
   return "Couldn't reach Claude. Check the server log and your connection.";
 }
-const REFUSAL = "Professor Neva can't help with that request. Try rephrasing it around the surveillance case.";
+const REFUSAL = "Professor Neva can't help with that request. Try rephrasing it around the case.";
 
 // ------------------------------------------------------------------ /api/professor
 type ProfessorReq = { context: string; messages: Msg[] };
@@ -117,17 +119,18 @@ const Grade = z.object({
   nudge: z.string().describe("One Socratic follow-up question that would move the learner forward"),
   misconception: z.string().nullable().describe("A short label for a misconception the answer reveals, or null"),
 });
-type GradeReq = { lesson: string; question: string; rubric: string[]; answer: string };
+type GradeReq = { path: string; lesson: string; question: string; rubric: string[]; answer: string };
 async function grade(req: IncomingMessage, res: ServerResponse) {
   const g = await body<GradeReq>(req);
+  const p = serverPath(g.path);
   try {
     const r = await ai().beta.messages.parse({
       model: MODEL,
       max_tokens: 16000,
       ...FALLBACK,
       output_config: { effort: "medium", format: betaZodOutputFormat(Grade) },
-      system: `You are Professor Neva grading a seminar answer in the Pathogen Genomics path (fictional St. Aurelia Medical Center case). Grade against the rubric only, generously for correct ideas in the learner's own words, strictly for factual errors. Use the colour markup [[c|...]], [[b|...]], [[t|...]], [[w|...]] for at most two key terms in your sentences.`,
-      messages: [{ role: "user", content: `Lesson: ${g.lesson}\nQuestion: ${g.question}\nRubric (each point is one idea a strong answer includes):\n${g.rubric.map((x, i) => `${i + 1}. ${x}`).join("\n")}\n\nLearner's answer:\n"""${g.answer.slice(0, 4000)}"""` }],
+      system: `You are Professor Neva grading a seminar answer in the ${p.title} path (${p.setting}). Grade against the rubric only, generously for correct ideas in the learner's own words, strictly for factual errors. Use the colour markup [[c|...]], [[b|...]], [[t|...]], [[w|...]] for at most two key terms in your sentences.`,
+      messages: [{ role: "user", content: `Lesson: ${g.lesson}\nQuestion: ${g.question}\nRubric (each point is one idea a strong answer includes):\n${(g.rubric || []).map((x, i) => `${i + 1}. ${x}`).join("\n")}\n\nLearner's answer:\n"""${String(g.answer).slice(0, 4000)}"""` }],
     });
     if (r.stop_reason === "refusal" || !r.parsed_output) return json(res, 502, { error: REFUSAL });
     json(res, 200, r.parsed_output);
@@ -144,17 +147,18 @@ const Quiz = z.object({
   answer: z.number().int().min(0).max(3).describe("Index of the correct option"),
   explanation: z.string().describe("Why the answer is right and the most tempting wrong option is wrong, 2-3 sentences"),
 });
-type QuizReq = { lesson: string; summary: string; avoid: string[]; difficulty: "core" | "challenge" };
+type QuizReq = { path: string; lesson: string; summary: string; avoid: string[]; difficulty: "core" | "challenge" };
 async function quiz(req: IncomingMessage, res: ServerResponse) {
   const q = await body<QuizReq>(req);
+  const p = serverPath(q.path);
   try {
     const r = await ai().beta.messages.parse({
       model: MODEL,
       max_tokens: 16000,
       ...FALLBACK,
       output_config: { effort: "medium", format: betaZodOutputFormat(Quiz) },
-      system: `You write case-based multiple-choice questions for the Pathogen Genomics path of an AI course (fictional St. Aurelia Medical Center CRKP case). Each question puts the learner in a concrete situation from the case and tests understanding, not recall of wording. Exactly four options, one unambiguously correct, distractors that reflect real misconceptions. Use the colour markup [[c|...]], [[b|...]], [[t|...]], [[w|...]] sparingly in the question and explanation.`,
-      messages: [{ role: "user", content: `Lesson: ${q.lesson}\nWhat the lesson taught:\n${q.summary}\nDifficulty: ${q.difficulty === "challenge" ? "challenge (combine two ideas, apply to a new situation in the case)" : "core"}\nDon't repeat these questions:\n${q.avoid.map(a => "- " + a).join("\n") || "(none)"}` }],
+      system: `You write case-based multiple-choice questions for the ${p.title} path of an AI course (${p.setting}). Each question puts the learner in a concrete situation from the case and tests understanding, not recall of wording. Exactly four options, one unambiguously correct, distractors that reflect real misconceptions. Every factual statement must be true. Use the colour markup sparingly in the question and explanation: [[c|...]] AI or methods concept, [[b|...]] domain term or data, [[t|...]] tool or system, [[w|...]] pitfall.`,
+      messages: [{ role: "user", content: `Lesson: ${q.lesson}\nWhat the lesson taught:\n${q.summary}\nDifficulty: ${q.difficulty === "challenge" ? "challenge (combine two ideas, apply to a new situation in the case)" : "core"}\nDon't repeat these questions:\n${(q.avoid || []).map(a => "- " + a).join("\n") || "(none)"}` }],
     });
     const out = r.parsed_output;
     if (r.stop_reason === "refusal" || !out || out.options.length !== 4) return json(res, 502, { error: "The question came back malformed. Try again." });
@@ -165,21 +169,51 @@ async function quiz(req: IncomingMessage, res: ServerResponse) {
   }
 }
 
+// ------------------------------------------------------------------ /api/screen
+const Screen = z.object({
+  decisions: z.array(z.object({
+    id: z.string(),
+    decision: z.enum(["include", "exclude", "unsure"]),
+    criterion: z.string().describe("The single criterion that decided it, e.g. 'Population' or 'Study design'"),
+    reason: z.string().describe("One sentence quoting or paraphrasing the abstract"),
+  })),
+});
+type ScreenReq = { path: string; criteria: string; abstracts: { id: string; text: string }[] };
+async function screen(req: IncomingMessage, res: ServerResponse) {
+  const s = await body<ScreenReq>(req);
+  try {
+    const r = await ai().beta.messages.parse({
+      model: MODEL,
+      max_tokens: 16000,
+      ...FALLBACK,
+      output_config: { effort: "medium", format: betaZodOutputFormat(Screen) },
+      system: "You are the second reviewer in a systematic review's title/abstract screening (fictional teaching abstracts). Apply the inclusion criteria exactly as written, using only what each abstract says. If an abstract doesn't give enough information to decide, answer 'unsure' rather than guessing. Return one decision per abstract id.",
+      messages: [{ role: "user", content: `Inclusion criteria:\n${s.criteria}\n\nAbstracts:\n${(s.abstracts || []).slice(0, 20).map(a => `[${a.id}] ${a.text}`).join("\n\n")}` }],
+    });
+    if (r.stop_reason === "refusal" || !r.parsed_output) return json(res, 502, { error: REFUSAL });
+    json(res, 200, r.parsed_output);
+  } catch (e) {
+    console.error("[screen]", e);
+    json(res, 502, { error: errMessage(e) });
+  }
+}
+
 // ------------------------------------------------------------------ /api/rag
-type RagReq = { question: string; chunkIds: string[] };
+type RagReq = { path: string; question: string; chunkIds: string[] };
 async function rag(req: IncomingMessage, res: ServerResponse) {
-  const { question, chunkIds } = await body<RagReq>(req);
-  const chosen = chunkIds.map(id => CHUNKS.find(c => c.id === id)).filter((c): c is (typeof CHUNKS)[number] => Boolean(c));
+  const { path, question, chunkIds } = await body<RagReq>(req);
+  const p = serverPath(path);
+  const chosen = (chunkIds || []).map(id => p.chunks.find(c => c.id === id)).filter((c): c is (typeof p.chunks)[number] => Boolean(c));
   const send = ndjson(res);
   try {
-    // Real RAG step 3: the packed chunks become document blocks with citations enabled, so every
+    // Real RAG step: the packed chunks become document blocks with citations enabled, so every
     // claim in the answer points back to the exact sentence it came from.
     const stream = ai().beta.messages.stream({
       model: MODEL,
       max_tokens: 64000,
       ...FALLBACK,
       output_config: { effort: "low" },
-      system: "You answer questions for the St. Aurelia infection prevention team using ONLY the provided documents (fictional teaching material). Cite the documents for every factual claim. If the documents do not contain the answer, say exactly what is missing instead of guessing; do not use outside knowledge. Keep answers under 150 words.",
+      system: `You answer questions for the team in a fictional teaching case (${p.setting}) using ONLY the provided documents. Cite the documents for every factual claim. If the documents do not contain the answer, say exactly what is missing instead of guessing; do not use outside knowledge. Keep answers under 150 words.`,
       messages: [{
         role: "user",
         content: [
@@ -209,64 +243,13 @@ async function rag(req: IncomingMessage, res: ServerResponse) {
 }
 
 // ------------------------------------------------------------------ /api/agent (tools)
-// These tools are what an MCP server for the hospital's genomics lab would expose via tools/list.
+// The path's tools are what an MCP server for that lab would expose via tools/list.
 // Here they run in-process so learners can watch each tools/call and its result.
-const nullable = (d: string) => ({ type: ["string", "null"], description: d + " Use null for no filter." });
-const TOOLS = [
-  { name: "search_isolates", description: "Search the lab's isolate records. Every filter is optional (null).", input_schema: { type: "object", properties: { ward: nullable("Ward: ICU, Surgical, Oncology, Medical, Outpatient or Environment."), st: nullable("Sequence type, e.g. ST258."), gene: nullable("Carbapenemase gene, e.g. blaKPC-3."), collected_after: nullable("ISO date; only isolates collected on or after it.") }, required: ["ward", "st", "gene", "collected_after"], additionalProperties: false } },
-  { name: "get_snp_distances", description: "Pairwise core-genome SNP distances between 2-12 isolates.", input_schema: { type: "object", properties: { isolate_ids: { type: "array", items: { type: "string" }, description: "Isolate ids such as KP-01." } }, required: ["isolate_ids"], additionalProperties: false } },
-  { name: "get_ward_transfers", description: "Ward transfers and admission source for the patient an isolate came from.", input_schema: { type: "object", properties: { isolate_id: { type: "string" } }, required: ["isolate_id"], additionalProperties: false } },
-  { name: "search_protocols", description: "Search hospital protocols and lab reports (infection prevention, genomic SOPs, drains, QC, stewardship). Returns the best-matching passages with ids.", input_schema: { type: "object", properties: { query: { type: "string" } }, required: ["query"], additionalProperties: false } },
-] as const;
-
-const ToolInputs = {
-  search_isolates: z.object({ ward: z.string().nullable(), st: z.string().nullable(), gene: z.string().nullable(), collected_after: z.string().nullable() }),
-  get_snp_distances: z.object({ isolate_ids: z.array(z.string()).min(2).max(12) }),
-  get_ward_transfers: z.object({ isolate_id: z.string() }),
-  search_protocols: z.object({ query: z.string() }),
-};
-
-function runTool(name: string, input: unknown): { ok: boolean; out: unknown } {
-  const schema = ToolInputs[name as keyof typeof ToolInputs];
-  if (!schema) return { ok: false, out: `Unknown tool ${name}` };
-  const p = schema.safeParse(input);
-  if (!p.success) return { ok: false, out: "INVALID_INPUT: " + p.error.message };
-  const v = p.data as Record<string, unknown>;
-  const norm = (s: unknown) => String(s ?? "").toLowerCase();
-  switch (name) {
-    case "search_isolates": {
-      const rows = ISOLATES.filter(i =>
-        (!v.ward || norm(i.ward) === norm(v.ward)) && (!v.st || norm(i.st) === norm(v.st)) &&
-        (!v.gene || norm(i.carbapenemase) === norm(v.gene)) && (!v.collected_after || i.collected >= String(v.collected_after)));
-      return { ok: true, out: rows.map(({ vec: _v, ...r }) => r) };
-    }
-    case "get_snp_distances": {
-      const ids = (v.isolate_ids as string[]).filter(id => ISOLATES.some(i => i.id === id));
-      const matrix: Record<string, Record<string, number>> = {};
-      for (const a of ids) { matrix[a] = {}; for (const b of ids) matrix[a][b] = snpDistance(a, b); }
-      const lowCov = ISOLATES.filter(i => ids.includes(i.id) && i.coverage < 30).map(i => i.id);
-      return { ok: true, out: { matrix, warnings: lowCov.length ? [`Low coverage (<30x): ${lowCov.join(", ")}; distances unreliable`] : [] } };
-    }
-    case "get_ward_transfers": {
-      const id = String(v.isolate_id);
-      const iso = ISOLATES.find(i => i.id === id);
-      if (!iso) return { ok: false, out: `No isolate ${id}` };
-      return { ok: true, out: { isolate: id, ward_at_collection: iso.ward, transfers: TRANSFERS[id] || [] } };
-    }
-    case "search_protocols":
-      return { ok: true, out: search(String(v.query), 3).map(r => ({ id: r.chunk.id, title: r.chunk.title, text: r.chunk.text })) };
-  }
-  return { ok: false, out: "unreachable" };
-}
-
-const AGENT = `You are the AI lab assistant for the St. Aurelia genomic surveillance team (fictional teaching case). A learner is leading the investigation of carbapenem-resistant Klebsiella pneumoniae and directs you. Use your tools to fetch facts; never invent isolate data. Do what the learner asks, report what the tool results show, and point out data-quality caveats. Do not draw the final conclusion for them: the learner must decide the cluster, the likely reservoir and the next action, so when they ask "what's the answer" offer evidence and a question instead. Keep replies under 170 words.
-
-${MARKUP}`;
-
 async function agent(req: IncomingMessage, res: ServerResponse) {
-  const { messages } = await body<{ messages: Msg[] }>(req);
+  const { path, messages } = await body<{ path: string; messages: Msg[] }>(req);
+  const p = serverPath(path);
   const send = ndjson(res);
-  const convo: Msg[] = [...messages];
+  const convo: Msg[] = [...(messages || [])];
   const added: Msg[] = [];
   try {
     for (let turn = 0; turn < 8; turn++) {
@@ -275,8 +258,8 @@ async function agent(req: IncomingMessage, res: ServerResponse) {
         max_tokens: 64000,
         ...FALLBACK,
         output_config: { effort: "medium" },
-        system: [{ type: "text", text: AGENT, cache_control: { type: "ephemeral" } }],
-        tools: TOOLS.map(t => ({ ...t, strict: true, eager_input_streaming: true })) as unknown as Anthropic.Beta.BetaTool[],
+        system: [{ type: "text", text: p.agentPrompt + "\n\n" + MARKUP, cache_control: { type: "ephemeral" } }],
+        tools: p.tools.map(t => ({ ...t, strict: true, eager_input_streaming: true })) as unknown as Anthropic.Beta.BetaTool[],
         messages: convo,
       });
       stream.on("text", t => send({ type: "text", text: t }));
@@ -290,7 +273,7 @@ async function agent(req: IncomingMessage, res: ServerResponse) {
       // All results for one assistant turn go back in a single user message.
       const results: Anthropic.Beta.BetaToolResultBlockParam[] = uses.map(u => {
         send({ type: "tool_call", id: u.id, name: u.name, input: u.input });
-        const r = runTool(u.name, u.input);
+        const r = p.runTool(u.name, u.input);
         send({ type: "tool_result", id: u.id, name: u.name, ok: r.ok, output: r.out });
         return { type: "tool_result", tool_use_id: u.id, content: JSON.stringify(r.out), is_error: !r.ok };
       });
@@ -314,17 +297,20 @@ const CapGrade = z.object({
   strengths: z.array(z.string()).describe("1-3 specific strengths"),
   improvements: z.array(z.string()).describe("1-3 specific improvements"),
 });
-type CapReq = { cluster: string[]; reservoir: string; route: string; action: string; reasoning: string; clusterCorrect: number; clusterWrong: string[] };
+/** `report` is the learner's free-text fields; `autoCheck` summarises what the browser already verified exactly. */
+type CapReq = { path: string; report: Record<string, string>; autoCheck: string };
 async function capstoneGrade(req: IncomingMessage, res: ServerResponse) {
   const a = await body<CapReq>(req);
+  const p = serverPath(a.path);
   try {
+    const fields = Object.entries(a.report || {}).map(([k, v]) => `${k}: ${v}`).join("\n");
     const r = await ai().beta.messages.parse({
       model: MODEL,
       max_tokens: 16000,
       ...FALLBACK,
       output_config: { effort: "medium", format: betaZodOutputFormat(CapGrade) },
-      system: `You are Professor Neva grading the capstone of the Pathogen Genomics path (fictional St. Aurelia CRKP outbreak). Answer key: cluster = KP-01, KP-02, KP-03, KP-04, KP-05, KP-09, KP-11, KP-12 (KP-12 is the ICU bay 3 sink drain). Excluded: KP-06 (ST307, blaKPC-2), KP-07 (ST11, blaNDM-1, 18x coverage, must be re-sequenced), KP-08 (ST258 but 61+ SNPs: separate introduction), KP-10 (ST147, blaOXA-48). Likely reservoir: the ICU bay 3 sink drain (1-5 SNPs from every ICU case). Route: ICU to Surgical via the KP-04 patient's transfer on 8 March, then spread within Surgical. Good next actions follow protocols IP-14 and EN-07 (drain response, contact screening, notify Infection Prevention, re-sequence KP-07). Score out of 10: cluster 3, reservoir 2, route 2, action 2, quality of reasoning 1. Use the colour markup [[c|...]], [[b|...]], [[t|...]], [[w|...]] for at most three key terms.`,
-      messages: [{ role: "user", content: `Cluster membership (checked automatically): ${a.clusterCorrect}/12 isolates classified correctly. Misclassified: ${a.clusterWrong.join(", ") || "none"}.\nChosen cluster: ${a.cluster.join(", ")}\nReservoir: ${a.reservoir}\nRoute: ${a.route}\nNext action: ${a.action}\nReasoning: ${a.reasoning}`.slice(0, 6000) }],
+      system: p.capstoneGrader + " Use the colour markup [[c|...]], [[b|...]], [[t|...]], [[w|...]] for at most three key terms.",
+      messages: [{ role: "user", content: `Checked automatically: ${a.autoCheck}\n\n${fields}`.slice(0, 8000) }],
     });
     if (r.stop_reason === "refusal" || !r.parsed_output) return json(res, 502, { error: REFUSAL });
     json(res, 200, r.parsed_output);
@@ -344,6 +330,7 @@ export async function handleApi(req: IncomingMessage, res: ServerResponse) {
     case "/api/professor": return professor(req, res);
     case "/api/grade": return grade(req, res);
     case "/api/quiz": return quiz(req, res);
+    case "/api/screen": return screen(req, res);
     case "/api/rag": return rag(req, res);
     case "/api/agent": return agent(req, res);
     case "/api/capstone-grade": return capstoneGrade(req, res);

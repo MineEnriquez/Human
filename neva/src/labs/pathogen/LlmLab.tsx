@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
-import { SortIntoBuckets, DragHint } from "../components/dnd";
-import { RichInline } from "../components/Rich";
-import { earnBadge, useProgress } from "../lib/progress";
-import { finishPart, LabCard } from "./common";
+import { SortIntoBuckets, DragHint } from "../../components/dnd";
+import { RichInline } from "../../components/Rich";
+import { earnBadge, useProgress } from "../../lib/progress";
+import { finishPart, LabCard } from "../common";
 
 const ID = "pg-llm";
 const EV = ["Tokenizer trace", "Temperature experiment", "Fact-check of the draft"];

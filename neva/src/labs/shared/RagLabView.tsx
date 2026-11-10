@@ -1,16 +1,14 @@
 import { useMemo, useState } from "react";
-import { BucketBoard, DragHint, SortableSequence } from "../components/dnd";
-import { RichInline } from "../components/Rich";
-import { CHUNKS, search, type Chunk } from "../content/corpus";
-import { stream, useAi } from "../lib/ai";
-import { earnBadge, useProgress } from "../lib/progress";
-import { finishPart, LabCard } from "./common";
+import { BucketBoard, DragHint, SortableSequence } from "../../components/dnd";
+import { RichInline } from "../../components/Rich";
+import { tokenEstimate as tokens, type Chunk, type Hit } from "../../content/search";
+import { stream, useAi } from "../../lib/ai";
+import { earnBadge, useProgress } from "../../lib/progress";
+import { finishPart, LabCard } from "../common";
 
-const ID = "pg-rag";
-const EV = ["Pipeline built", "Context packed", "Cited answer"];
-
-const PIPELINE = [
-  { id: "p1", label: "**Load** the hospital documents", why: "Ingestion starts with the raw protocols and reports." },
+/** The RAG pipeline is the same in every field; only the first step's wording changes. */
+export const ragPipeline = (docs: string) => [
+  { id: "p1", label: `**Load** ${docs}`, why: "Ingestion starts with the raw documents." },
   { id: "p2", label: "**Chunk** them into passages", why: "Passages small enough to be precise, big enough to keep a rule with its condition." },
   { id: "p3", label: "**Embed** each chunk", why: "Turn each chunk into a vector (or index its words for BM25)." },
   { id: "p4", label: "**Store** chunks in the [[t|vector database]]", why: "Ingestion ends here; the rest happens per question." },
@@ -19,22 +17,22 @@ const PIPELINE = [
   { id: "p7", label: "**Augment** the prompt with those chunks", why: "Put them in the context window with instructions to use only them." },
   { id: "p8", label: "**Generate** the answer with citations", why: "The model answers from the context and cites it." },
 ];
-
-const QUESTIONS = [
-  "The bay 3 sink drain grew the outbreak strain. What must we do about the drain?",
-  "Who needs screening after a new CPE case, and for how long?",
-  "Can we interpret the SNP distances for KP-07?",
-];
-const BUDGET = 200; // tokens, deliberately tiny so packing is a real decision
-const tokens = (c: Chunk) => Math.ceil(c.text.split(/\s+/).length * 1.35);
+export const RAG_EVIDENCE = ["Pipeline built", "Context packed", "Cited answer"];
 
 type Part = { kind: "text"; text: string } | { kind: "cite"; chunk: string; quote: string };
 
-export default function RagLab() {
+export type RagLabProps = {
+  lessonId: string; path: string; docs: string; chunks: Chunk[]; search: (q: string, k?: number) => Hit[];
+  questions: string[]; budget?: number; seed?: number;
+};
+
+export function RagLabView({ lessonId: ID, path, docs, chunks: CHUNKS, search, questions: QUESTIONS, budget: BUDGET = 200, seed = 11 }: RagLabProps) {
+  const EV = RAG_EVIDENCE;
+  const PIPELINE = useMemo(() => ragPipeline(docs), [docs]);
   const ev = useProgress().lessons[ID]?.evidence || [];
   const aiOn = useAi();
   const [q, setQ] = useState(QUESTIONS[0]);
-  const [results, setResults] = useState<{ chunk: Chunk; score: number }[] | null>(null);
+  const [results, setResults] = useState<Hit[] | null>(null);
   const [place, setPlace] = useState<Record<string, string>>({});
   const [parts, setParts] = useState<Part[]>([]);
   const [busy, setBusy] = useState(false);
@@ -47,7 +45,7 @@ export default function RagLab() {
     setBusy(true); setErr(""); setParts([]);
     let cites = 0;
     let pending: Part[] = [];
-    await stream("/api/rag", { question: q, chunkIds: packed.map(c => c.id) }, e => {
+    await stream("/api/rag", { path, question: q, chunkIds: packed.map(c => c.id) }, e => {
       if (e.type === "text") setParts(p => { const last = p[p.length - 1]; return last?.kind === "text" ? [...p.slice(0, -1), { kind: "text", text: last.text + e.text }] : [...p, { kind: "text", text: e.text }]; });
       else if (e.type === "cite") { cites++; pending.push({ kind: "cite", chunk: e.chunk, quote: e.quote }); }
       else if (e.type === "block_end" && pending.length) { const add = pending; pending = []; setParts(p => [...p, ...add]); }
@@ -62,7 +60,7 @@ export default function RagLab() {
   return (
     <>
       <LabCard title="A. Build the pipeline" done={ev.includes(EV[0])} sub="Put the RAG steps in order: ingestion first, then what happens for every question." right={<DragHint />}>
-        <SortableSequence items={PIPELINE} seed={11} onSolved={() => finishPart(ID, EV[0], EV)} />
+        <SortableSequence items={PIPELINE} seed={seed} onSolved={() => finishPart(ID, EV[0], EV)} />
       </LabCard>
 
       <LabCard title="B. Retrieve, then pack the context window" done={ev.includes(EV[1])} sub={<RichInline text={`Retrieval uses [[t|BM25]] keyword scoring so you can see every score. The [[c|context window]] here holds only ${BUDGET} tokens: choose what earns a place.`} />} right={<DragHint>Drag chunks into the context</DragHint>}>

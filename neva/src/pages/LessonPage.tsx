@@ -1,17 +1,11 @@
-import { lazy, Suspense, useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { askProfessor, ProfessorChat } from "../components/ProfessorChat";
 import { CaseBrief, Debrief, Lecture, Quiz, Seminar } from "../components/stages";
-import { findLesson, type Lesson } from "../content/paths";
+import { findLesson, type Lesson, type Path } from "../content/paths";
+import { LABS } from "../labs/registry";
 import { levelOf, lessonDone, useProgress, type StageId } from "../lib/progress";
 
-const LABS = {
-  llm: lazy(() => import("../labs/LlmLab")),
-  vectordb: lazy(() => import("../labs/VectorDbLab")),
-  rag: lazy(() => import("../labs/RagLab")),
-  mcp: lazy(() => import("../labs/McpLab")),
-  outbreak: lazy(() => import("../labs/OutbreakRoom")),
-};
 
 const STAGES: { id: StageId; label: string; sub: string }[] = [
   { id: "brief", label: "Case file", sub: "The situation" },
@@ -24,12 +18,13 @@ const STAGES: { id: StageId; label: string; sub: string }[] = [
 const BOSS_STAGES: { id: StageId; label: string; sub: string }[] = [
   { id: "brief", label: "Case file", sub: "The situation" },
   { id: "lecture", label: "Briefing", sub: "From the professor" },
-  { id: "lab", label: "Outbreak Room", sub: "Investigate + report" },
+  { id: "lab", label: "Capstone", sub: "Investigate + report" },
   { id: "debrief", label: "Debrief", sub: "Takeaways" },
 ];
 
-function lessonContext(l: Lesson, level: string, misconceptions: string[]) {
+function lessonContext(p: Path, l: Lesson, level: string, misconceptions: string[]) {
   return [
+    `Path: ${p.title} (${p.area}). ${p.setting}`,
     `Lesson ${l.n}: ${l.title} (topic: ${l.topic}). Case: "${l.caseTitle}".`,
     `Situation: ${l.brief.situation.replace(/\[\[\w\|([^\]]+)\]\]/g, "$1")}`,
     `Case question: ${l.brief.question}`,
@@ -46,14 +41,14 @@ export function LessonPage() {
   const p = useProgress();
   const [stageSel, setStage] = useState<StageId | null>(null);
   const [drawer, setDrawer] = useState(false);
-  const context = useMemo(() => (found ? lessonContext(found.lesson, levelOf(p.xp).title, p.misconceptions) : ""), [id]); // frozen per lesson visit // eslint-disable-line
+  const context = useMemo(() => (found ? lessonContext(found.path, found.lesson, levelOf(p.xp).title, p.misconceptions) : ""), [id]); // frozen per lesson visit // eslint-disable-line
   if (!found) return <div className="page"><h1>Case not found</h1><Link to="/">Home</Link></div>;
   const { path, lesson } = found;
   const idx = path.lessons.indexOf(lesson);
   const prev = path.lessons[idx - 1];
   const next = path.lessons[idx + 1];
   const unlocked = !prev || lessonDone(p, prev.id, prev.boss);
-  const stages = lesson.boss ? BOSS_STAGES : STAGES;
+  const stages = lesson.boss ? BOSS_STAGES.map(s => (s.id === "lab" ? { ...s, label: lesson.title } : s)) : STAGES;
   const st = p.lessons[lesson.id]?.stages || {};
   const stage = stageSel || stages.find(s => !st[s.id])?.id || "brief";
   const go = (s: StageId) => { setStage(s); window.scrollTo({ top: 0, behavior: "smooth" }); };
@@ -70,6 +65,7 @@ export function LessonPage() {
   );
 
   const Lab = LABS[lesson.lab];
+  if (!Lab) return <div className="page"><h1>Lab "{lesson.lab}" is missing</h1></div>;
   return (
     <div className="page">
       <div className="row" style={{ marginBottom: 18, fontSize: ".9rem" }}><Link to={`/paths/${path.id}`} className="muted">← {path.title}</Link><span className="muted">/ Case {lesson.n} of {path.lessons.length}</span></div>
@@ -89,8 +85,8 @@ export function LessonPage() {
             {stage === "lecture" && <Lecture lesson={lesson} onNext={() => go(nextOf("lecture"))} onAsk={ask} />}
             {stage === "lab" && <Suspense fallback={<p className="thinking">Loading the lab…</p>}><Lab /></Suspense>}
             {stage === "lab" && !lesson.boss && <div className="row" style={{ marginTop: 18 }}><button className="btn primary" disabled={!st.lab} onClick={() => go("seminar")}>{st.lab ? "To the seminar →" : "Finish all lab parts to continue"}</button></div>}
-            {stage === "seminar" && <Seminar lesson={lesson} onNext={() => go("quiz")} />}
-            {stage === "quiz" && <Quiz lesson={lesson} onNext={() => go("debrief")} />}
+            {stage === "seminar" && <Seminar pathId={path.id} lesson={lesson} onNext={() => go("quiz")} />}
+            {stage === "quiz" && <Quiz pathId={path.id} lesson={lesson} onNext={() => go("debrief")} />}
             {stage === "debrief" && <Debrief lesson={lesson} nextHref={next && lessonDone(p, lesson.id, lesson.boss) ? `/lesson/${next.id}` : null} onAsk={ask} />}
           </section>
         </div>

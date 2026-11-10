@@ -1,14 +1,10 @@
-import { AgentConsole } from "../components/AgentConsole";
-import { DragHint, SortableSequence, SortIntoBuckets } from "../components/dnd";
-import { earnBadge, useProgress } from "../lib/progress";
-import { finishPart, LabCard } from "./common";
-
-const ID = "pg-mcp";
-const EV = ["Handshake ordered", "Tool policy", "Live tool trace"];
+import { McpLabView } from "../shared/McpLabView";
 
 const HANDSHAKE = [
   { id: "h1", label: "[[t|Host]] starts an MCP client for the lab server", why: "One client per server, inside the host app." },
   { id: "h2", label: "Client → Server: `initialize`", why: "Agree protocol version and capabilities first." },
+  { id: "h2b", label: "Server → Client: `initialize` result with its capabilities", why: "The server says what it supports (tools, resources, prompts)." },
+  { id: "h2c", label: "Client → Server: `notifications/initialized`", why: "The client confirms; normal requests can start." },
   { id: "h3", label: "Client → Server: `tools/list`", why: "Discover what the server offers." },
   { id: "h4", label: "Server → Client: tool names, descriptions, **input schemas**", why: "The schema tells the model what arguments are valid." },
   { id: "h5", label: "Host gives the tool definitions + the user's question to the [[c|LLM]]", why: "Now the model knows the tools exist." },
@@ -18,7 +14,7 @@ const HANDSHAKE = [
   { id: "h9", label: "Host → LLM: tool result; the LLM writes the answer", why: "The loop can repeat if more tools are needed." },
 ];
 
-const TOOLS = [
+const TOOLS: Parameters<typeof McpLabView>[0]["tools"] = [
   { id: "t1", label: "`search_isolates`: read isolate records", bucket: "auto", why: "Read-only, narrow, internal." },
   { id: "t2", label: "`get_snp_distances`: read the SNP matrix", bucket: "auto", why: "Read-only computation." },
   { id: "t3", label: "`search_protocols`: search hospital documents", bucket: "auto", why: "Read-only retrieval." },
@@ -30,21 +26,7 @@ const TOOLS = [
 ];
 
 export default function McpLab() {
-  const ev = useProgress().lessons[ID]?.evidence || [];
-  return (
-    <>
-      <LabCard title="A. One tool call, message by message" done={ev.includes(EV[0])} sub="Order the messages from start-up to the model's answer." right={<DragHint />}>
-        <SortableSequence items={HANDSHAKE} seed={5} onSolved={n => { finishPart(ID, EV[0], EV); if (n <= 2) earnBadge("toolsmith"); }} />
-      </LabCard>
-      <LabCard title="B. Set the tool policy" done={ev.includes(EV[1])} sub="You're designing the lab's MCP server. Which tools run automatically, which need a human's approval, and which should not exist?" right={<DragHint>Drag cards into buckets</DragHint>}>
-        <SortIntoBuckets items={TOOLS} columns={3} buckets={[{ id: "auto", title: "Auto-run (read-only)" }, { id: "ask", title: "Ask a human first" }, { id: "never", title: "Don't expose" }]}
-          onSolved={n => { finishPart(ID, EV[1], EV); if (n === 1) earnBadge("gatekeeper"); }} />
-      </LabCard>
-      <LabCard title="C. Watch a live host" done={ev.includes(EV[2])} sub="This is a real Claude model with the lab's read-only tools. Each call is shown as the JSON-RPC tools/call message an MCP host would send.">
-        <AgentConsole showRpc height={420}
-          starters={["What are the SNP distances between KP-01, KP-03 and KP-12?", "Which ICU isolates carry blaKPC-3?", "What does our SOP say about low-coverage genomes?"]}
-          onToolCall={() => finishPart(ID, EV[2], EV)} />
-      </LabCard>
-    </>
-  );
+  return <McpLabView lessonId="pg-mcp" path="pathogen-genomics" system="the hospital's genomics lab" handshake={HANDSHAKE} tools={TOOLS}
+    toolNames={["search_isolates", "get_snp_distances", "get_ward_transfers", "search_protocols"]}
+    starters={["What are the SNP distances between KP-01, KP-03 and KP-12?", "Which ICU isolates carry blaKPC-3?", "What does our SOP say about low-coverage genomes?"]} />;
 }
