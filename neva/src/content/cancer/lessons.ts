@@ -218,7 +218,7 @@ export const LESSONS: Lesson[] = [
     },
     lecture: [
       {
-        title: "Briefing from Professor Neva",
+        title: "Briefing from Otto",
         body: `Everything you've learned comes together here. Your assistant is an [[c|LLM]] that calls [[t|tools]]: \`search_variants\`, \`get_vaf_timeline\`, \`get_sample_qc\` and \`search_sops\` (which does [[c|retrieval]] over the lab's SOPs). Each call and result is shown in the trace, the way an MCP host would log them.\n\nA disciplined analysis:\n1. List every variant with its VAF in each sample. What is present in the skin control?\n2. Get sample purity. For a heterozygous variant in a diploid, copy-neutral region, [[b|cancer cell fraction]] ≈ 2 × VAF / purity. Which variants are clonal (CCF near 1) and which are subclonal, at diagnosis and at relapse?\n3. Trace each variant from diagnosis to relapse: present in both, lost, or expanded?\n4. Check QC: [[w|don't interpret calls that fail the SOP thresholds]].\n5. Look up what the SOPs require (germline findings, reporting, MRD markers), then write your report. Interpret; don't prescribe: treatment is the clinical team's decision.\n\nThe assistant won't hand you the answer. Ask good questions.`,
       },
     ],

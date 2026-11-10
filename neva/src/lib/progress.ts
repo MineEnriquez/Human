@@ -1,5 +1,5 @@
 // Gamification state: XP, levels, badges, streak, per-lesson stage progress, evidence and
-// misconceptions (fed back to Professor Neva so tutoring adapts). Persisted in localStorage.
+// misconceptions (fed back to Otto so tutoring adapts). Persisted in localStorage.
 import { useSyncExternalStore } from "react";
 
 export const LEVELS = [

@@ -59,7 +59,7 @@ export default function ReviewBoard() {
           onToolCall={name => { const e = TOOL_EVIDENCE[name]; if (e) { addEvidence(ID, e); award(`${ID}:ev:${e}`, 15, `Evidence: ${e}`); } }} />
       </LabCard>
 
-      <LabCard title="2. File your review report" sub="Decide every record, then state the direction of effect, the GRADE certainty for the randomized evidence, the limitations and your conclusion. Inclusion and certainty are checked exactly; Professor Neva grades your reasoning." right={<DragHint>Drag records</DragHint>}>
+      <LabCard title="2. File your review report" sub="Decide every record, then state the direction of effect, the GRADE certainty for the randomized evidence, the limitations and your conclusion. Inclusion and certainty are checked exactly; Otto grades your reasoning." right={<DragHint>Drag records</DragHint>}>
         <BucketBoard items={STUDIES} columns={2} value={place} onChange={p => { setPlace(p); setCheck(null); }} trayLabel="Study records"
           buckets={[{ id: "in", title: "Included in the review" }, { id: "out", title: "Excluded" }]}
           stateOf={s => (check ? ((place[s.id] === "in") === KEY.included.includes(s.id) ? "right" : "wrong") : undefined)}
@@ -79,7 +79,7 @@ export default function ReviewBoard() {
         <div style={{ marginTop: 12 }}><label className="lbl" htmlFor="why">Your reasoning</label><textarea id="why" className="answer" value={reasoning} onChange={e => setReasoning(e.target.value)} placeholder="Why did you exclude what you excluded? How did you rate certainty, domain by domain?" /></div>
         {aiOn === false && <div className="banner warn" style={{ marginTop: 10 }}>Grading needs Claude (ANTHROPIC_API_KEY on the server).</div>}
         <div className="row" style={{ marginTop: 12 }}>
-          <button className="btn yellow" onClick={submit} disabled={!ready || busy || !aiOn}>{busy ? "Professor Neva is reading your report…" : "Submit review report"}</button>
+          <button className="btn yellow" onClick={submit} disabled={!ready || busy || !aiOn}>{busy ? "Otto is reading your report…" : "Submit review report"}</button>
           {!ready && <span className="muted" style={{ fontSize: ".85rem" }}>Decide all {STUDIES.length} records ({sorted}/{STUDIES.length}) and fill every field.</span>}
         </div>
         {err && <div className="banner err" style={{ marginTop: 10 }}>{err}</div>}

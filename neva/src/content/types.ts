@@ -19,7 +19,7 @@ export type Lesson = {
     deliverable?: string;
     success?: string[];
   };
-  /** Professor Neva's opening line for the case, shown in the case file. */
+  /** Otto's opening line for the case, shown in the case file. */
   hook?: string;
   lecture: Segment[];
   lab: string; // key in src/labs/registry.ts

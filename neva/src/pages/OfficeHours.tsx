@@ -22,7 +22,7 @@ export function OfficeHours() {
   return (
     <div className="page" style={{ maxWidth: 860 }}>
       <div className="eyebrow">Office hours</div>
-      <h1 style={{ fontSize: "clamp(2rem, 5vw, 3.2rem)", fontWeight: 800, margin: "6px 0 10px" }}>Talk to Professor Neva</h1>
+      <h1 style={{ fontSize: "clamp(2rem, 5vw, 3.2rem)", fontWeight: 800, margin: "6px 0 10px" }}>Talk to Otto</h1>
       <p className="read">Bring a question from any case, a concept you'd like re-explained, or an idea from your own lab. The professor teaches Socratically: expect questions back.</p>
       <div className="row" style={{ margin: "14px 0 10px" }}>{live.map(x => <button key={x.id} className={`btn sm ${x.id === pathId ? "primary" : "ghost"}`} onClick={() => setPathId(x.id)}>{x.title}</button>)}</div>
       <div style={{ margin: "0 0 20px" }}><Legend /></div>

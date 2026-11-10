@@ -64,7 +64,7 @@ export default function TumorBoard() {
           onToolCall={name => { const e = TOOL_EVIDENCE[name]; if (e) { addEvidence(ID, e); award(`${ID}:ev:${e}`, 15, `Evidence: ${e}`); } }} />
       </LabCard>
 
-      <LabCard title="2. File your tumor board report" sub="Classify every variant, then explain the relapse, the germline action and your reporting decisions. Classification is checked exactly; Professor Neva grades your reasoning. Interpret, don't prescribe: no treatment advice." right={<DragHint>Drag variants</DragHint>}>
+      <LabCard title="2. File your tumor board report" sub="Classify every variant, then explain the relapse, the germline action and your reporting decisions. Classification is checked exactly; Otto grades your reasoning. Interpret, don't prescribe: no treatment advice." right={<DragHint>Drag variants</DragHint>}>
         <BucketBoard items={VARIANTS} columns={3} value={place} onChange={p => { setPlace(p); setCheck(null); }} trayLabel="Variants"
           buckets={CLASSES}
           stateOf={v => (check ? (place[v.id] === TUMOR_BOARD_KEY.classes[v.id] ? "right" : "wrong") : undefined)}
@@ -77,7 +77,7 @@ export default function TumorBoard() {
         <div style={{ marginTop: 12 }}><label className="lbl" htmlFor="why">Your reasoning</label><textarea id="why" className="answer" value={reasoning} onChange={e => setReasoning(e.target.value)} placeholder="Explain the evidence: VAFs across timepoints, purity and CCF (with assumptions), the skin control, QC flags." /></div>
         {aiOn === false && <div className="banner warn" style={{ marginTop: 10 }}>Grading needs Claude (ANTHROPIC_API_KEY on the server).</div>}
         <div className="row" style={{ marginTop: 12 }}>
-          <button className="btn yellow" onClick={submit} disabled={!ready || busy || !aiOn}>{busy ? "Professor Neva is reading your report…" : "Submit tumor board report"}</button>
+          <button className="btn yellow" onClick={submit} disabled={!ready || busy || !aiOn}>{busy ? "Otto is reading your report…" : "Submit tumor board report"}</button>
           {!ready && <span className="muted" style={{ fontSize: ".85rem" }}>Classify all {VARIANTS.length} variants ({sorted}/{VARIANTS.length}) and fill every field.</span>}
         </div>
         {err && <div className="banner err" style={{ marginTop: 10 }}>{err}</div>}

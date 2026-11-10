@@ -1,7 +1,7 @@
 # Neva: AI for the life sciences
 
 A case-based course site that teaches how modern AI works (LLMs, vector databases, RAG and MCP)
-through casework in three fields. Professor Neva, an AI tutor, teaches Socratically, grades open
+through casework in three fields. Otto, an AI tutor, teaches Socratically, grades open
 answers, writes new questions and coaches you through a live investigation.
 
 | Path | Field | Case setting (all fictional) |
@@ -41,7 +41,7 @@ annotates single cells against a healthy bone-marrow reference atlas. Research-l
 | 2 | Vector databases | Which Cell Is This? | Build a reference-cell record, k-nearest-neighbour label transfer on a single-cell map, drag-in metadata filters |
 | 3 | RAG | The Tiering Question | Order the pipeline, BM25 retrieval over the lab's SOPs, pack a 200-token context window, Claude answers **with citations** |
 | 4 | MCP | Wire Up the Lab | Order the host/client/server messages, sort tools by approval policy, watch a live tool-using host |
-| 5 | Capstone | The Tumor Board | Direct a tool-using agent, classify every variant (founder, lost, relapse, germline, artifact), file a report graded by the professor |
+| 5 | Capstone | The Tumor Board | Direct a tool-using agent, classify every variant (founder, lost, relapse, germline, artifact), file a report graded by Otto |
 
 ### Outbreak Modeling
 
@@ -86,15 +86,15 @@ the lab's AI lead:
 The path page shows the dossier: summary, stakes, key facts, timeline with your progress, and who's involved. Each
 case file shows:
 - the scene: who asks, when, and their exact request
-- Professor Neva's opening hook
+- Otto's opening hook
 - the deliverable and how you'll be judged
 - the missions and the XP each stage is worth
 
 ## How it teaches
 
-- **Cold calls.** After each lecture segment, Professor Neva can cold-call you: an AI-written question that applies
+- **Cold calls.** After each lecture segment, Otto can cold-call you: an AI-written question that applies
   the segment to the case, graded against a 3-point rubric.
-- **Professor, not chatbot.** Professor Neva runs a case-method seminar: guiding questions first,
+- **Professor, not chatbot.** Otto runs a case-method seminar: guiding questions first,
   explicit correction of misconceptions, and short answers that end with a question. Misconceptions found
   while grading are saved and fed back into later tutoring.
 - **Gamification.** XP for checks, evidence, seminar points and quiz answers. Five levels from Lab Intern

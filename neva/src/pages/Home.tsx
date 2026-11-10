@@ -25,7 +25,7 @@ export function Home() {
             </div>
           </div>
           <div className="hero-card">
-            <div className="who" style={{ color: "var(--on-band)" }}><span className="avatar bot" role="img" aria-label="Professor Neva" />Professor Neva</div>
+            <div className="who" style={{ color: "var(--on-band)" }}><span className="avatar bot" role="img" aria-label="Otto" />Otto</div>
             <p className="q">"A relapse cell's nearest neighbours in the reference atlas are normal myeloid progenitors. Your colleague calls it a healthy cell. <b>What would you check before you agree?</b>"</p>
             <p style={{ color: "var(--on-band-muted)", fontSize: ".9rem", margin: 0 }}>Socratic tutoring, AI-graded seminars, live tool-using agents, and answers that cite their sources.</p>
           </div>
@@ -59,11 +59,11 @@ export function Home() {
         <div className="grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
           {[
             ["📂", "Case file", "A realistic situation, your role, the question you must answer, and the evidence to collect."],
-            ["🎓", "Lecture with checks", "Short segments from Professor Neva, each followed by a check for understanding."],
+            ["🎓", "Lecture with checks", "Short segments from Otto, each followed by a check for understanding."],
             ["🧪", "Hands-on lab", "Drag-and-drop exercises and live AI: tokenizers, vector search, RAG with citations, MCP tool calls."],
             ["💬", "Seminar", "Answer an open question in your own words. [[c|AI grading]] against a rubric, with a Socratic nudge."],
             ["✅", "Quiz", "Case-based questions, plus fresh challenge questions written by AI on demand."],
-            ["🏆", "Capstone", "Direct a [[t|tool-using AI agent]] through the outbreak and file a report graded by the professor."],
+            ["🏆", "Capstone", "Direct a [[t|tool-using AI agent]] through the outbreak and file a report graded by Otto."],
           ].map(([ico, h, t]) => (
             <div key={h} className="card pad"><div style={{ fontSize: "1.6rem" }}>{ico}</div><h3 style={{ fontSize: "1.1rem", margin: "6px 0" }}>{h}</h3><p className="read" style={{ fontSize: ".98rem", margin: 0 }}><RichInline text={t} /></p></div>
           ))}

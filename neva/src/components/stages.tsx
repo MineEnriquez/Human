@@ -16,7 +16,7 @@ export function CaseBrief({ path, lesson, onNext }: { path: Path; lesson: Lesson
   return (
     <div className="stack" style={{ gap: 18 }}>
       {lesson.hook && (
-        <div className="hook"><span className="avatar bot" role="img" aria-label="Professor Neva" /><div><div className="who" style={{ marginBottom: 2 }}>Professor Neva opens the case</div><Rich text={`"${lesson.hook}"`} /></div></div>
+        <div className="hook"><span className="avatar bot" role="img" aria-label="Otto" /><div><div className="who" style={{ marginBottom: 2 }}>Otto opens the case</div><Rich text={`"${lesson.hook}"`} /></div></div>
       )}
       <div className="casefile">
         <div className="casefile-h"><b>Case file {String(lesson.n).padStart(2, "0")}: {lesson.caseTitle}</b><span className="row" style={{ gap: 10 }}>{b.when && <span className="deadline">🕑 {b.when}</span>}<span className="stamp">CONFIDENTIAL · FICTIONAL</span></span></div>
@@ -56,7 +56,7 @@ export function CaseBrief({ path, lesson, onNext }: { path: Path; lesson: Lesson
   );
 }
 
-// ------------------------------------------------------------------ Cold call: Professor Neva asks you about a segment (AI)
+// ------------------------------------------------------------------ Cold call: Otto asks you about a segment (AI)
 type ColdQ = { question: string; rubric: string[] };
 function ColdCall({ pathId, lesson, index }: { pathId: string; lesson: Lesson; index: number }) {
   const aiOn = useAi();
@@ -83,10 +83,10 @@ function ColdCall({ pathId, lesson, index }: { pathId: string; lesson: Lesson; i
     } catch (e) { setErr((e as Error).message); }
     setBusy(false);
   };
-  if (!q) return <button className="btn sm" style={{ marginTop: 10 }} onClick={ask} disabled={busy}>{busy ? "Professor Neva is choosing a question…" : `🎯 Take the cold call (up to +${3 * XP.coldCallPoint} XP)`}</button>;
+  if (!q) return <button className="btn sm" style={{ marginTop: 10 }} onClick={ask} disabled={busy}>{busy ? "Otto is choosing a question…" : `🎯 Take the cold call (up to +${3 * XP.coldCallPoint} XP)`}</button>;
   return (
     <div className="coldcall">
-      <div className="who"><span className="avatar bot" role="img" aria-label="Professor Neva" />Professor Neva, cold-calling you</div>
+      <div className="who"><span className="avatar bot" role="img" aria-label="Otto" />Otto, cold-calling you</div>
       <Rich text={`**${q.question}**`} />
       {!grade && <>
         <textarea className="answer" style={{ minHeight: 90 }} value={answer} onChange={e => setAnswer(e.target.value)} placeholder="Answer in 2-4 sentences, as you would in class…" aria-label="Your answer to the cold call" />
@@ -123,7 +123,7 @@ export function Lecture({ pathId, lesson, onNext, onAsk }: { pathId: string; les
           <Rich text={s.body} />
           {s.check && <CheckQ c={s.check} onAnswered={right => { setAnswered(n => n + 1); if (right) award(`${lesson.id}:check${i}`, XP.check, "Check passed"); }} />}
           <div className="row" style={{ gap: 8 }}>
-            <button className="btn ghost sm" style={{ marginTop: 10 }} onClick={() => onAsk(`Can you explain "${s.title.replace(/^\d+\.\s*/, "")}" another way, using the case?`)}>🎓 Ask the professor about this</button>
+            <button className="btn ghost sm" style={{ marginTop: 10 }} onClick={() => onAsk(`Can you explain "${s.title.replace(/^\d+\.\s*/, "")}" another way, using the case?`)}>🎓 Ask Otto about this</button>
           </div>
           <ColdCall pathId={pathId} lesson={lesson} index={i} />
         </div>
@@ -159,11 +159,11 @@ export function Seminar({ pathId, lesson, onNext }: { pathId: string; lesson: Le
   return (
     <div className="stack" style={{ gap: 16 }}>
       <div className="check" style={{ background: "var(--yellow-soft)" }}><div className="eyebrow">Seminar question</div><Rich text={`**${lesson.seminar.question}**`} /></div>
-      <p className="muted" style={{ margin: 0 }}>Answer in your own words, like you would in a seminar. Professor Neva grades against a 3-point rubric; 2+ points completes the stage, and each point earns XP once. {best != null && `Your best so far: ${best}/3.`}</p>
+      <p className="muted" style={{ margin: 0 }}>Answer in your own words, like you would in a seminar. Otto grades against a 3-point rubric; 2+ points completes the stage, and each point earns XP once. {best != null && `Your best so far: ${best}/3.`}</p>
       {aiOn === false && <div className="banner warn">Grading needs Claude (ANTHROPIC_API_KEY on the server). You can skip to the quiz.</div>}
       <textarea className="answer" value={answer} onChange={e => setAnswer(e.target.value)} placeholder="Your answer…" aria-label="Your seminar answer" />
       <div className="row">
-        <button className="btn yellow" onClick={submit} disabled={busy || answer.trim().length < 30 || !aiOn}>{busy ? "Grading…" : tries ? "Revise and resubmit" : "Submit to Professor Neva"}</button>
+        <button className="btn yellow" onClick={submit} disabled={busy || answer.trim().length < 30 || !aiOn}>{busy ? "Grading…" : tries ? "Revise and resubmit" : "Submit to Otto"}</button>
         {(grade && grade.score >= 2) || aiOn === false ? <button className="btn primary" onClick={onNext}>To the quiz →</button> : null}
       </div>
       {err && <div className="banner err">{err}</div>}
@@ -222,7 +222,7 @@ export function Quiz({ pathId, lesson, onNext }: { pathId: string; lesson: Lesso
       {answeredBase === base && <div className="banner warn"><b>{correctBase}/{base}</b> on the core questions. {correctBase === base ? "Perfect recall." : "Review the explanations above, then try a challenge question."}</div>}
       {err && <div className="banner err">{err}</div>}
       <div className="row">
-        {aiOn && <button className="btn" onClick={more} disabled={busy}>{busy ? "Writing a new question…" : "✨ Professor, give me a challenge question (+20 XP)"}</button>}
+        {aiOn && <button className="btn" onClick={more} disabled={busy}>{busy ? "Writing a new question…" : "✨ Otto, give me a challenge question (+20 XP)"}</button>}
         {answeredBase === base && <button className="btn primary" onClick={onNext}>To the debrief →</button>}
       </div>
     </div>
@@ -247,7 +247,7 @@ export function Debrief({ lesson, nextHref, onAsk }: { lesson: Lesson; nextHref:
         </div>
       </div>
       <div className="row">
-        <button className="btn" onClick={() => onAsk("Summarise what I should take away from this case, then ask me one question to test it.")}>🎓 Exit interview with the professor</button>
+        <button className="btn" onClick={() => onAsk("Summarise what I should take away from this case, then ask me one question to test it.")}>🎓 Exit interview with Otto</button>
         <button className="btn primary" onClick={() => { completeStage(lesson.id, "debrief"); award(`${lesson.id}:debrief`, 15, "Debrief complete"); }}>Mark debrief done (+15 XP)</button>
         {nextHref && <Link className="btn yellow" to={nextHref}>Next case →</Link>}
       </div>

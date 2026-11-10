@@ -18,7 +18,7 @@ const STAGES: { id: StageId; label: string; sub: string }[] = [
 ];
 const BOSS_STAGES: { id: StageId; label: string; sub: string }[] = [
   { id: "brief", label: "Case file", sub: "The situation" },
-  { id: "lecture", label: "Briefing", sub: "From the professor" },
+  { id: "lecture", label: "Briefing", sub: "From Otto" },
   { id: "lab", label: "Capstone", sub: "Investigate + report" },
   { id: "debrief", label: "Debrief", sub: "Takeaways" },
 ];
@@ -98,10 +98,10 @@ export function LessonPage() {
         </div>
       </div>
 
-      {!drawer && <button className="prof-fab" onClick={() => setDrawer(true)}><span className="avatar bot" role="img" aria-label="Professor Neva" />Ask Professor Neva</button>}
+      {!drawer && <button className="prof-fab" onClick={() => setDrawer(true)}><span className="avatar bot" role="img" aria-label="Otto" />Ask Otto</button>}
       {drawer && (
-        <aside className="drawer" aria-label="Professor Neva">
-          <div className="drawer-h"><div className="who" style={{ margin: 0 }}><span className="avatar bot" role="img" aria-label="Professor Neva" /><div><b>Professor Neva</b><div className="muted" style={{ fontWeight: 500 }}>Office hours · {lesson.caseTitle}</div></div></div><button className="btn sm ghost" onClick={() => setDrawer(false)} aria-label="Close">✕</button></div>
+        <aside className="drawer" aria-label="Otto">
+          <div className="drawer-h"><div className="who" style={{ margin: 0 }}><span className="avatar bot" role="img" aria-label="Otto" /><div><b>Otto</b><div className="muted" style={{ fontWeight: 500 }}>Office hours · {lesson.caseTitle}</div></div></div><button className="btn sm ghost" onClick={() => setDrawer(false)} aria-label="Close">✕</button></div>
           <div className="drawer-b">
             <ProfessorChat convoKey={convoKey} context={context} note={`[Learner is on the ${stage} stage]`}
               intro={`We're on **${lesson.caseTitle}**. Ask about anything in the case, or explain an idea back to me and I'll tell you where it holds and where it doesn't.`}

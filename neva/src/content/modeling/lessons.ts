@@ -223,7 +223,7 @@ export const LESSONS: Lesson[] = [
     },
     lecture: [
       {
-        title: "Briefing from Professor Neva",
+        title: "Briefing from Otto",
         body: `This is the whole path in one decision. Your assistant is an [[c|LLM]] that calls [[t|tools]]: \`get_case_counts\`, \`fit_growth_rate\`, \`run_seir\` and \`search_evidence\` (which does [[c|retrieval]] over the evidence library). Every call and result appears in the trace, as an MCP host would log them.\n\nA disciplined analysis:\n1. Look at the reported counts. Where is growth exponential? [[w|Skip the noisy first two weeks]].\n2. Fit the growth rate r over that window. Note the doubling time.\n3. Retrieve the latent and infectious periods from the evidence (not the incubation period), then convert r into R0 with \`R0 = (1 + r·latent)(1 + r·infectious)\`.\n4. Run the SEIR model without intervention, then with schools closed from day 45, using the contact reduction the evidence supports.\n5. Write the briefing: numbers, ranges, assumptions, recommendation.\n\nThe assistant won't hand you the answer. And remember the forecast SOP: what you write is a **projection** under stated assumptions, not a prediction.`,
       },
     ],

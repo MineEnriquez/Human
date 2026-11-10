@@ -1,4 +1,4 @@
-// Chat with Professor Neva (/api/professor). One conversation per key (a lesson, or office hours).
+// Chat with Otto (/api/professor). One conversation per key (a lesson, or office hours).
 // The lesson context is frozen when the conversation starts so the system prompt never changes mid-chat;
 // the learner's current stage travels with each new user message instead.
 import { useRef, useState, useSyncExternalStore } from "react";
@@ -14,7 +14,7 @@ const get = (k: string) => convos.get(k);
 const set = (k: string, c: Convo) => { convos.set(k, c); subs.forEach(f => f()); };
 const useConvo = (k: string) => useSyncExternalStore(cb => { subs.add(cb); return () => subs.delete(cb); }, () => get(k));
 
-/** Send a message from anywhere (e.g. "Ask the professor about this" buttons). */
+/** Send a message from anywhere (e.g. "Ask Otto about this" buttons). */
 export async function askProfessor(key: string, context: string, text: string, note = "") {
   let c = get(key) || { context, history: [], turns: [], busy: false };
   if (c.busy) return;
@@ -40,22 +40,22 @@ export function ProfessorChat({ convoKey, context, starters, note = "", intro }:
   const end = useRef<HTMLDivElement>(null);
   const send = (t: string) => { if (!t.trim()) return; setText(""); askProfessor(convoKey, context, t, note).then(() => end.current?.scrollIntoView({ block: "end" })); requestAnimationFrame(() => end.current?.scrollIntoView({ block: "end" })); };
 
-  if (aiOn === false) return <div className="banner warn">Professor Neva needs Claude. Set <code>ANTHROPIC_API_KEY</code> on the server (see README) and restart it. Everything else on the site still works.</div>;
+  if (aiOn === false) return <div className="banner warn">Otto needs Claude. Set <code>ANTHROPIC_API_KEY</code> on the server (see README) and restart it. Everything else on the site still works.</div>;
   return (
     <div className="stack">
       <div className="chat">
-        <div className="bubble prof"><div className="who"><span className="avatar bot" role="img" aria-label="Professor Neva" />Professor Neva</div><Rich text={intro || "Ask me anything about this case. I'll usually answer with a question first: that's on purpose."} /></div>
+        <div className="bubble prof"><div className="who"><span className="avatar bot" role="img" aria-label="Otto" />Otto</div><Rich text={intro || "Ask me anything about this case. I'll usually answer with a question first: that's on purpose."} /></div>
         {c?.turns.map((t, i) => (
           <div key={i} className="stack">
             <div className="bubble me">{t.me}</div>
-            <div className="bubble prof"><div className="who"><span className="avatar bot" role="img" aria-label="Professor Neva" />Professor Neva</div>{t.prof ? <Rich text={t.prof} /> : !t.error && <p className="thinking">Thinking…</p>}{t.error && <div className="banner err">{t.error}</div>}</div>
+            <div className="bubble prof"><div className="who"><span className="avatar bot" role="img" aria-label="Otto" />Otto</div>{t.prof ? <Rich text={t.prof} /> : !t.error && <p className="thinking">Thinking…</p>}{t.error && <div className="banner err">{t.error}</div>}</div>
           </div>
         ))}
         <div ref={end} />
       </div>
       {!c?.turns.length && <div className="chips">{starters.map(s => <button key={s} className="chip" onClick={() => send(s)}>{s}</button>)}</div>}
       <form className="composer" onSubmit={e => { e.preventDefault(); send(text); }}>
-        <textarea rows={1} value={text} placeholder="Ask Professor Neva, or explain it back in your own words…" onChange={e => setText(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(text); } }} aria-label="Message to Professor Neva" />
+        <textarea rows={1} value={text} placeholder="Ask Otto, or explain it back in your own words…" onChange={e => setText(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(text); } }} aria-label="Message to Otto" />
         <button className="btn primary sm" disabled={c?.busy || !text.trim() || aiOn === null}>{c?.busy ? "…" : "Send"}</button>
       </form>
     </div>
