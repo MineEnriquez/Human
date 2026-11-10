@@ -2,7 +2,7 @@
 // Used by the RAG lab (learner retrieves + packs chunks; Claude answers with citations)
 // and by the capstone agent's search_protocols tool.
 
-export type Chunk = { id: string; doc: string; title: string; text: string };
+import { makeSearch, type Chunk } from "../search";
 
 export const CHUNKS: Chunk[] = [
   // IP-14: infection prevention protocol
@@ -31,30 +31,4 @@ export const CHUNKS: Chunk[] = [
   { id: "AS22-2", doc: "AS-22", title: "AS-22 Treatment decisions", text: "Gene detection does not replace phenotypic susceptibility testing. Treatment of an individual patient is decided by the treating team with Infectious Diseases, using the lab's susceptibility report." },
 ];
 
-// Small BM25 index so retrieval is transparent (learners see every score).
-const STOP = new Set("a an and are as at be by can do does for from has have how in is it its of on or our should that the their this to was we what when which who why will with".split(" "));
-export const tokenize = (s: string) => s.toLowerCase().replace(/[^a-z0-9\- ]+/g, " ").split(/\s+/).filter(w => w && !STOP.has(w));
-
-const docs = CHUNKS.map(c => tokenize(c.title + " " + c.text));
-const avg = docs.reduce((n, d) => n + d.length, 0) / docs.length;
-const df = new Map<string, number>();
-for (const d of docs) for (const w of new Set(d)) df.set(w, (df.get(w) || 0) + 1);
-
-export function search(query: string, k = 5): { chunk: Chunk; score: number }[] {
-  const q = tokenize(query);
-  const N = docs.length, k1 = 1.4, b = 0.75;
-  return docs
-    .map((d, i) => {
-      let s = 0;
-      for (const w of q) {
-        const f = d.filter(x => x === w).length;
-        if (!f) continue;
-        const idf = Math.log(1 + (N - (df.get(w) || 0) + 0.5) / ((df.get(w) || 0) + 0.5));
-        s += idf * (f * (k1 + 1)) / (f + k1 * (1 - b + b * d.length / avg));
-      }
-      return { chunk: CHUNKS[i], score: Math.round(s * 100) / 100 };
-    })
-    .filter(r => r.score > 0)
-    .sort((x, y) => y.score - x.score)
-    .slice(0, k);
-}
+export const search = makeSearch(CHUNKS);

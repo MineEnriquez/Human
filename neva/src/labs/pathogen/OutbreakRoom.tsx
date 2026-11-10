@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { AgentConsole } from "../components/AgentConsole";
-import { BucketBoard, DragHint } from "../components/dnd";
-import { Rich, RichInline } from "../components/Rich";
-import { ISOLATES, OUTBREAK_KEY } from "../content/dataset";
-import { postJson, useAi } from "../lib/ai";
-import { addEvidence, award, completeStage, earnBadge, recordBest, useProgress } from "../lib/progress";
-import { LabCard } from "./common";
+import { AgentConsole } from "../../components/AgentConsole";
+import { BucketBoard, DragHint } from "../../components/dnd";
+import { Rich, RichInline } from "../../components/Rich";
+import { ISOLATES, OUTBREAK_KEY } from "../../content/pathogen/dataset";
+import { postJson, useAi } from "../../lib/ai";
+import { addEvidence, award, completeStage, earnBadge, recordBest, useProgress } from "../../lib/progress";
+import { LabCard } from "../common";
 
 const ID = "pg-capstone";
 const TOOL_EVIDENCE: Record<string, string> = { search_isolates: "Isolate list", get_snp_distances: "SNP matrix", get_ward_transfers: "Transfer history", search_protocols: "Protocol lookup" };
@@ -34,7 +34,7 @@ export default function OutbreakRoom() {
     const c = { correct: ISOLATES.length - wrong.length, wrong };
     setCheck(c); setBusy(true); setErr("");
     try {
-      const g = await postJson<Grade>("/api/capstone-grade", { cluster, reservoir, route, action, reasoning, clusterCorrect: c.correct, clusterWrong: wrong });
+      const g = await postJson<Grade>("/api/capstone-grade", { path: "pathogen-genomics", autoCheck: `Cluster membership: ${c.correct}/12 isolates classified correctly. Misclassified: ${wrong.join(", ") || "none"}.`, report: { "Chosen cluster": cluster.join(", "), Reservoir: reservoir, Route: route, "Next action": action, Reasoning: reasoning } });
       setGrade(g);
       recordBest(ID, "seminarBest", g.score);
       completeStage(ID, "lab");
@@ -49,7 +49,7 @@ export default function OutbreakRoom() {
     <>
       <LabCard title="1. Investigate with your lab assistant" sub={<RichInline text="It runs real [[t|tool calls]] against the lab data. Expand any call to see the raw result. Evidence collected:" />}
         right={<div className="evidence">{Object.values(TOOL_EVIDENCE).map(e => <span key={e} className={`ev ${ev.includes(e) ? "got" : ""}`}>{ev.includes(e) ? "✓ " : ""}{e}</span>)}</div>}>
-        <AgentConsole height={520}
+        <AgentConsole path="pathogen-genomics" toolNames={Object.keys(TOOL_EVIDENCE)} height={520}
           starters={["List every isolate with its ST, gene, ward and date.", "Get SNP distances for all the ST258 isolates.", "Which patients moved between wards?", "What does GS-03 say about SNP thresholds?"]}
           onToolCall={name => { const e = TOOL_EVIDENCE[name]; if (e) { addEvidence(ID, e); award(`${ID}:ev:${e}`, 15, `Evidence: ${e}`); } }} />
       </LabCard>

@@ -65,7 +65,7 @@ export function Lecture({ lesson, onNext, onAsk }: { lesson: Lesson; onNext: () 
 
 // ------------------------------------------------------------------ Seminar (AI-graded open answer)
 type Grade = { score: number; verdict: string; strengths: string; gap: string; nudge: string; misconception: string | null };
-export function Seminar({ lesson, onNext }: { lesson: Lesson; onNext: () => void }) {
+export function Seminar({ pathId, lesson, onNext }: { pathId: string; lesson: Lesson; onNext: () => void }) {
   const aiOn = useAi();
   const best = useProgress().lessons[lesson.id]?.seminarBest;
   const [answer, setAnswer] = useState("");
@@ -76,7 +76,7 @@ export function Seminar({ lesson, onNext }: { lesson: Lesson; onNext: () => void
   const submit = async () => {
     setBusy(true); setErr("");
     try {
-      const g = await postJson<Grade>("/api/grade", { lesson: lesson.title, question: lesson.seminar.question, rubric: lesson.seminar.rubric, answer });
+      const g = await postJson<Grade>("/api/grade", { path: pathId, lesson: lesson.title, question: lesson.seminar.question, rubric: lesson.seminar.rubric, answer });
       setGrade(g); setTries(t => t + 1);
       noteMisconception(g.misconception);
       recordBest(lesson.id, "seminarBest", g.score);
@@ -108,7 +108,7 @@ export function Seminar({ lesson, onNext }: { lesson: Lesson; onNext: () => void
 }
 
 // ------------------------------------------------------------------ Quiz (static + AI-generated)
-export function Quiz({ lesson, onNext }: { lesson: Lesson; onNext: () => void }) {
+export function Quiz({ pathId, lesson, onNext }: { pathId: string; lesson: Lesson; onNext: () => void }) {
   const aiOn = useAi();
   const [qs, setQs] = useState<QuizQ[]>(lesson.quiz);
   const [picks, setPicks] = useState<Record<number, number>>({});
@@ -133,7 +133,7 @@ export function Quiz({ lesson, onNext }: { lesson: Lesson; onNext: () => void })
   const more = async () => {
     setBusy(true); setErr("");
     try {
-      const q = await postJson<{ question: string; options: string[]; answer: number; explanation: string }>("/api/quiz", { lesson: lesson.title, summary: lesson.summary, avoid: qs.map(x => x.q), difficulty: "challenge" });
+      const q = await postJson<{ question: string; options: string[]; answer: number; explanation: string }>("/api/quiz", { path: pathId, lesson: lesson.title, summary: lesson.summary, avoid: qs.map(x => x.q), difficulty: "challenge" });
       setQs(x => [...x, { q: q.question, options: q.options, answer: q.answer, explain: q.explanation }]);
     } catch (e) { setErr((e as Error).message); }
     setBusy(false);

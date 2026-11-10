@@ -21,6 +21,10 @@ export const BADGES: Record<string, { icon: string; name: string; how: string }>
   perfect: { icon: "💯", name: "Perfect Recall", how: "Ace a quiz with no mistakes" },
   streak3: { icon: "🔥", name: "On a Roll", how: "Learn three days in a row" },
   "case-closed": { icon: "🏆", name: "Case Closed", how: "Solve the Outbreak Room capstone" },
+  "curve-shaper": { icon: "📈", name: "Curve Shaper", how: "Fit an epidemic model to the observed cases" },
+  "briefing-done": { icon: "🏛️", name: "Briefing Delivered", how: "Pass the Briefing Room capstone" },
+  "second-reviewer": { icon: "🧾", name: "Second Reviewer", how: "Reach substantial agreement (κ ≥ 0.61) with Claude when screening" },
+  "review-board": { icon: "📚", name: "Review Board", how: "Pass the Review Board capstone" },
 };
 
 export type StageId = "brief" | "lecture" | "lab" | "seminar" | "quiz" | "debrief";

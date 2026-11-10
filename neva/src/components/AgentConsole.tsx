@@ -1,4 +1,4 @@
-// Chat with the tool-using lab assistant (/api/agent). Shows every tool call and result as an MCP host would log it.
+// Chat with a path's tool-using lab assistant (/api/agent). Shows every tool call and result as an MCP host would log it.
 import { useRef, useState } from "react";
 import { Rich } from "./Rich";
 import { stream, useAi, type ApiMessage } from "../lib/ai";
@@ -12,8 +12,8 @@ type Item =
 
 let rpcId = 1;
 
-export function AgentConsole({ starters, onToolCall, showRpc = false, placeholder = "Ask the lab assistant…", height = 460 }: {
-  starters: string[]; onToolCall?: (name: string) => void; showRpc?: boolean; placeholder?: string; height?: number;
+export function AgentConsole({ path, toolNames, starters, onToolCall, showRpc = false, placeholder = "Ask the lab assistant…", height = 460 }: {
+  path: string; toolNames: string[]; starters: string[]; onToolCall?: (name: string) => void; showRpc?: boolean; placeholder?: string; height?: number;
 }) {
   const aiOn = useAi();
   const [items, setItems] = useState<Item[]>([]);
@@ -29,7 +29,7 @@ export function AgentConsole({ starters, onToolCall, showRpc = false, placeholde
     const userMsg: ApiMessage = { role: "user", content: msg };
     setItems(x => [...x, { kind: "me", text: msg }, { kind: "ai", text: "" }]); scroll();
     let added: ApiMessage[] = [];
-    await stream("/api/agent", { messages: [...history, userMsg] }, e => {
+    await stream("/api/agent", { path, messages: [...history, userMsg] }, e => {
       if (e.type === "text") setItems(x => { const l = x[x.length - 1]; return l?.kind === "ai" ? [...x.slice(0, -1), { kind: "ai", text: l.text + e.text }] : [...x, { kind: "ai", text: e.text }]; });
       else if (e.type === "tool_call") { setItems(x => [...x.filter(i => !(i.kind === "ai" && !i.text)), { kind: "call", id: e.id, name: e.name, input: e.input }]); onToolCall?.(e.name); }
       else if (e.type === "tool_result") setItems(x => [...x, { kind: "result", id: e.id, name: e.name, ok: e.ok, output: e.output }]);
@@ -48,7 +48,7 @@ export function AgentConsole({ starters, onToolCall, showRpc = false, placeholde
   return (
     <div className="stack">
       <div ref={box} className="chat" style={{ maxHeight: height, overflowY: "auto", padding: "4px 2px" }}>
-        {!items.length && <p className="muted" style={{ margin: 0 }}>The assistant can call: <code>search_isolates</code>, <code>get_snp_distances</code>, <code>get_ward_transfers</code>, <code>search_protocols</code>. Start with a question.</p>}
+        {!items.length && <p className="muted" style={{ margin: 0 }}>The assistant can call: {toolNames.map((t, i) => <span key={t}>{i > 0 && ", "}<code>{t}</code></span>)}. Start with a question.</p>}
         {items.map((it, i) => {
           if (it.kind === "me") return <div key={i} className="bubble me">{it.text}</div>;
           if (it.kind === "ai") return <div key={i} className="bubble prof"><div className="who"><span className="avatar">⚗</span>Lab assistant</div>{it.text ? <Rich text={it.text} /> : <p className="thinking">Thinking…</p>}</div>;

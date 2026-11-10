@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
-import { BucketBoard, DragHint, SortIntoBuckets } from "../components/dnd";
-import { RichInline } from "../components/Rich";
-import { ISOLATES, QUERY_ISOLATE, type Isolate } from "../content/dataset";
-import { earnBadge, useProgress } from "../lib/progress";
-import { finishPart, LabCard } from "./common";
+import { BucketBoard, DragHint, SortIntoBuckets } from "../../components/dnd";
+import { RichInline } from "../../components/Rich";
+import { ISOLATES, QUERY_ISOLATE, type Isolate } from "../../content/pathogen/dataset";
+import { earnBadge, useProgress } from "../../lib/progress";
+import { finishPart, LabCard } from "../common";
 
 const ID = "pg-vdb";
 const EV = ["Record anatomy", "Top-k search", "Filtered search"];
