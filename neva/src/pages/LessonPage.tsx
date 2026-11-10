@@ -18,7 +18,7 @@ const STAGES: { id: StageId; label: string; sub: string }[] = [
 const BOSS_STAGES: { id: StageId; label: string; sub: string }[] = [
   { id: "brief", label: "Case file", sub: "The situation" },
   { id: "lecture", label: "Briefing", sub: "From the professor" },
-  { id: "lab", label: "Outbreak Room", sub: "Investigate + report" },
+  { id: "lab", label: "Capstone", sub: "Investigate + report" },
   { id: "debrief", label: "Debrief", sub: "Takeaways" },
 ];
 
@@ -48,7 +48,7 @@ export function LessonPage() {
   const prev = path.lessons[idx - 1];
   const next = path.lessons[idx + 1];
   const unlocked = !prev || lessonDone(p, prev.id, prev.boss);
-  const stages = lesson.boss ? BOSS_STAGES : STAGES;
+  const stages = lesson.boss ? BOSS_STAGES.map(s => (s.id === "lab" ? { ...s, label: lesson.title } : s)) : STAGES;
   const st = p.lessons[lesson.id]?.stages || {};
   const stage = stageSel || stages.find(s => !st[s.id])?.id || "brief";
   const go = (s: StageId) => { setStage(s); window.scrollTo({ top: 0, behavior: "smooth" }); };
