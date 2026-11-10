@@ -231,7 +231,7 @@ export const LESSONS: Lesson[] = [
 ];
 
 export const PATH: Path = {
-  id: "cancer-genomics", area: "Genetics", title: "Cancer Genomics", color: "#ecb340", status: "live",
+  id: "cancer-genomics", area: "Genetics", title: "Cancer Genomics", color: "#ffc21a", status: "live",
   tagline: "Use AI to read a tumor's genome and cells, from diagnosis to relapse.",
   blurb: "Follow a fictional leukemia through a sequencing report, a single-cell reference atlas, the lab's variant SOPs and a tool-using lab assistant, to explain why the cancer came back.",
   cases: ["The Overnight Variant Report", "Which Cell Is This?", "The Tiering Question", "Wire Up the Lab", "The Tumor Board"],

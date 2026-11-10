@@ -233,7 +233,7 @@ export const LESSONS: Lesson[] = [
 ];
 
 export const PATH: Path = {
-  id: "research-intelligence", area: "Research", title: "Research Intelligence", color: "#86375a", status: "live",
+  id: "research-intelligence", area: "Research", title: "Research Intelligence", color: "#b02a6a", status: "live",
   tagline: "Use AI to screen, search and synthesise the literature, with receipts.",
   blurb: "Run a systematic review on rapid molecular diagnostics for bloodstream infection: LLM-assisted screening with agreement statistics, semantic and hybrid search, citation-grounded answers and MCP connectors to the research stack.",
   cases: ["The Abstract Screen", "Semantic Search", "The Grounded Review", "Library Connectors", "The Review Board"],

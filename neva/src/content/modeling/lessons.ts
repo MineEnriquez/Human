@@ -236,7 +236,7 @@ export const LESSONS: Lesson[] = [
 ];
 
 export const PATH: Path = {
-  id: "outbreak-modeling", area: "Disease modeling", title: "Outbreak Modeling", color: "#b0641f", status: "live",
+  id: "outbreak-modeling", area: "Disease modeling", title: "Outbreak Modeling", color: "#e0662a", status: "live",
   tagline: "Use AI to build, calibrate and explain epidemic models.",
   blurb: "Model a new respiratory virus in a fictional city: verify LLM-extracted parameters, find analogous epidemics in a vector database, ground priors in cited evidence, and drive a simulation server through MCP.",
   cases: ["The Parameter Hunt", "Similar Epidemics", "Evidence-Based Priors", "The Simulation Server", "The Briefing Room"],

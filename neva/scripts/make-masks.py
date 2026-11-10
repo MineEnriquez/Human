@@ -27,13 +27,13 @@ otto.save("public/otto-mask.png", optimize=True)
 logo = line_mask("../images/neva_and_owl.png", 256)
 logo.save("public/logo-mask.png", optimize=True)
 
-# Favicon: the logo in the theme's amber on the espresso band colour.
+# Favicon: the logo in the theme yellow on the charcoal band colour.
 S = 128
 icon = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-ImageDraw.Draw(icon).rounded_rectangle([0, 0, S - 1, S - 1], radius=26, fill=(47, 38, 32, 255))
+ImageDraw.Draw(icon).rounded_rectangle([0, 0, S - 1, S - 1], radius=26, fill=(22, 22, 22, 255))
 art = logo.copy()
 art.thumbnail((S - 20, S - 20), Image.LANCZOS)
-amber = Image.new("RGBA", art.size, (236, 179, 64, 255))
+amber = Image.new("RGBA", art.size, (255, 194, 26, 255))
 amber.putalpha(art.getchannel("A"))
 icon.alpha_composite(amber, ((S - art.width) // 2, (S - art.height) // 2))
 icon.save("public/favicon.png", optimize=True)
