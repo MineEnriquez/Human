@@ -7,7 +7,7 @@ import { finishPart, LabCard } from "./common";
 
 const ID = "pg-vdb";
 const EV = ["Record anatomy", "Top-k search", "Filtered search"];
-const ST_COLOR: Record<string, string> = { ST258: "#000000", ST307: "#5154cc", ST11: "#d1263a", ST147: "#be2fb3" };
+const ST_COLOR: Record<string, string> = { ST258: "var(--st-258)", ST307: "var(--st-307)", ST11: "var(--st-11)", ST147: "var(--st-147)" };
 
 const FIELDS = [
   { id: "f1", label: "`KP-04`", bucket: "id", why: "A unique key for the record." },
@@ -61,19 +61,19 @@ export default function VectorDbLab() {
       <LabCard title="B. Search the genome database" done={ev.includes(EV[1]) && ev.includes(EV[2])} sub={<RichInline text="Query: the new isolate **KP-13** (ICU, 22 March). First search with no filters, then drag filter chips into the query and search again. Toy 2-D [[c|embeddings]]; real ones have hundreds of dimensions." />}>
         <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.2fr) minmax(0, 1fr)", gap: 20 }} className="vdb-grid">
           <svg viewBox="0 0 500 400" className="svgbox" role="img" aria-label="Embedding map of isolates">
-            {[0.25, 0.5, 0.75].map(g => <g key={g}><line x1={X(g)} x2={X(g)} y1={Y(0)} y2={Y(1)} stroke="#d6d4ce" strokeDasharray="3 5" /><line y1={Y(g)} y2={Y(g)} x1={X(0)} x2={X(1)} stroke="#d6d4ce" strokeDasharray="3 5" /></g>)}
-            {ran && ISOLATES.filter(i => shown.has(i.id)).map(i => <line key={i.id} x1={X(QUERY_ISOLATE.vec[0])} y1={Y(QUERY_ISOLATE.vec[1])} x2={X(i.vec[0])} y2={Y(i.vec[1])} stroke="#ffce2e" strokeWidth={4} />)}
+            {[0.25, 0.5, 0.75].map(g => <g key={g}><line x1={X(g)} x2={X(g)} y1={Y(0)} y2={Y(1)} style={{ stroke: "var(--line)" }} strokeDasharray="3 5" /><line y1={Y(g)} y2={Y(g)} x1={X(0)} x2={X(1)} style={{ stroke: "var(--line)" }} strokeDasharray="3 5" /></g>)}
+            {ran && ISOLATES.filter(i => shown.has(i.id)).map(i => <line key={i.id} x1={X(QUERY_ISOLATE.vec[0])} y1={Y(QUERY_ISOLATE.vec[1])} x2={X(i.vec[0])} y2={Y(i.vec[1])} style={{ stroke: "var(--yellow)" }} strokeWidth={4} />)}
             {ISOLATES.map(i => {
               const on = passes(i);
               return (
                 <g key={i.id} opacity={on ? 1 : 0.18}>
-                  {i.ward === "Environment" ? <rect x={X(i.vec[0]) - 7} y={Y(i.vec[1]) - 7} width={14} height={14} fill={ST_COLOR[i.st]} /> : <circle cx={X(i.vec[0])} cy={Y(i.vec[1])} r={shown.has(i.id) ? 9 : 7} fill={ST_COLOR[i.st]} stroke={shown.has(i.id) ? "#ffce2e" : "#fff"} strokeWidth={2} />}
-                  <text x={X(i.vec[0]) + 11} y={Y(i.vec[1]) + 4} fontSize={11} fontFamily="IBM Plex Mono" fill="#000">{i.id.slice(3)}</text>
+                  {i.ward === "Environment" ? <rect x={X(i.vec[0]) - 7} y={Y(i.vec[1]) - 7} width={14} height={14} style={{ fill: ST_COLOR[i.st] }} /> : <circle cx={X(i.vec[0])} cy={Y(i.vec[1])} r={shown.has(i.id) ? 9 : 7} style={{ fill: ST_COLOR[i.st], stroke: shown.has(i.id) ? "var(--yellow)" : "var(--sheet)" }} strokeWidth={2} />}
+                  <text x={X(i.vec[0]) + 11} y={Y(i.vec[1]) + 4} fontSize={11} fontFamily="IBM Plex Mono" style={{ fill: "var(--ink)" }}>{i.id.slice(3)}</text>
                 </g>
               );
             })}
-            <text x={X(QUERY_ISOLATE.vec[0]) - 9} y={Y(QUERY_ISOLATE.vec[1]) + 7} fontSize={22}>★</text>
-            {Object.entries(ST_COLOR).map(([st, c], n) => <g key={st}><circle cx={30 + n * 80} cy={392} r={5} fill={c} /><text x={40 + n * 80} y={396} fontSize={11} fontFamily="IBM Plex Mono">{st}</text></g>)}
+            <text x={X(QUERY_ISOLATE.vec[0]) - 9} y={Y(QUERY_ISOLATE.vec[1]) + 7} fontSize={22} style={{ fill: "var(--ink)" }}>★</text>
+            {Object.entries(ST_COLOR).map(([st, c], n) => <g key={st}><circle cx={30 + n * 80} cy={392} r={5} style={{ fill: c }} /><text x={40 + n * 80} y={396} fontSize={11} fontFamily="IBM Plex Mono" style={{ fill: "var(--ink)" }}>{st}</text></g>)}
           </svg>
           <div className="stack">
             <div className="row"><label className="muted" htmlFor="topk">top-k = {k}</label><input id="topk" type="range" min={1} max={8} value={k} onChange={e => setK(+e.target.value)} /></div>

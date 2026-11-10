@@ -51,6 +51,10 @@ ${MARKUP}`;
 
 // ------------------------------------------------------------------ helpers
 async function body<T>(req: IncomingMessage): Promise<T> {
+  // Vercel's Node runtime may already have parsed the JSON body.
+  const pre = (req as IncomingMessage & { body?: unknown }).body;
+  if (pre && typeof pre === "object") return pre as T;
+  if (typeof pre === "string") return JSON.parse(pre || "{}") as T;
   const parts: Buffer[] = [];
   for await (const c of req) parts.push(c as Buffer);
   return JSON.parse(Buffer.concat(parts).toString("utf8") || "{}") as T;

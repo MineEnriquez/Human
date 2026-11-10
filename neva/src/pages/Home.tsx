@@ -13,21 +13,21 @@ export function Home() {
       <section className="hero">
         <div className="hero-in">
           <div>
-            <div className="eyebrow" style={{ color: "#b4aca6" }}>AI for the life sciences</div>
+            <div className="eyebrow" style={{ color: "var(--on-band-muted)" }}>AI for the life sciences</div>
             <h1>Learn AI by <em>solving real cases</em>.</h1>
             <p className="lede">LLMs, vector databases, retrieval-augmented generation and MCP, taught by an AI professor through casework in genomics, disease modeling and research.</p>
             <div className="row">
               <Link className="btn yellow" to={`/lesson/${next.id}`}>{done ? "Continue your case" : "Open your first case"} →</Link>
-              <Link className="btn" style={{ background: "transparent", color: "#fff", borderColor: "#fff" }} to="/paths/pathogen-genomics">See the path</Link>
+              <Link className="btn" style={{ background: "transparent", color: "var(--on-band)", borderColor: "var(--on-band)" }} to="/paths/pathogen-genomics">See the path</Link>
             </div>
             <div className="stat-row">
               <div><b>3</b>paths</div><div><b>5</b>cases per path</div><div><b>6</b>AI features</div><div><b>{p.xp}</b>your XP</div>
             </div>
           </div>
           <div className="hero-card">
-            <div className="who" style={{ color: "#fff" }}><span className="avatar">N</span>Professor Neva</div>
+            <div className="who" style={{ color: "var(--on-band)" }}><span className="avatar">N</span>Professor Neva</div>
             <p className="q">"Two isolates share a sequence type and score as near neighbours in the vector database. Your colleague calls it transmission. <b>What would you ask before you agree?</b>"</p>
-            <p style={{ color: "#b4aca6", fontSize: ".9rem", margin: 0 }}>Socratic tutoring, AI-graded seminars, live tool-using agents, and answers that cite their sources.</p>
+            <p style={{ color: "var(--on-band-muted)", fontSize: ".9rem", margin: 0 }}>Socratic tutoring, AI-graded seminars, live tool-using agents, and answers that cite their sources.</p>
           </div>
         </div>
       </section>

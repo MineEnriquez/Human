@@ -209,21 +209,21 @@ const pathogen: Lesson[] = [
 
 export const PATHS: Path[] = [
   {
-    id: "pathogen-genomics", area: "Genetics", title: "Pathogen Genomics", color: "#ffce2e", status: "live",
+    id: "pathogen-genomics", area: "Genetics", title: "Pathogen Genomics", color: "#ecb340", status: "live",
     tagline: "Use AI to trace a hospital outbreak from genomes to action.",
     blurb: "Follow a carbapenem-resistant Klebsiella cluster through sequencing QC, genome similarity search, protocol retrieval and a tool-using lab assistant.",
     cases: ["The Midnight Report", "Who's Related?", "The Protocol Question", "Wire Up the Lab", "The Outbreak Room"],
     lessons: pathogen,
   },
   {
-    id: "outbreak-modeling", area: "Disease modeling", title: "Outbreak Modeling", color: "#5154cc", status: "soon",
+    id: "outbreak-modeling", area: "Disease modeling", title: "Outbreak Modeling", color: "#b0641f", status: "soon",
     tagline: "Use AI to build, calibrate and explain epidemic models.",
     blurb: "Agent-based and compartmental models of a respiratory outbreak: LLM-assisted model specification, retrieving parameters from the literature, and an MCP tool that runs simulations.",
     cases: ["The Parameter Hunt (LLMs)", "Similar Epidemics (vector databases)", "Evidence-Based Priors (RAG)", "The Simulation Server (MCP)", "Capstone: The Briefing Room"],
     lessons: [],
   },
   {
-    id: "research-intelligence", area: "Research", title: "Research Intelligence", color: "#be2fb3", status: "soon",
+    id: "research-intelligence", area: "Research", title: "Research Intelligence", color: "#86375a", status: "soon",
     tagline: "Use AI to read, search and synthesise the literature, with receipts.",
     blurb: "A systematic review on antimicrobial resistance surveillance: screening abstracts with LLMs, semantic paper search, citation-grounded synthesis and MCP tools for bibliographic databases.",
     cases: ["The Abstract Screen (LLMs)", "Semantic Search (vector databases)", "The Grounded Review (RAG)", "Library Connectors (MCP)", "Capstone: The Review Board"],
