@@ -1,47 +1,51 @@
-<title>Gradient Tutor</title>
+<meta charset="utf-8">
+<title>Neva Tutor</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: lab-notebook graph paper. A topic rail (sidebar on desktop, swipe strip on phone) beside one lesson sheet:
    Learn (interactive visual + notes) -> Code (run Python, iterate until tests pass) -> Ask (tutor) -> Quiz. */
 :root {
-  --paper: #f4f6fa;
+  /* Theme inspired by pratt.edu: black on white, signature yellow, warm greys, pastel tints.
+     Graphik / Tiempos are licensed, so free stand-ins: Hanken Grotesk (sans) + Source Serif 4 (reading text). */
+  --paper: #f0eded;
   --sheet: #ffffff;
-  --ink: #15213b;
-  --muted: #5b6579;
-  --line: #dce2ec;
-  --grid: rgba(21, 33, 59, 0.055);
-  --accent: #2a4bd6;
-  --accent-soft: #e6ebfc;
+  --ink: #000000;
+  --muted: #5e5955;
+  --line: #d6d4ce;
+  --grid: rgba(0, 0, 0, 0.045);
+  --accent: #000000;
+  --accent-soft: #fff5d6;
   --on-accent: #ffffff;
-  --mark: #ffe38c;
-  --ok: #1b8256;
-  --ok-soft: #e1f3ea;
-  --bad: #bf3f2b;
-  --bad-soft: #fbe7e3;
-  --c1: #2a4bd6; --c2: #c2410c; --c3: #0f8a6a; --c4: #9333ea; --c5: #b45309;
-  --t1: #dfe7ff; --t2: #ffe4d1; --t3: #d6f3e8; --t4: #efdffd; --t5: #fdf0c9;
-  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
-  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mark: #ffce2e;
+  --ok: #1d7a43;
+  --ok-soft: #def2db;
+  --bad: #d1263a;
+  --bad-soft: #ffe3d9;
+  --c1: #5154cc; --c2: #e0531f; --c3: #1f8a4c; --c4: #be2fb3; --c5: #a86f00;
+  --t1: #dbdbf5; --t2: #ffe3d9; --t3: #def2db; --t4: #f2d6f0; --t5: #fff5d6;
+  --font-display: "Hanken Grotesk", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --font-body: "Hanken Grotesk", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #0e1420; --sheet: #151d2d; --ink: #e5eaf4; --muted: #98a2b7; --line: #26314a;
-    --grid: rgba(229, 234, 244, 0.045); --accent: #8aa3ff; --accent-soft: #1f2a48; --on-accent: #0e1420;
-    --mark: #5b4a14; --ok: #4fc58d; --ok-soft: #15301f; --bad: #f2806a; --bad-soft: #3a1c17;
-    --c1: #8aa3ff; --c2: #fb923c; --c3: #34d3a6; --c4: #c084fc; --c5: #fbbf24;
-    --t1: #243256; --t2: #4a2a17; --t3: #143a2e; --t4: #36214d; --t5: #44370f;
+    --paper: #000000; --sheet: #161615; --ink: #ffffff; --muted: #b4aca6; --line: #33322f;
+    --grid: rgba(255, 255, 255, 0.04); --accent: #ffce2e; --accent-soft: #3a300a; --on-accent: #000000;
+    --mark: #6b540f; --ok: #48dd7c; --ok-soft: #16301c; --bad: #f65058; --bad-soft: #3a1214;
+    --c1: #9496f0; --c2: #ff8548; --c3: #48dd7c; --c4: #f27ee6; --c5: #ffce2e;
+    --t1: #212152; --t2: #3e231a; --t3: #1c3a1f; --t4: #380d36; --t5: #4b4226;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --paper: #0e1420; --sheet: #151d2d; --ink: #e5eaf4; --muted: #98a2b7; --line: #26314a;
-  --grid: rgba(229, 234, 244, 0.045); --accent: #8aa3ff; --accent-soft: #1f2a48; --on-accent: #0e1420;
-  --mark: #5b4a14; --ok: #4fc58d; --ok-soft: #15301f; --bad: #f2806a; --bad-soft: #3a1c17;
-  --c1: #8aa3ff; --c2: #fb923c; --c3: #34d3a6; --c4: #c084fc; --c5: #fbbf24;
-  --t1: #243256; --t2: #4a2a17; --t3: #143a2e; --t4: #36214d; --t5: #44370f;
+  --paper: #000000; --sheet: #161615; --ink: #ffffff; --muted: #b4aca6; --line: #33322f;
+  --grid: rgba(255, 255, 255, 0.04); --accent: #ffce2e; --accent-soft: #3a300a; --on-accent: #000000;
+  --mark: #6b540f; --ok: #48dd7c; --ok-soft: #16301c; --bad: #f65058; --bad-soft: #3a1214;
+  --c1: #9496f0; --c2: #ff8548; --c3: #48dd7c; --c4: #f27ee6; --c5: #ffce2e;
+  --t1: #212152; --t2: #3e231a; --t3: #1c3a1f; --t4: #380d36; --t5: #4b4226;
   color-scheme: dark;
 }
 
@@ -87,7 +91,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .sheet { background: var(--sheet); border: 1px solid var(--line); border-radius: 14px; min-width: 0; overflow: hidden; }
 .sheet-head { padding: 24px 28px 0; display: flex; flex-direction: column; gap: 6px; }
 .eyebrow { font: 500 0.72rem var(--font-mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); }
-.sheet-head h2 { font: 700 clamp(1.6rem, 4vw, 2.2rem)/1.1 var(--font-display); margin: 0; letter-spacing: -0.015em; text-wrap: balance; }
+.sheet-head h2 { font: 700 clamp(1.8rem, 4.5vw, 2.6rem)/1.05 var(--font-display); margin: 0; letter-spacing: -0.025em; text-wrap: balance; }
 .steps { display: flex; gap: 8px; flex-wrap: wrap; font-size: 0.82rem; color: var(--muted); align-items: center; }
 .pill { border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; font: 500 0.76rem var(--font-mono); }
 .pill.on { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
@@ -98,6 +102,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 
 .prose { max-width: 68ch; display: flex; flex-direction: column; gap: 12px; }
 .prose p, .prose ul, .prose ol { margin: 0; }
+.prose p, .prose li { font-family: var(--font-serif); font-size: 1.05rem; line-height: 1.65; }
 .prose ul, .prose ol { padding-left: 1.3em; display: flex; flex-direction: column; gap: 4px; }
 .prose h4 { font: 700 1.05rem var(--font-display); margin: 6px 0 0; }
 .prose strong { background: linear-gradient(transparent 58%, var(--mark) 58%); color: inherit; padding: 0 1px; }
@@ -236,7 +241,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
   position: fixed; z-index: 20;
   right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   display: flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; padding: 10px 16px 10px 10px;
-  background: var(--accent); color: var(--on-accent); font-weight: 600; cursor: pointer; box-shadow: 0 6px 20px rgba(21, 33, 59, .25);
+  background: var(--accent); color: var(--on-accent); font-weight: 600; cursor: pointer; box-shadow: 0 6px 20px rgba(0, 0, 0, .25);
 }
 .fab svg { width: 26px; height: 26px; }
 .msg.note { align-self: stretch; max-width: none; color: var(--muted); font-size: 0.86rem; text-align: center; }
@@ -292,7 +297,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
         <circle cx="18.2" cy="22.4" r="2.8" style="fill:var(--on-accent)"/>
       </svg>
       <div>
-        <h1>Gradient</h1>
+        <h1>Neva</h1>
         <p>Learn LLMs, vector databases, RAG and MCP by seeing and coding</p>
       </div>
     </div>
@@ -312,7 +317,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
         <div class="steps" id="steps"></div>
       </div>
       <div class="tabs" role="tablist">
-        <button class="tab" role="tab" aria-selected="true" data-tab="ask">💬 Gradient bot</button>
+        <button class="tab" role="tab" aria-selected="true" data-tab="ask">💬 Neva bot</button>
         <button class="tab" role="tab" aria-selected="false" data-tab="learn">See it</button>
         <button class="tab" role="tab" aria-selected="false" data-tab="code">Code it</button>
         <button class="tab" role="tab" aria-selected="false" data-tab="quiz">Quiz</button>
@@ -375,7 +380,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
     </main>
   </div>
 </div>
-<button class="fab" id="fab" type="button" hidden aria-label="Ask the Gradient bot">
+<button class="fab" id="fab" type="button" hidden aria-label="Ask the Neva bot">
   <svg viewBox="0 0 34 34" aria-hidden="true"><rect x="1" y="1" width="32" height="32" rx="9" style="fill:var(--on-accent)" opacity=".18"/><circle cx="10" cy="15" r="2.2" style="fill:var(--on-accent)" opacity=".5"/><circle cx="14" cy="20.5" r="2.4" style="fill:var(--on-accent)" opacity=".75"/><circle cx="18.2" cy="22.4" r="2.8" style="fill:var(--on-accent)"/></svg>
   <span>Ask the bot</span>
 </button>
@@ -2633,8 +2638,8 @@ async function review(stretch) {
   const runInfo = ran ? `Test results from actually running it:\n${lastRun.results.map(([n, ok, m]) => `${ok ? "PASS" : "FAIL"}: ${n}${ok ? "" : " (" + m + ")"}`).join("\n")}${lastRun.err ? "\nError:\n" + lastRun.err : ""}${lastRun.out ? "\nPrinted output:\n" + lastRun.out.slice(0, 1500) : ""}`
     : `The code has not been run. Work out whether it would pass these tests:\n${ex.tests}`;
   const prompt = stretch
-    ? `You are Gradient, a friendly Python and AI tutor. The student just passed this exercise on "${t.title}".\nTask: ${ex.task}\nTheir code:\n\`\`\`python\n${code}\n\`\`\`\nGive them ONE short stretch challenge that extends their code a little further and deepens the concept (for example a new feature, an edge case, or connecting to a real library). Describe it in 2-4 sentences, then list 2 example inputs with expected outputs. Don't write the solution. Use Markdown.`
-    : `You are Gradient, a friendly Python and AI tutor reviewing a student's exercise on "${t.title}". ${LEVELS[level]}\nTask: ${ex.task}\nTheir code:\n\`\`\`python\n${code}\n\`\`\`\n${runInfo}\n\nReply in Markdown, under 170 words:\n1. One sentence on what they did well.\n2. The single most important problem, pointing to the specific line or idea, and why it fails.\n3. A nudge toward the fix, with a tiny snippet if needed, but do NOT give the full solution.\nIf everything passes, say so, then suggest one improvement for style or robustness.`;
+    ? `You are Neva, a friendly Python and AI tutor. The student just passed this exercise on "${t.title}".\nTask: ${ex.task}\nTheir code:\n\`\`\`python\n${code}\n\`\`\`\nGive them ONE short stretch challenge that extends their code a little further and deepens the concept (for example a new feature, an edge case, or connecting to a real library). Describe it in 2-4 sentences, then list 2 example inputs with expected outputs. Don't write the solution. Use Markdown.`
+    : `You are Neva, a friendly Python and AI tutor reviewing a student's exercise on "${t.title}". ${LEVELS[level]}\nTask: ${ex.task}\nTheir code:\n\`\`\`python\n${code}\n\`\`\`\n${runInfo}\n\nReply in Markdown, under 170 words:\n1. One sentence on what they did well.\n2. The single most important problem, pointing to the specific line or idea, and why it fails.\n3. A nudge toward the fix, with a tiny snippet if needed, but do NOT give the full solution.\nIf everything passes, say so, then suggest one improvement for style or robustness.`;
   await streamInto(body, prompt);
 }
 $("reviewBtn").onclick = () => review(false);
@@ -2648,12 +2653,12 @@ function bubble(role, content) {
   if (role === "note") return h("div", { class: "msg note" }, esc(content));
   return h("div", { class: "msg tutor" }, BOT_TAG + `<div class="prose">${md(content)}</div>`);
 }
-const BOT_TAG = `<div class="who"><svg viewBox="0 0 34 34" aria-hidden="true"><rect x="1" y="1" width="32" height="32" rx="9" style="fill:var(--accent)"/><circle cx="10" cy="15" r="2.2" style="fill:var(--on-accent)" opacity=".5"/><circle cx="14" cy="20.5" r="2.4" style="fill:var(--on-accent)" opacity=".75"/><circle cx="18.2" cy="22.4" r="2.8" style="fill:var(--on-accent)"/></svg>Gradient</div>`;
+const BOT_TAG = `<div class="who"><svg viewBox="0 0 34 34" aria-hidden="true"><rect x="1" y="1" width="32" height="32" rx="9" style="fill:var(--accent)"/><circle cx="10" cy="15" r="2.2" style="fill:var(--on-accent)" opacity=".5"/><circle cx="14" cy="20.5" r="2.4" style="fill:var(--on-accent)" opacity=".75"/><circle cx="18.2" cy="22.4" r="2.8" style="fill:var(--on-accent)"/></svg>Neva</div>`;
 function greeting() {
   const t = topic(), idx = TOPICS.indexOf(t), p = prog[t.id] || {};
   const first = t.lesson.replace(/\*\*/g, "").split(/(?<=[.!?])\s/)[0];
   const status = learned(t.id) ? "You've already completed this one. Want to go deeper?" : p.code ? "Your code already passes. A quiz will finish the lesson." : "";
-  const el = h("div", { class: "msg tutor" }, BOT_TAG + `<div class="prose"><p>${idx === 0 && !Object.keys(prog).length ? "Hi! I'm <b>Gradient</b>, your AI tutor. We'll learn LLMs, vector databases, RAG and MCP together by playing with visuals and writing Python. " : ""}Lesson ${idx + 1}: <b>${esc(t.title)}</b>.</p><p>${inline(first)}</p>${status ? `<p>${esc(status)}</p>` : ""}<p>How do you want to start?</p></div>`);
+  const el = h("div", { class: "msg tutor" }, BOT_TAG + `<div class="prose"><p>${idx === 0 && !Object.keys(prog).length ? "Hi! I'm <b>Neva</b>, your AI tutor. We'll learn LLMs, vector databases, RAG and MCP together by playing with visuals and writing Python. " : ""}Lesson ${idx + 1}: <b>${esc(t.title)}</b>.</p><p>${inline(first)}</p>${status ? `<p>${esc(status)}</p>` : ""}<p>How do you want to start?</p></div>`);
   const acts = h("div", { class: "greet-actions" });
   acts.append(
     h("button", { class: "btn primary small", onclick: () => send(TEACH) }, "Teach me step by step"),
@@ -2672,7 +2677,7 @@ function renderChat() {
 }
 function rules() {
   const t = topic();
-  return `You are Gradient, a warm, patient tutor teaching how LLMs, vector databases, RAG and MCP fit together, with Python. You're tutoring one student through a hands-on course where each lesson has an interactive visual and a Python exercise.
+  return `You are Neva, a warm, patient tutor teaching how LLMs, vector databases, RAG and MCP fit together, with Python. You're tutoring one student through a hands-on course where each lesson has an interactive visual and a Python exercise.
 
 Current lesson: "${t.title}".
 Lesson notes the student has read:

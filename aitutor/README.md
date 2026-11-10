@@ -1,4 +1,4 @@
-# Gradient: an AI tutor bot
+# Neva: an AI tutor bot
 
 A single-page tutor for learning AI concepts with interactive visuals and Python.
 
