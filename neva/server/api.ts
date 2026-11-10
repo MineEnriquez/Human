@@ -4,6 +4,7 @@
 //   POST /api/professor       -> NDJSON stream: Professor Neva (Socratic tutor, lesson-aware)
 //   POST /api/grade           -> JSON: rubric grading of a seminar answer (structured output)
 //   POST /api/quiz            -> JSON: a fresh case-based multiple-choice question (structured output)
+//   POST /api/coldcall        -> JSON: Professor Neva's cold-call question + 3-point rubric for one lecture segment
 //   POST /api/screen          -> JSON: Claude screens abstracts against inclusion criteria (structured output)
 //   POST /api/rag             -> NDJSON stream: answer grounded ONLY in the chunks the learner packed, with citations
 //   POST /api/agent           -> NDJSON stream: lab assistant agent that calls the path's tools (manual tool loop)
@@ -169,6 +170,33 @@ async function quiz(req: IncomingMessage, res: ServerResponse) {
   }
 }
 
+// ------------------------------------------------------------------ /api/coldcall
+const ColdCall = z.object({
+  question: z.string().describe("One open question a professor would cold-call a student with, anchored in the case"),
+  rubric: z.array(z.string()).describe("Exactly three ideas a strong answer includes"),
+});
+type ColdCallReq = { path: string; lesson: string; caseTitle: string; segmentTitle: string; segmentBody: string };
+async function coldcall(req: IncomingMessage, res: ServerResponse) {
+  const c = await body<ColdCallReq>(req);
+  const p = serverPath(c.path);
+  try {
+    const r = await ai().beta.messages.parse({
+      model: MODEL,
+      max_tokens: 16000,
+      ...FALLBACK,
+      output_config: { effort: "low", format: betaZodOutputFormat(ColdCall) },
+      system: `You are Professor Neva running a case-method class in the ${p.title} path (${p.setting}). After a short lecture segment, you cold-call one student with a single open question. It must require applying the segment to the case (why/what would happen if/how would you check), be answerable in 2-4 sentences, and never be answerable by copying a sentence from the segment. Give exactly three rubric ideas. Every factual statement must be true. Use at most two colour-markup terms: [[c|...]] concept, [[b|...]] domain term, [[t|...]] tool, [[w|...]] pitfall.`,
+      messages: [{ role: "user", content: `Lesson: ${c.lesson}\nCase: ${c.caseTitle}\nSegment: ${c.segmentTitle}\n"""${String(c.segmentBody).slice(0, 4000)}"""` }],
+    });
+    const out = r.parsed_output;
+    if (r.stop_reason === "refusal" || !out || out.rubric.length < 2) return json(res, 502, { error: "The cold call came back malformed. Try again." });
+    json(res, 200, { question: out.question, rubric: out.rubric.slice(0, 3) });
+  } catch (e) {
+    console.error("[coldcall]", e);
+    json(res, 502, { error: errMessage(e) });
+  }
+}
+
 // ------------------------------------------------------------------ /api/screen
 const Screen = z.object({
   decisions: z.array(z.object({
@@ -330,6 +358,7 @@ export async function handleApi(req: IncomingMessage, res: ServerResponse) {
     case "/api/professor": return professor(req, res);
     case "/api/grade": return grade(req, res);
     case "/api/quiz": return quiz(req, res);
+    case "/api/coldcall": return coldcall(req, res);
     case "/api/screen": return screen(req, res);
     case "/api/rag": return rag(req, res);
     case "/api/agent": return agent(req, res);

@@ -27,7 +27,7 @@ describe("handleApi", () => {
   });
   it("refuses AI calls with a clear 503 when no key is configured", async () => {
     process.env.ANTHROPIC_API_KEY = "";
-    for (const ep of ["professor", "grade", "quiz", "screen", "rag", "agent", "capstone-grade"]) {
+    for (const ep of ["professor", "grade", "quiz", "coldcall", "screen", "rag", "agent", "capstone-grade"]) {
       const r = await call("POST", `/api/${ep}`, {});
       expect(r.status, ep).toBe(503);
       expect(r.json.error).toMatch(/ANTHROPIC_API_KEY/);

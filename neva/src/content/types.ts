@@ -10,7 +10,17 @@ export type Lesson = {
   title: string;
   caseTitle: string;
   boss?: boolean;
-  brief: { role: string; situation: string; question: string; objectives: string[]; evidence: string[] };
+  brief: {
+    role: string; situation: string; question: string; objectives: string[]; evidence: string[];
+    /** Who brings you this case, and when it happens on the dossier timeline. */
+    from?: { name: string; role: string; ask: string };
+    when?: string;
+    /** What you must hand over at the end, and how it will be judged. */
+    deliverable?: string;
+    success?: string[];
+  };
+  /** Professor Neva's opening line for the case, shown in the case file. */
+  hook?: string;
   lecture: Segment[];
   lab: string; // key in src/labs/registry.ts
   seminar: { question: string; rubric: string[] };
@@ -23,4 +33,17 @@ export type Path = {
   blurb: string; cases: string[]; lessons: Lesson[];
   /** One paragraph the AI professor gets as background for every conversation in this path. */
   setting: string;
+  /** The fictional case dossier the whole path follows. */
+  dossier?: Dossier;
+};
+
+export type Dossier = {
+  headline: string;
+  summary: string;
+  /** The clinical or project timeline; `lesson` marks the step each case happens at. */
+  timeline: { when: string; what: string; lesson?: string }[];
+  cast: { name: string; role: string; needs: string }[];
+  facts: { label: string; value: string }[];
+  stakes: string;
+  deadline: string;
 };

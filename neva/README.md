@@ -68,8 +68,32 @@ computed from the model, not typed in.
 
 Each case runs the same way: **case file → lecture with checks → lab → AI-graded seminar → quiz → debrief.**
 
+## The Cancer Genomics case dossier
+
+Every case in the path follows one fictional dossier (`src/content/cancer/dossier.ts`). Patient AML-0412, a
+58-year-old at the fictional Cascade Ridge Cancer Research Center, has acute myeloid leukemia that relapsed about
+six months after remission. Over three days before the molecular tumor board (Thu 10 Sep 2026, 08:00) you are
+the lab's AI lead:
+
+| When | Brought by | Case | You hand over |
+|---|---|---|---|
+| Tue 8 Sep, 02:10 | Dr. Ines Varga, molecular pathology fellow | The Overnight Variant Report | A fact-checked LLM summary |
+| Tue 8 Sep, 14:00 | Dr. Kenji Albright, hematopathologist | Which Cell Is This? | Cell-type labels with neighbour agreement and caveats |
+| Wed 9 Sep, 10:30 | Dr. Ines Varga | The Tiering Question | Three SOP answers with citations |
+| Wed 9 Sep, 16:00 | Omar Haddad, research informatics | Wire Up the Lab | A tool policy and an audited live trace |
+| Thu 10 Sep, 08:00 | Dr. Mara Ellison, tumor board chair | The Tumor Board | The full tumor board report |
+
+The path page shows the dossier: summary, stakes, key facts, timeline with your progress, and who's involved. Each
+case file shows:
+- the scene: who asks, when, and their exact request
+- Professor Neva's opening hook
+- the deliverable and how you'll be judged
+- the missions and the XP each stage is worth
+
 ## How it teaches
 
+- **Cold calls.** After each lecture segment, Professor Neva can cold-call you: an AI-written question that applies
+  the segment to the case, graded against a 3-point rubric.
 - **Professor, not chatbot.** Professor Neva runs a case-method seminar: guiding questions first,
   explicit correction of misconceptions, and short answers that end with a question. Misconceptions found
   while grading are saved and fed back into later tutoring.
@@ -86,6 +110,7 @@ Each case runs the same way: **case file → lecture with checks → lab → AI-
 | `/api/professor` | Socratic tutor that knows the lesson | streaming, prompt caching |
 | `/api/grade` | Grades seminar answers against a rubric and spots misconceptions | structured outputs (Zod) |
 | `/api/quiz` | Writes a new case-based challenge question | structured outputs |
+| `/api/coldcall` | Writes a cold-call question + rubric for a lecture segment | structured outputs |
 | `/api/screen` | Second reviewer for abstract screening | structured outputs |
 | `/api/rag` | Answers only from the chunks the learner packed | document blocks + **citations** |
 | `/api/agent` | Each path's lab assistant, calling that path's tools | tool use loop, strict schemas, eager input streaming |

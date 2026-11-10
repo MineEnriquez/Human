@@ -1,6 +1,7 @@
 // Cancer Genomics path: five cases around a fictional AML patient (AML-0412) at the fictional
 // Cascade Ridge Cancer Research Center. Research-level molecular profiling only; no treatment advice.
 import type { Lesson, Path } from "../types";
+import { DOSSIER, SCENES } from "./dossier";
 
 export const SETTING = "The Cascade Ridge Cancer Research Center (fictional) runs a translational genomics lab that sequences tumors and builds single-cell maps of bone marrow. You have joined the lab as its AI lead, working on patient AML-0412 (fictional), whose [[b|acute myeloid leukemia]] relapsed after induction chemotherapy.";
 
@@ -235,5 +236,10 @@ export const PATH: Path = {
   blurb: "Follow a fictional leukemia through a sequencing report, a single-cell reference atlas, the lab's variant SOPs and a tool-using lab assistant, to explain why the cancer came back.",
   cases: ["The Overnight Variant Report", "Which Cell Is This?", "The Tiering Question", "Wire Up the Lab", "The Tumor Board"],
   setting: "Every idea is taught through a translational cancer genomics case at the fictional Cascade Ridge Cancer Research Center: patient AML-0412 (fictional) with acute myeloid leukemia, sequenced at diagnosis (BM-DX), remission after induction chemotherapy (BM-REM), relapse (BM-REL) and a cultured skin germline control (SKIN). Variants: DNMT3A p.R882H, NPM1 c.860_863dupTCTG (p.W288Cfs*12), FLT3-ITD, IDH2 p.R140Q, a DDX41 frameshift and a KRAS p.G12D call; a healthy bone-marrow single-cell reference atlas; lab SOPs VC-SOP-02, GL-POL-01, QC-SOP-05, PUR-NOTE-1, MRD-SOP-03, RPT-POL-02. Research-level interpretation only; treatment decisions belong to the clinical team.",
-  lessons: LESSONS,
+  dossier: DOSSIER,
+  // Each case gets its scene from the dossier: who asks, when, the deliverable and how it's judged.
+  lessons: LESSONS.map(l => {
+    const sc = SCENES[l.id];
+    return sc ? { ...l, hook: sc.hook, brief: { ...l.brief, from: sc.from, when: sc.when, deliverable: sc.deliverable, success: sc.success } } : l;
+  }),
 };

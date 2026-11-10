@@ -1,5 +1,7 @@
 import { Link, useParams } from "react-router-dom";
+import { DossierPanel } from "../components/Dossier";
 import { Legend, RichInline } from "../components/Rich";
+import { totalXp } from "../lib/rewards";
 import { PATHS } from "../content/paths";
 import { lessonDone, useProgress } from "../lib/progress";
 
@@ -30,6 +32,8 @@ export function PathPage() {
         </div>
       </div>
 
+      {path.dossier && <div style={{ marginBottom: 28 }}><DossierPanel path={path} dossier={path.dossier} /></div>}
+
       {path.status === "soon" ? (
         <div className="card pad">
           <h3>Syllabus</h3>
@@ -50,9 +54,10 @@ export function PathPage() {
                 <div>
                   <div className="eyebrow">{l.topic}</div>
                   <h3>{l.title}</h3>
-                  <div className="case">Case: {l.caseTitle}</div>
+                  <div className="case">Case: {l.caseTitle}{l.brief.when ? ` · ${l.brief.when}` : ""}</div>
+                  {l.brief.from && <div className="muted" style={{ fontSize: ".85rem", marginTop: 4 }}>Brought by {l.brief.from.name}, {l.brief.from.role.toLowerCase()}</div>}
                   <div className="meta">
-                    {(l.boss ? ["brief", "lab"] : ["brief", "lecture", "lab", "seminar", "quiz"]).map(s => <span key={s} className={`tag ${st[s as keyof typeof st] ? "live" : ""}`}>{st[s as keyof typeof st] ? "✓" : "○"} {s}</span>)}
+                    <span className="tag soon">up to {totalXp(l)} XP</span>{(l.boss ? ["brief", "lab"] : ["brief", "lecture", "lab", "seminar", "quiz"]).map(s => <span key={s} className={`tag ${st[s as keyof typeof st] ? "live" : ""}`}>{st[s as keyof typeof st] ? "✓" : "○"} {s}</span>)}
                   </div>
                 </div>
                 <div>{locked ? <span className="muted">🔒 Locked</span> : <span className={`btn sm ${open ? "yellow" : ""}`}>{done ? "Review" : Object.keys(st).length ? "Continue" : "Start"} →</span>}</div>
@@ -64,7 +69,7 @@ export function PathPage() {
           })}
         </div>
       )}
-      <p className="muted" style={{ marginTop: 20, fontSize: ".85rem" }}><RichInline text="Data, hospital and documents are [[w|fictional]]; gene names and sequence types are real names used for realism." /></p>
+      <p className="muted" style={{ marginTop: 20, fontSize: ".85rem" }}><RichInline text="All cases, people, institutions and data are [[w|fictional]]; the science, methods and AI concepts are real and described accurately." /></p>
     </div>
   );
 }

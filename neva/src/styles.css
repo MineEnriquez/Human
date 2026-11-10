@@ -299,3 +299,38 @@ input[type=range] { accent-color: var(--ink); }
 /* text on yellow and on ink stays legible in both themes */
 .avatar, .prof-fab { color: var(--on-yellow); }
 .step.done .dot, .mod.done .node { color: var(--on-accent); }
+
+/* ---------- case dossier, scene, missions, cold call ---------- */
+.dossier { border: 2px solid var(--ink); border-radius: var(--r); background: var(--sheet); overflow: hidden; }
+.dossier-h { list-style: none; cursor: pointer; background: var(--band); color: var(--on-band); padding: 14px 22px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.dossier-h::-webkit-details-marker { display: none; }
+.dossier-h b { display: block; font-size: 1.15rem; }
+.dossier-h::after { content: "▾"; margin-left: 8px; }
+.dossier:not([open]) .dossier-h::after { content: "▸"; }
+.deadline { font: 600 .8rem var(--font-mono); background: var(--yellow); color: var(--on-yellow); border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
+.dossier-b { padding: 22px; display: grid; grid-template-columns: 1.15fr 1fr; gap: 26px; }
+.stakes { background: var(--k-w-bg); border-radius: 10px; padding: 12px 16px; }
+.stakes .read { font-size: .98rem; }
+.timeline { list-style: none; margin: 0; padding: 0 0 0 14px; border-left: 3px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+.timeline li { position: relative; display: grid; grid-template-columns: 118px 1fr; gap: 10px; font-size: .9rem; }
+.timeline li::before { content: ""; position: absolute; left: -21px; top: 4px; width: 11px; height: 11px; border-radius: 50%; background: var(--line); border: 2px solid var(--sheet); }
+.timeline li.case::before { background: var(--yellow); }
+.timeline li.done::before { background: var(--ok); }
+.timeline li.now::before { background: var(--ink); box-shadow: 0 0 0 4px var(--yellow); }
+.timeline li.now { font-weight: 600; }
+.timeline .when { font: 500 .76rem var(--font-mono); color: var(--muted); padding-top: 2px; }
+.timeline a.tag { text-decoration: none; }
+.cast { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+.person-card { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: var(--paper); font-size: .9rem; }
+.avatar.person { background: var(--band); color: var(--on-band); width: 32px; height: 32px; flex: none; font-size: .72rem; border-color: var(--band); }
+.scene { display: flex; gap: 12px; align-items: flex-start; background: var(--yellow-soft); border-radius: 12px; padding: 12px 14px; }
+.hook { display: flex; gap: 12px; align-items: flex-start; border-left: 4px solid var(--yellow); background: var(--sheet); border-radius: 0 12px 12px 0; padding: 12px 16px; box-shadow: var(--shadow); }
+.hook .read { font-size: 1.12rem; font-style: italic; }
+.deliverable { border: 1.5px dashed var(--ink); border-radius: 12px; padding: 12px 14px; }
+.missions { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--paper); }
+.mission { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 5px 0; border-bottom: 1px dashed var(--line); font-size: .9rem; font-weight: 600; }
+.mission:last-child { border-bottom: 0; }
+.mission small { display: block; font-weight: 400; color: var(--muted); font-size: .76rem; }
+.mission b { color: var(--ok); white-space: nowrap; }
+.coldcall { margin-top: 12px; border: 1.5px solid var(--ink); border-radius: 12px; padding: 12px 14px; background: var(--yellow-soft); display: flex; flex-direction: column; gap: 8px; }
+@media (max-width: 960px) { .dossier-b { grid-template-columns: 1fr; } .timeline li { grid-template-columns: 1fr; } }
