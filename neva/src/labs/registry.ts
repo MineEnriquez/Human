@@ -4,12 +4,12 @@ import { MODELING_LABS } from "./modeling";
 import { RESEARCH_LABS } from "./research";
 
 export const LABS: Record<string, LazyExoticComponent<ComponentType>> = {
-  // Pathogen Genomics
-  llm: lazy(() => import("./pathogen/LlmLab")),
-  vectordb: lazy(() => import("./pathogen/VectorDbLab")),
-  rag: lazy(() => import("./pathogen/RagLab")),
-  mcp: lazy(() => import("./pathogen/McpLab")),
-  outbreak: lazy(() => import("./pathogen/OutbreakRoom")),
+  // Cancer Genomics
+  "cg-llm": lazy(() => import("./cancer/LlmLab")),
+  "cg-vdb": lazy(() => import("./cancer/VectorDbLab")),
+  "cg-rag": lazy(() => import("./cancer/RagLab")),
+  "cg-mcp": lazy(() => import("./cancer/McpLab")),
+  "cg-capstone": lazy(() => import("./cancer/TumorBoard")),
   ...MODELING_LABS,
   ...RESEARCH_LABS,
 };

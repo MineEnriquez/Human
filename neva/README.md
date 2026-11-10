@@ -6,7 +6,7 @@ answers, writes new questions and coaches you through a live investigation.
 
 | Path | Field | Case setting (all fictional) |
 |---|---|---|
-| **Pathogen Genomics** | Genetics | A carbapenem-resistant *Klebsiella* cluster at St. Aurelia Medical Center |
+| **Cancer Genomics** | Genetics | A relapsed acute myeloid leukemia at the Cascade Ridge Cancer Research Center: tumor sequencing and a single-cell atlas |
 | **Outbreak Modeling** | Disease modeling | A new respiratory virus in Port Calder; the city must decide on school closures |
 | **Research Intelligence** | Research | A systematic review at the Meridian Evidence Unit |
 
@@ -29,18 +29,19 @@ Production: `npm run build && npm start` serves `dist/` and the API on port 8787
 
 ## The paths
 
-### Pathogen Genomics
+### Cancer Genomics
 
-The whole path follows one case: a fictional carbapenem-resistant *Klebsiella pneumoniae* outbreak at
-St. Aurelia Medical Center.
+The whole path follows one fictional patient, AML-0412, whose acute myeloid leukemia relapsed after induction
+chemotherapy. The lab sequenced marrow at diagnosis, remission and relapse plus a skin germline control, and
+annotates single cells against a healthy bone-marrow reference atlas. Research-level interpretation only.
 
 | # | AI topic | Case | Lab (drag-and-drop + live AI) |
 |---|---|---|---|
-| 1 | LLMs | The Midnight Report | Tokenizer bench, temperature sampler, sort the draft's sentences into fact or fabrication |
-| 2 | Vector databases | Who's Related? | Build a record (id / vector / metadata), embedding map, drag filter chips into the query |
-| 3 | RAG | The Protocol Question | Order the pipeline, BM25 retrieval, pack a 200-token context window, Claude answers **with citations** |
+| 1 | LLMs | The Overnight Variant Report | Tokenizer bench on HGVS notation, temperature sampler, sort the draft's sentences into fact or fabrication |
+| 2 | Vector databases | Which Cell Is This? | Build a reference-cell record, k-nearest-neighbour label transfer on a single-cell map, drag-in metadata filters |
+| 3 | RAG | The Tiering Question | Order the pipeline, BM25 retrieval over the lab's SOPs, pack a 200-token context window, Claude answers **with citations** |
 | 4 | MCP | Wire Up the Lab | Order the host/client/server messages, sort tools by approval policy, watch a live tool-using host |
-| 5 | Capstone | The Outbreak Room | Direct a tool-using agent, sort all 12 isolates, file a report graded by the professor |
+| 5 | Capstone | The Tumor Board | Direct a tool-using agent, classify every variant (founder, lost, relapse, germline, artifact), file a report graded by the professor |
 
 ### Outbreak Modeling
 
@@ -90,8 +91,8 @@ Each case runs the same way: **case file → lecture with checks → lab → AI-
 | `/api/agent` | Each path's lab assistant, calling that path's tools | tool use loop, strict schemas, eager input streaming |
 | `/api/capstone-grade` | Grades the outbreak report | structured outputs |
 
-Every call uses `claude-opus-5-5` with server-side refusal fallback (`fallbacks: "default"`). Pathogen
-content can occasionally trip a safety classifier on legitimate surveillance questions, and the fallback
+Every call uses `claude-opus-5-5` with server-side refusal fallback (`fallbacks: "default"`). Life-science
+content can occasionally trip a safety classifier on legitimate research questions, and the fallback
 reruns the request on Anthropic's recommended fallback model. Conversation history is sent back exactly as
 the API returned it, so it is only ever appended to.
 
@@ -130,5 +131,5 @@ e2e/smoke.ts              browser smoke test
 To add a path: create `src/content/<path>/lessons.ts` (export `PATH`), labs in `src/labs/<path>/`
 (export a lab map), `server/paths/<path>.ts` (export a `ServerPath`), and register each one.
 
-All hospitals, cities, patients, isolates, studies and documents are fictional teaching material. Gene names,
-sequence types and methods (SEIR, GRADE, PRISMA, MCP...) are real and described accurately. This is not medical advice.
+All institutions, cities, patients, samples, studies and documents are fictional teaching material. Gene names,
+variant notation, marker genes and methods (SEIR, GRADE, PRISMA, MCP...) are real and described accurately. This is not medical advice.

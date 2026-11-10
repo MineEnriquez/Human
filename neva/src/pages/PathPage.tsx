@@ -33,9 +33,9 @@ export function PathPage() {
       {path.status === "soon" ? (
         <div className="card pad">
           <h3>Syllabus</h3>
-          <p className="read">This path teaches the same AI stack through {path.area.toLowerCase()} cases. It opens after Pathogen Genomics.</p>
+          <p className="read">This path teaches the same AI stack through {path.area.toLowerCase()} cases. Start with Cancer Genomics if you are new.</p>
           <ol className="read">{path.cases.map(c => <li key={c}>{c}</li>)}</ol>
-          <Link className="btn primary" to="/paths/pathogen-genomics">Start with Pathogen Genomics →</Link>
+          <Link className="btn primary" to="/paths/cancer-genomics">Start with Cancer Genomics →</Link>
         </div>
       ) : (
         <div className="map">

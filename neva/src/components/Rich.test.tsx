@@ -18,9 +18,9 @@ describe("Rich markup renderer", () => {
     expect(html("#### Title\nbody")).toContain("<h4>Title</h4><p>body</p>");
   });
   it("renders Markdown tables", () => {
-    const h = html("| Pair | SNPs |\n|---|---|\n| KP-01 ↔ KP-03 | **7** |");
-    expect(h).toContain("<th>Pair</th>");
-    expect(h).toContain("<td><strong>7</strong></td>");
+    const h = html("| Sample | VAF |\n|---|---|\n| BM-REL | **0.40** |");
+    expect(h).toContain("<th>Sample</th>");
+    expect(h).toContain("<td><strong>0.40</strong></td>");
   });
   it("never injects HTML from model output", () => {
     const h = html('<script>alert(1)</script> [[w|<img src=x onerror=alert(1)>]]');

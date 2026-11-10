@@ -18,7 +18,7 @@ export function Home() {
             <p className="lede">LLMs, vector databases, retrieval-augmented generation and MCP, taught by an AI professor through casework in genomics, disease modeling and research.</p>
             <div className="row">
               <Link className="btn yellow" to={`/lesson/${next.id}`}>{done ? "Continue your case" : "Open your first case"} →</Link>
-              <Link className="btn" style={{ background: "transparent", color: "var(--on-band)", borderColor: "var(--on-band)" }} to="/paths/pathogen-genomics">See the path</Link>
+              <Link className="btn" style={{ background: "transparent", color: "var(--on-band)", borderColor: "var(--on-band)" }} to="/paths/cancer-genomics">See the path</Link>
             </div>
             <div className="stat-row">
               <div><b>3</b>paths</div><div><b>5</b>cases per path</div><div><b>6</b>AI features</div><div><b>{p.xp}</b>your XP</div>
@@ -26,7 +26,7 @@ export function Home() {
           </div>
           <div className="hero-card">
             <div className="who" style={{ color: "var(--on-band)" }}><span className="avatar">N</span>Professor Neva</div>
-            <p className="q">"Two isolates share a sequence type and score as near neighbours in the vector database. Your colleague calls it transmission. <b>What would you ask before you agree?</b>"</p>
+            <p className="q">"A relapse cell's nearest neighbours in the reference atlas are normal myeloid progenitors. Your colleague calls it a healthy cell. <b>What would you check before you agree?</b>"</p>
             <p style={{ color: "var(--on-band-muted)", fontSize: ".9rem", margin: 0 }}>Socratic tutoring, AI-graded seminars, live tool-using agents, and answers that cite their sources.</p>
           </div>
         </div>

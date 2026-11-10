@@ -4,13 +4,13 @@ import { makeSearch, tokenEstimate, tokenize } from "./search";
 const chunks = [
   { id: "a", doc: "d", title: "Drain response", text: "Disinfect the drain and replace the trap." },
   { id: "b", doc: "d", title: "Screening", text: "Weekly rectal screens for contacts." },
-  { id: "c", doc: "d", title: "Drains", text: "Sink drains can harbour bacteria; drain drain drain." },
+  { id: "c", doc: "d", title: "Drains", text: "Sink drains need a trap; drain drain drain." },
 ];
 const search = makeSearch(chunks);
 
 describe("BM25 search", () => {
   it("drops stop words and punctuation", () => {
-    expect(tokenize("What is the KP-07 result?")).toEqual(["kp-07", "result"]);
+    expect(tokenize("What is the IDH2-R140Q result?")).toEqual(["idh2-r140q", "result"]);
   });
   it("ranks matching chunks and ignores non-matching ones", () => {
     const r = search("screens for contacts");

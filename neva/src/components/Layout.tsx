@@ -29,7 +29,7 @@ export function Layout() {
           <Link to="/" className="logo"><span className="logo-mark">N</span>Neva</Link>
           <nav className="nav">
             <NavLink to="/" end>Home</NavLink>
-            <NavLink to="/paths/pathogen-genomics">Paths</NavLink>
+            <NavLink to="/paths/cancer-genomics">Paths</NavLink>
             <NavLink to="/office-hours">Office hours</NavLink>
             <NavLink to="/dashboard">Progress</NavLink>
           </nav>
@@ -45,7 +45,7 @@ export function Layout() {
         </div>
       </header>
       <main><Outlet /></main>
-      <footer className="footer">Neva · AI for the life sciences. Cases, hospitals, patients and isolates are fictional teaching material. Not medical advice.</footer>
+      <footer className="footer">Neva · AI for the life sciences. Cases, institutions, patients, samples and studies are fictional teaching material. Not medical advice.</footer>
       <div className="toasts" aria-live="polite">
         {toasts.map(t => <div key={t.id} className={`toast ${t.kind}`}><span className="plus">{t.plus}</span>{t.text}</div>)}
       </div>
