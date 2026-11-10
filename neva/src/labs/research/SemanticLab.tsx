@@ -6,6 +6,14 @@ import { FILTERS, PRESETS, applyFilters, hybridSearch, keywordSearch, vectorSear
 import { useProgress } from "../../lib/progress";
 import { finishPart, LabCard } from "../common";
 
+// Fit the map to the data (studies + query points) so clustered studies don't overlap.
+const PTS = [...STUDIES.map(s => s.vec), ...PRESETS.map(q => q.vec)];
+const pad = 0.04;
+const B = {
+  x0: Math.min(...PTS.map(v => v[0])) - pad, x1: Math.max(...PTS.map(v => v[0])) + pad,
+  y0: Math.min(...PTS.map(v => v[1])) - pad, y1: Math.max(...PTS.map(v => v[1])) + pad,
+};
+
 const ID = "ri-vdb";
 export const EVIDENCE = ["Synonym gap found", "Hybrid ranking", "Filtered search"];
 const title = (id: string) => STUDIES.find(s => s.id === id)!;
@@ -19,7 +27,7 @@ function ResultList({ title: h, rows, unit }: { title: string; rows: { id: strin
       <ol style={{ margin: "8px 0 0", paddingLeft: "1.3em", fontSize: ".84rem" }}>
         {rows.map(r => (
           <li key={r.id} style={{ marginBottom: 4 }}>
-            <b>{r.id}</b> <span className="mono muted">{unit} {r.score}</span>{eligible(r.id) && <span className="tag live" style={{ marginLeft: 6, padding: "0 6px" }}>eligible</span>}
+            <b>{r.id}</b> <span className="mono muted">{unit} {unit === "cos" ? r.score.toFixed(3) : r.score}</span>{eligible(r.id) && <span className="tag live" style={{ marginLeft: 6, padding: "0 6px" }}>eligible</span>}
             <div className="muted">{title(r.id).title}</div>
           </li>
         ))}
@@ -39,7 +47,7 @@ export default function SemanticLab() {
   const keep = (s: (typeof STUDIES)[number]) => applyFilters(active, s);
   const kw = keywordSearch(p.text, 6);
   const vec = vectorSearch(p.vec, 6);
-  const X = (v: number) => 20 + v * 460, Y = (v: number) => 360 - v * 340;
+  const X = (v: number) => 30 + ((v - B.x0) / (B.x1 - B.x0)) * 420, Y = (v: number) => 350 - ((v - B.y0) / (B.y1 - B.y0)) * 320;
 
   const run = (q: Preset) => {
     setP(q); setRan(true); setFused(false); setFilteredRun(false);
