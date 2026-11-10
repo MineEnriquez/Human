@@ -27,14 +27,14 @@ const NEXT = [
 ];
 const softmax = (T: number) => { const e = NEXT.map(n => Math.exp(n.logit / Math.max(T, 0.05))); const s = e.reduce((a, b) => a + b, 0); return e.map(x => x / s); };
 
-const REPORT = `Patient AML-0412 (fictional). Samples: BM-DX (diagnosis), BM-REM (after induction), BM-REL (relapse), SKIN (cultured fibroblasts, germline control). DNMT3A p.R882H: DX 45%, REM 2%, REL 44%, SKIN 0%. NPM1 c.860_863dupTCTG (p.W288Cfs*12): DX 41%, REM 0%, REL 38%. FLT3-ITD: DX 30%, REM 0%, REL 0% (fragment analysis: positive at DX, negative at REL). IDH2 p.R140Q: DX 6%, REM 0%, REL 40%. DDX41 frameshift: DX 50%, REM 51%, REL 48%, SKIN 49%. KRAS p.G12D: REL 3% at 38x depth, strand-bias flag. All other calls at 790-930x.`;
+const REPORT = `Patient AML-0412 (fictional). Samples: BM-DX (diagnosis), BM-REM (after induction), BM-REL (relapse), SKIN (cultured fibroblasts, germline control). DNMT3A p.R882H: DX 45%, REM 2%, REL 44%, SKIN 0%. NPM1 c.860_863dupTCTG (p.W288Cfs*12): DX 41%, REM 0%, REL 38%. FLT3-ITD: DX 30%, REM 0%, REL 0% (fragment analysis: positive at DX, negative at REL). IDH2 p.R140Q: DX 6%, REM 0%, REL 40%. DDX41 frameshift: DX 50%, REM 51%, REL 48%, SKIN 49%. KRAS p.G12D: REL 3% at 38x depth, strand-bias flag. All other calls at 560-930x (bone marrow 760-930x, skin 560-610x).`;
 
 const CLAIMS = [
   { id: "c1", label: "Four samples were sequenced, including a skin germline control.", bucket: "sup", why: "BM-DX, BM-REM, BM-REL and SKIN are listed." },
   { id: "c2", label: "All variant calls passed QC.", bucket: "fab", why: "KRAS p.G12D is at 38x with a strand-bias flag. The model smoothed over the exception." },
   { id: "c3", label: "FLT3-ITD persists at relapse and is the main driver.", bucket: "fab", why: "FLT3-ITD is 0% at relapse and negative by fragment analysis. FLT3 is a plausible AML word, not a supported fact." },
   { id: "c4", label: "IDH2 p.R140Q rose from 6% VAF at diagnosis to 40% at relapse.", bucket: "sup", why: "Both numbers are in the report." },
-  { id: "c5", label: "A new somatic DDX41 mutation appeared at relapse.", bucket: "fab", why: "DDX41 is at ~50% in every sample, including the skin control: inherited, not new or somatic." },
+  { id: "c5", label: "A new somatic DDX41 mutation appeared at relapse.", bucket: "fab", why: "DDX41 is at ~50% in every sample, including the skin control: presumed germline, not a new somatic mutation." },
   { id: "c6", label: "The NPM1 mutation was undetectable after induction.", bucket: "sup", why: "NPM1: REM 0%." },
   { id: "c7", label: "KRAS p.G12D is a confirmed relapse mutation.", bucket: "fab", why: "3% at 38x with strand bias is unconfirmed; the report confirms nothing about it." },
   { id: "c8", label: "Relapse was first detected by an MRD test on 1 August.", bucket: "fab", why: "No MRD test or date appears in the report. Plausible, unsupported." },

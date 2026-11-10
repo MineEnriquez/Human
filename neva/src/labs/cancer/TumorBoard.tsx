@@ -13,8 +13,8 @@ const CLASSES: { id: VariantClass; title: string }[] = [
   { id: "founder", title: "Founder / truncal clone" },
   { id: "lost", title: "Diagnostic subclone lost at relapse" },
   { id: "relapse", title: "Subclone that drove relapse" },
-  { id: "germline", title: "Germline (inherited)" },
-  { id: "artifact", title: "Artifact / not reportable" },
+  { id: "germline", title: "Presumed germline" },
+  { id: "artifact", title: "Probable artifact / not reportable" },
 ];
 type Grade = { score: number; headline: string; strengths: string[]; improvements: string[] };
 
@@ -68,7 +68,7 @@ export default function TumorBoard() {
         <BucketBoard items={VARIANTS} columns={3} value={place} onChange={p => { setPlace(p); setCheck(null); }} trayLabel="Variants"
           buckets={CLASSES}
           stateOf={v => (check ? (place[v.id] === TUMOR_BOARD_KEY.classes[v.id] ? "right" : "wrong") : undefined)}
-          render={v => <span style={{ fontSize: ".82rem" }}><b>{v.gene}</b> <span className="muted">{v.hgvsP === "ITD" || v.hgvsP === "frameshift" ? v.hgvsC : v.hgvsP}</span></span>} />
+          render={v => <span style={{ fontSize: ".82rem" }}><b>{v.gene}</b> <span className="muted">{v.hgvsP === "ITD" ? v.hgvsC : v.hgvsP}</span></span>} />
         <div style={{ marginTop: 16 }}><label className="lbl" htmlFor="rel">Relapse explanation</label><input id="rel" className="field" value={relapse} onChange={e => setRelapse(e.target.value)} placeholder="Which clone came back, and how do you know?" /></div>
         <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", marginTop: 12 }}>
           <div><label className="lbl" htmlFor="germ">Germline finding: what must happen</label><input id="germ" className="field" value={germline} onChange={e => setGermline(e.target.value)} placeholder="What does the policy require?" /></div>

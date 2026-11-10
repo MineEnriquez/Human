@@ -36,7 +36,7 @@ export const VARIANTS: Variant[] = [
     note: "NGS can underestimate ITD allele burden; the lab also ran fragment analysis, which was positive at diagnosis and negative at relapse." },
   { id: "IDH2-R140Q", gene: "IDH2", hgvsC: "c.419G>A", hgvsP: "p.R140Q", kind: "missense",
     calls: { "BM-DX": c(0.06, 840), "BM-REM": c(0, 900), "BM-REL": c(0.4, 830), SKIN: c(0, 600) } },
-  { id: "DDX41-fs", gene: "DDX41", hgvsC: "frameshift (germline)", hgvsP: "frameshift", kind: "frameshift",
+  { id: "DDX41-fs", gene: "DDX41", hgvsC: "frameshift (exact coordinate not shown)", hgvsP: "frameshift", kind: "frameshift",
     calls: { "BM-DX": c(0.5, 820), "BM-REM": c(0.51, 900), "BM-REL": c(0.48, 810), SKIN: c(0.49, 595) } },
   { id: "KRAS-G12D", gene: "KRAS", hgvsC: "c.35G>A", hgvsP: "p.G12D", kind: "missense",
     calls: { "BM-DX": c(0, 805), "BM-REM": c(0, 890), "BM-REL": c(0.03, 38, ["strand bias", "low depth"]), SKIN: c(0, 600) } },
@@ -74,7 +74,7 @@ export const TUMOR_BOARD_KEY: { classes: Record<string, VariantClass>; relapse: 
   },
   relapse: "The relapse grew from the founder clone (DNMT3A + NPM1, both clonal at diagnosis and relapse) through the minor IDH2 R140Q subclone (CCF ~0.14 at diagnosis, ~1.0 at relapse); the FLT3-ITD subclone (CCF ~0.71 at diagnosis) was lost and is negative by fragment analysis at relapse.",
   germline: "DDX41 frameshift at ~0.5 VAF in every sample including cultured skin fibroblasts: presumed germline, not a tumor finding; refer for genetic counseling under GL-POL-01 and report separately with consent.",
-  reporting: "KRAS G12D (3% VAF, 38x, strand bias) fails QC-SOP-05: not reportable without orthogonal confirmation. DNMT3A persisting at 2% in remission is expected (it can persist in pre-leukemic or clonal hematopoiesis cells) and is not used as an MRD marker; NPM1 is.",
+  reporting: "KRAS G12D (3% VAF, 38x, strand bias; about one supporting read) fails QC-SOP-05 twice: below the 100x minimum it is not assessable (QC05-1), and a call under 5% VAF with strand bias needs orthogonal confirmation (QC05-2). Probable artifact; not reportable. DNMT3A persisting at 2% in remission is expected (it can persist in pre-leukemic or clonal hematopoiesis cells) and is not used as an MRD marker; NPM1 is.",
 };
 
 // ------------------------------------------------------------------ single-cell reference atlas (vector database lab)

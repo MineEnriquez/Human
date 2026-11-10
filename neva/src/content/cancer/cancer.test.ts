@@ -88,6 +88,7 @@ describe("RAG lab retrieval", () => {
   const cases: [string, string][] = [
     ["A DDX41 variant is at 50% VAF in the marrow and 49% in the skin sample. What must we do?", "GL01-3"],
     ["Can we report the KRAS G12D call at 3% VAF with 38x depth and strand bias?", "QC05-2"],
+    ["Can we report the KRAS G12D call at 3% VAF with 38x depth and strand bias?", "QC05-1"],
     ["How do we classify a variant whose clinical significance is unknown?", "VC02-3"],
   ];
   it.each(cases)("%s -> %s in the top 3", (q, id) => {
