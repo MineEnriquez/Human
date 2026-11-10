@@ -334,3 +334,9 @@ input[type=range] { accent-color: var(--ink); }
 .mission b { color: var(--ok); white-space: nowrap; }
 .coldcall { margin-top: 12px; border: 1.5px solid var(--ink); border-radius: 12px; padding: 12px 14px; background: var(--yellow-soft); display: flex; flex-direction: column; gap: 8px; }
 @media (max-width: 960px) { .dossier-b { grid-template-columns: 1fr; } .timeline li { grid-template-columns: 1fr; } }
+
+/* Professor Neva's avatar: the owl line art (public/otto-mask.png) drawn in the theme's ink on the yellow badge */
+.avatar.bot { position: relative; width: 30px; height: 30px; font-size: 0; }
+.avatar.bot::before { content: ""; position: absolute; inset: 3px 5px 4px; background: var(--on-yellow); -webkit-mask: url(/otto-mask.png) center / contain no-repeat; mask: url(/otto-mask.png) center / contain no-repeat; }
+.prof-fab .avatar.bot, .hook .avatar.bot { width: 36px; height: 36px; }
+.drawer-h .avatar.bot { width: 40px; height: 40px; }

@@ -16,7 +16,7 @@ export function CaseBrief({ path, lesson, onNext }: { path: Path; lesson: Lesson
   return (
     <div className="stack" style={{ gap: 18 }}>
       {lesson.hook && (
-        <div className="hook"><span className="avatar">N</span><div><div className="who" style={{ marginBottom: 2 }}>Professor Neva opens the case</div><Rich text={`"${lesson.hook}"`} /></div></div>
+        <div className="hook"><span className="avatar bot" role="img" aria-label="Professor Neva" /><div><div className="who" style={{ marginBottom: 2 }}>Professor Neva opens the case</div><Rich text={`"${lesson.hook}"`} /></div></div>
       )}
       <div className="casefile">
         <div className="casefile-h"><b>Case file {String(lesson.n).padStart(2, "0")}: {lesson.caseTitle}</b><span className="row" style={{ gap: 10 }}>{b.when && <span className="deadline">🕑 {b.when}</span>}<span className="stamp">CONFIDENTIAL · FICTIONAL</span></span></div>
@@ -86,7 +86,7 @@ function ColdCall({ pathId, lesson, index }: { pathId: string; lesson: Lesson; i
   if (!q) return <button className="btn sm" style={{ marginTop: 10 }} onClick={ask} disabled={busy}>{busy ? "Professor Neva is choosing a question…" : `🎯 Take the cold call (up to +${3 * XP.coldCallPoint} XP)`}</button>;
   return (
     <div className="coldcall">
-      <div className="who"><span className="avatar">N</span>Professor Neva, cold-calling you</div>
+      <div className="who"><span className="avatar bot" role="img" aria-label="Professor Neva" />Professor Neva, cold-calling you</div>
       <Rich text={`**${q.question}**`} />
       {!grade && <>
         <textarea className="answer" style={{ minHeight: 90 }} value={answer} onChange={e => setAnswer(e.target.value)} placeholder="Answer in 2-4 sentences, as you would in class…" aria-label="Your answer to the cold call" />

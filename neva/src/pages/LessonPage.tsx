@@ -98,14 +98,14 @@ export function LessonPage() {
         </div>
       </div>
 
-      {!drawer && <button className="prof-fab" onClick={() => setDrawer(true)}><span className="avatar">N</span>Ask Professor Neva</button>}
+      {!drawer && <button className="prof-fab" onClick={() => setDrawer(true)}><span className="avatar bot" role="img" aria-label="Professor Neva" />Ask Professor Neva</button>}
       {drawer && (
         <aside className="drawer" aria-label="Professor Neva">
-          <div className="drawer-h"><div className="who" style={{ margin: 0 }}><span className="avatar">N</span><div><b>Professor Neva</b><div className="muted" style={{ fontWeight: 500 }}>Office hours · {lesson.caseTitle}</div></div></div><button className="btn sm ghost" onClick={() => setDrawer(false)} aria-label="Close">✕</button></div>
+          <div className="drawer-h"><div className="who" style={{ margin: 0 }}><span className="avatar bot" role="img" aria-label="Professor Neva" /><div><b>Professor Neva</b><div className="muted" style={{ fontWeight: 500 }}>Office hours · {lesson.caseTitle}</div></div></div><button className="btn sm ghost" onClick={() => setDrawer(false)} aria-label="Close">✕</button></div>
           <div className="drawer-b">
             <ProfessorChat convoKey={convoKey} context={context} note={`[Learner is on the ${stage} stage]`}
               intro={`We're on **${lesson.caseTitle}**. Ask about anything in the case, or explain an idea back to me and I'll tell you where it holds and where it doesn't.`}
-              starters={["Explain this lesson like I'm a microbiologist new to AI", "Quiz me with one question", "What's the most common mistake here?", "How does this show up in a real lab?"]} />
+              starters={["Explain this lesson like I know the science but am new to AI", "Quiz me with one question", "What's the most common mistake here?", "How does this show up in a real lab?"]} />
           </div>
         </aside>
       )}

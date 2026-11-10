@@ -25,7 +25,7 @@ export function Home() {
             </div>
           </div>
           <div className="hero-card">
-            <div className="who" style={{ color: "var(--on-band)" }}><span className="avatar">N</span>Professor Neva</div>
+            <div className="who" style={{ color: "var(--on-band)" }}><span className="avatar bot" role="img" aria-label="Professor Neva" />Professor Neva</div>
             <p className="q">"A relapse cell's nearest neighbours in the reference atlas are normal myeloid progenitors. Your colleague calls it a healthy cell. <b>What would you check before you agree?</b>"</p>
             <p style={{ color: "var(--on-band-muted)", fontSize: ".9rem", margin: 0 }}>Socratic tutoring, AI-graded seminars, live tool-using agents, and answers that cite their sources.</p>
           </div>

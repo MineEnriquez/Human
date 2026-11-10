@@ -44,11 +44,11 @@ export function ProfessorChat({ convoKey, context, starters, note = "", intro }:
   return (
     <div className="stack">
       <div className="chat">
-        <div className="bubble prof"><div className="who"><span className="avatar">N</span>Professor Neva</div><Rich text={intro || "Ask me anything about this case. I'll usually answer with a question first: that's on purpose."} /></div>
+        <div className="bubble prof"><div className="who"><span className="avatar bot" role="img" aria-label="Professor Neva" />Professor Neva</div><Rich text={intro || "Ask me anything about this case. I'll usually answer with a question first: that's on purpose."} /></div>
         {c?.turns.map((t, i) => (
           <div key={i} className="stack">
             <div className="bubble me">{t.me}</div>
-            <div className="bubble prof"><div className="who"><span className="avatar">N</span>Professor Neva</div>{t.prof ? <Rich text={t.prof} /> : !t.error && <p className="thinking">Thinking…</p>}{t.error && <div className="banner err">{t.error}</div>}</div>
+            <div className="bubble prof"><div className="who"><span className="avatar bot" role="img" aria-label="Professor Neva" />Professor Neva</div>{t.prof ? <Rich text={t.prof} /> : !t.error && <p className="thinking">Thinking…</p>}{t.error && <div className="banner err">{t.error}</div>}</div>
           </div>
         ))}
         <div ref={end} />
