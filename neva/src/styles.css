@@ -60,7 +60,8 @@ h1, h2, h3, h4 { font-family: var(--font-ui); letter-spacing: -0.02em; margin: 0
 .topbar { position: sticky; top: 0; z-index: 40; background: var(--band); color: var(--on-band); }
 .topbar-in { max-width: 1240px; margin: 0 auto; padding: 0 24px; height: 64px; display: flex; align-items: center; gap: 28px; }
 .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; font: 800 1.35rem var(--font-ui); letter-spacing: -0.03em; }
-.logo-mark { width: 30px; height: 30px; border-radius: 8px; background: var(--yellow); color: var(--on-yellow); display: grid; place-items: center; font-size: 1rem; }
+/* Site logo: the Neva-and-owl line art (public/logo-mask.png), drawn in the theme amber on the dark top bar */
+.logo-mark { width: 38px; height: 44px; background: var(--yellow); -webkit-mask: url(/logo-mask.png) center / contain no-repeat; mask: url(/logo-mask.png) center / contain no-repeat; }
 .nav { display: flex; gap: 4px; }
 .nav a { text-decoration: none; padding: 8px 12px; border-radius: 999px; font-weight: 600; font-size: 0.95rem; color: var(--on-band-muted); }
 .nav a:hover { color: var(--on-band); }

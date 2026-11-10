@@ -26,7 +26,7 @@ export function Layout() {
     <>
       <header className="topbar">
         <div className="topbar-in">
-          <Link to="/" className="logo"><span className="logo-mark">N</span>Neva</Link>
+          <Link to="/" className="logo"><span className="logo-mark" role="img" aria-label="Neva logo: Minerva with Otto the owl" />Neva</Link>
           <nav className="nav">
             <NavLink to="/" end>Home</NavLink>
             <NavLink to="/paths/cancer-genomics">Paths</NavLink>
