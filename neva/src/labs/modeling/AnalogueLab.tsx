@@ -6,26 +6,26 @@ import { VDB_EVIDENCE as EV } from "../../content/modeling/lessons";
 import { useProgress } from "../../lib/progress";
 import { finishPart, LabCard } from "../common";
 
-const ID = "om-vdb";
+const ID = "dm-vdb";
 
 type Filter = { id: string; label: string; field: string; test: (a: Analogue) => boolean };
 export const FILTERS: Filter[] = [
-  { id: "resp", label: "family = respiratory", field: "family", test: a => a.family === "respiratory" },
-  { id: "city", label: "setting = city", field: "setting", test: a => a.setting === "city" },
-  { id: "island", label: "setting = island", field: "setting", test: a => a.setting === "island" },
-  { id: "pop", label: "population ≥ 100,000", field: "population", test: a => a.population >= 100_000 },
-  { id: "recent", label: "year ≥ 2020", field: "year", test: a => a.year >= 2020 },
+  { id: "hivlow", label: "HIV band = low", field: "hiv", test: a => a.hiv === "low" },
+  { id: "mixed", label: "setting = mixed", field: "setting", test: a => a.setting === "mixed" },
+  { id: "rural", label: "setting = rural", field: "setting", test: a => a.setting === "rural" },
+  { id: "acf", label: "ran case finding = yes", field: "acf", test: a => a.acf },
+  { id: "pop", label: "population ≥ 300,000", field: "population", test: a => a.population >= 300_000 },
 ];
 
-const STATEMENTS = [
-  { id: "s1", label: "Use Marrow Vale's R0 range as a starting prior, then update it with Port Calder's data.", bucket: "ok", why: "Analogues are good priors when they match on route, setting and growth." },
-  { id: "s2", label: "Port Calder will peak in the same week Marrow Vale did.", bucket: "over", why: "Timing depends on seeding, population and behaviour, not just early shape." },
-  { id: "s3", label: "Check pathogen family and setting before borrowing any parameter.", bucket: "ok", why: "Those are hard requirements: put them in the filter." },
-  { id: "s4", label: "A cosine similarity of 0.999 proves the same virus is circulating.", bucket: "over", why: "Six noisy weekly counts can't identify a pathogen." },
-  { id: "s5", label: "Similar shape implies a similar early growth rate and doubling time.", bucket: "ok", why: "Same week-to-week ratios mean the same exponential growth." },
-  { id: "s6", label: "Skip the metadata: the vector already captures everything that matters.", bucket: "over", why: "The curve says nothing about transmission route or setting." },
-  { id: "s7", label: "Kellen Island's hospital numbers can be used directly for Port Calder.", bucket: "over", why: "A 40,000-person island is far smaller. Cosine ignored size; demand estimates need it." },
-  { id: "s8", label: "Write down which analogues you used and why, so others can challenge the choice.", bucket: "ok", why: "Transparent assumptions are part of a defensible forecast." },
+export const STATEMENTS = [
+  { id: "s1", label: "If we fund case finding, expect notifications to rise for a year or two before they fall, as Harrow Flats saw.", bucket: "ok", why: "Finding missed cases raises notifications first: a pattern worth anticipating in the briefing." },
+  { id: "s2", label: "Harrow Flats' notifications fell 20% after case finding, so ours will too.", bucket: "over", why: "Effect sizes depend on local reach, services and costs; use them as a prior, not a promise." },
+  { id: "s3", label: "Filter on HIV band before borrowing anything: HIV changes how often infection becomes disease.", bucket: "ok", why: "HIV strongly raises the risk of progression, so it is a hard requirement for comparing TB dynamics." },
+  { id: "s4", label: "Sable Coast's flat curve shows it detects as large a share of its cases as we do.", bucket: "over", why: "A flat trajectory says nothing about detection: notifications are not incidence anywhere." },
+  { id: "s5", label: "Pell Marsh's rising notifications may reflect its new laboratory rather than more TB.", bucket: "ok", why: "Better diagnosis raises notifications without any change in incidence." },
+  { id: "s6", label: "Skip the metadata: the vector already captures everything that matters.", bucket: "over", why: "The trajectory knows nothing about HIV, setting or programme history." },
+  { id: "s7", label: "Calloway Town's survey suggested about 7 in 10 cases are detected, a useful sanity check for our own estimate.", bucket: "ok", why: "A comparable district's independent estimate is a reasonable prior to compare against, not a substitute for ours." },
+  { id: "s8", label: "Write down which districts you used and why, so others can challenge the choice.", bucket: "ok", why: "Transparent assumptions are part of a defensible projection." },
 ];
 
 function Spark({ v, w = 90, h = 26 }: { v: number[]; w?: number; h?: number }) {
@@ -57,7 +57,7 @@ export default function AnalogueLab() {
 
   return (
     <>
-      <LabCard title="A + B. Search the outbreak library" done={ev.includes(EV[0]) && ev.includes(EV[1])} sub={<RichInline text={`Query: **${QUERY.name}**, weekly reported cases [${QUERY.vec.join(", ")}]. Run the search with at least two metrics, then drag filter chips into the query and search again.`} />}>
+      <LabCard title="A + B. Search the district library" done={ev.includes(EV[0]) && ev.includes(EV[1])} sub={<RichInline text={`Query: **${QUERY.name}**, notifications per 100,000, 2015-2025 [${QUERY.vec.join(", ")}]. Run the search with at least two metrics, then drag filter chips into the query and search again.`} />}>
         <div className="row" style={{ marginBottom: 12 }}>
           {METRICS.map(x => <button key={x.id} className={`btn sm ${metric === x.id ? "primary" : "ghost"}`} onClick={() => setMetric(x.id)}>{x.label}{tried.includes(x.id) ? " ✓" : ""}</button>)}
         </div>
@@ -69,20 +69,20 @@ export default function AnalogueLab() {
           </div>
           <div className="scroll-x">
             <table className="t">
-              <thead><tr><th>rank</th><th>outbreak</th><th>curve</th><th>{m.higherIsCloser ? "similarity" : "distance"}</th><th>metadata</th></tr></thead>
+              <thead><tr><th>rank</th><th>district</th><th>2015-2025</th><th>{m.higherIsCloser ? "similarity" : "distance"}</th><th>metadata</th></tr></thead>
               <tbody>{results.map((r, i) => (
-                <tr key={r.a.id}><td>{i + 1}</td><td><b>{r.a.name}</b><div className="muted" style={{ fontSize: ".78rem" }}>{r.a.outcome}</div></td><td><Spark v={r.a.vec} /></td><td className="mono">{r.s.toFixed(5)}</td><td style={{ fontSize: ".8rem" }}>{r.a.family}, {r.a.setting}, {r.a.population.toLocaleString()}, {r.a.year}</td></tr>
+                <tr key={r.a.id}><td>{i + 1}</td><td><b>{r.a.name}</b><div className="muted" style={{ fontSize: ".78rem" }}>{r.a.outcome}</div></td><td><Spark v={r.a.vec} /></td><td className="mono">{r.s.toFixed(5)}</td><td style={{ fontSize: ".8rem" }}>HIV {r.a.hiv}, {r.a.setting}, {r.a.acf ? "ran ACF" : "no ACF"}, {r.a.population.toLocaleString()}</td></tr>
               ))}</tbody>
             </table>
             {!results.length && <p className="feedback bad">No records pass these filters.</p>}
             <p className="muted" style={{ fontSize: ".85rem" }}>Query curve: <Spark v={QUERY.vec} /></p>
           </div>
         </div>
-        {tried.length >= 2 && <p className="read" style={{ fontSize: ".95rem", marginTop: 10 }}><RichInline text={"Cosine ranks Kellen Island (40,000 people) at the top because it compares **shape** only. Raw Euclidean ranks Marrow Vale first because it is dominated by **size**. Unit-length Euclidean agrees with cosine, as |a−b|² = 2 − 2cos θ predicts."} /></p>}
-        {ranFiltered && <p className="read" style={{ fontSize: ".95rem" }}><RichInline text={"Filters removed records **before** ranking. Did the island or the mosquito-borne outbreak survive your filters? [[w|Filter on what must match, rank on what should be similar.]]"} /></p>}
+        {tried.length >= 2 && <p className="read" style={{ fontSize: ".95rem", marginTop: 10 }}><RichInline text={"Cosine ranks Sable Coast (about 420 per 100,000) at the top because it compares **shape** only: its decade is as flat as ours. Raw Euclidean ranks Calloway Town first because it is dominated by **level**. Unit-length Euclidean agrees with cosine, as |a−b|² = 2 − 2cos θ predicts."} /></p>}
+        {ranFiltered && <p className="read" style={{ fontSize: ".95rem" }}><RichInline text={"Filters removed records **before** ranking. Did the high-HIV districts survive your filters? Try **ran case finding = yes** to see the rise-then-fall shape. [[w|Filter on what must match, rank on what should be similar.]]"} /></p>}
       </LabCard>
 
-      <LabCard title="C. Vet the analogues" done={ev.includes(EV[2])} sub="The director's team drafted statements about using the analogues. Which are reasonable, and which overreach?" right={<DragHint>Drag cards into buckets</DragHint>}>
+      <LabCard title="C. Vet the analogues" done={ev.includes(EV[2])} sub="The programme team drafted statements about using the analogues. Which are reasonable, and which overreach?" right={<DragHint>Drag cards into buckets</DragHint>}>
         <SortIntoBuckets items={STATEMENTS} buckets={[{ id: "ok", title: "✓ Reasonable use" }, { id: "over", title: "✗ Overreach" }]} onSolved={() => finishPart(ID, EV[2], EV)} />
       </LabCard>
     </>

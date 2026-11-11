@@ -2,58 +2,60 @@ import { useMemo, useState } from "react";
 import { DragHint, SortIntoBuckets } from "../../components/dnd";
 import { RichInline } from "../../components/Rich";
 import { LLM_EVIDENCE as EV } from "../../content/modeling/lessons";
-import { CITY, OBSERVED, TODAY, expectedReported, growthFromR0, logFitError, simulateSEIR } from "../../content/modeling/model";
+import { NOTIFICATIONS, PREVALENCE_SURVEY, fitError, per100k, runTb } from "../../content/modeling/model";
 import { earnBadge, useProgress } from "../../lib/progress";
 import { finishPart, LabCard } from "../common";
 
-const ID = "om-llm";
-export const FIT_THRESHOLD = 0.2;
+const ID = "dm-llm";
+/** Root-mean-square relative error of modelled vs observed notifications that counts as a good fit. */
+export const FIT_THRESHOLD = 0.03;
 
-const EXCERPT = `Methods (Harbourside Household Study and Viral Culture Substudy, fictional). We followed 212 Port Calder households with a confirmed CRV case. Among contacts with a single exposure day, the mean incubation period was 4.1 days. Daily cultures first grew live virus a mean of 3.0 days after exposure (latent period), and virus could be cultured for a mean of 4.0 days after that (infectious period). The household secondary attack rate was 18%. A blood-donor antibody pilot suggests about 30% of infections in the city (population 250,000) are reported.`;
+const EXCERPT = `Kestrel Contact Cohort (fictional). We followed 1,840 household contacts of people with pulmonary TB in Kestrel Valley District (population 600,000) for five years. Among contacts who were newly infected, about 7% developed active TB, most of them within two years. The programme's model uses a progression rate of 0.07 per year from recent infection and a stabilisation rate of 0.93 per year to remote latent infection, and a reactivation rate of 0.0006 per year for remote infection. Treatment for drug-susceptible TB lasts six months; in 2025, 80% of people who started treatment completed it successfully.`;
 
 const CARDS = [
-  { id: "x1", label: "Mean latent period: **3.0 days**", bucket: "ok", why: "Stated: cultures first grew virus 3.0 days after exposure." },
-  { id: "x2", label: "Latent rate σ = **3 per day**", bucket: "bad", why: "A 3-day mean means σ = 1/3 ≈ 0.33 per day. The duration was copied into a rate field." },
-  { id: "x3", label: "Mean infectious period: **4.0 days**", bucket: "ok", why: "Stated directly." },
-  { id: "x4", label: "Recovery rate γ = **0.25 per day**", bucket: "ok", why: "Correctly derived: 1 / 4.0 days." },
-  { id: "x5", label: "Incubation period: **3.0 days**", bucket: "bad", why: "The source says 4.1 days. 3.0 days is the latent period: two 'time after infection' numbers swapped." },
-  { id: "x6", label: "Basic reproduction number R0 = **2.6**", bucket: "missing", why: "The excerpt never reports R0. The model filled a row it was asked for." },
-  { id: "x7", label: "Transmission rate β = **0.65 per day**", bucket: "missing", why: "β = R0·γ needs R0, which the source doesn't give. The value rests on the invented R0." },
-  { id: "x8", label: "Household secondary attack rate: **18%**", bucket: "ok", why: "Stated directly." },
-  { id: "x9", label: "Reported fraction of infections: **30%**", bucket: "ok", why: "Stated (about 30%)." },
-  { id: "x10", label: "City population: **2.5 million**", bucket: "bad", why: "The source says 250,000. One digit of scale is easy for a fluent model to slip." },
+  { id: "x1", label: "Progression rate from recent infection: **0.07 per year**", bucket: "ok", why: "Stated." },
+  { id: "x2", label: "Risk of active TB after recent infection: **7% per year**", bucket: "bad", why: "7% is the share who progressed overall, mostly within two years: a risk over a period, not a rate per year." },
+  { id: "x3", label: "Stabilisation rate: **0.93 per month**", bucket: "bad", why: "The source says 0.93 per year. Per month would be 12 times faster." },
+  { id: "x4", label: "Reactivation rate of remote infection: **0.0006 per year**", bucket: "ok", why: "Stated." },
+  { id: "x5", label: "Reactivation risk within 40 years: **about 2.4%**", bucket: "ok", why: "Correctly derived: 1 − e^(−0.0006×40) ≈ 0.024." },
+  { id: "x6", label: "Treatment exit rate τ: **6 per year**", bucket: "bad", why: "Six months of treatment means τ = 1/0.5 = 2 per year. The duration was copied into a rate field." },
+  { id: "x7", label: "Treatment exit rate τ: **2 per year**", bucket: "ok", why: "Correctly derived from six months: 1 / 0.5 years." },
+  { id: "x8", label: "Treatment success: **80%**", bucket: "ok", why: "Stated for 2025." },
+  { id: "x9", label: "Detection rate: **0.70 per year**", bucket: "missing", why: "The cohort report never mentions detection. The model filled a row it was asked for." },
+  { id: "x10", label: "District population: **6 million**", bucket: "bad", why: "The source says 600,000. One digit of scale is easy for a fluent model to slip." },
 ];
 
 const CODE = [
-  { id: "k1", label: "`gamma = 1 / infectious_days`", bucket: "ok", why: "Rate = 1 / mean duration." },
-  { id: "k2", label: "`sigma = latent_days`", bucket: "bug", why: "Should be `1 / latent_days`." },
-  { id: "k3", label: "`beta = R0 * gamma`", bucket: "ok", why: "From R0 = β/γ." },
-  { id: "k4", label: "`dS = -beta * S * I`", bucket: "bug", why: "Missing `/ N`: this turns frequency-dependent transmission into density-dependent transmission." },
-  { id: "k5", label: "`dE = beta * S * I / N - sigma * E`", bucket: "ok", why: "New infections enter E and leave at rate σ." },
-  { id: "k6", label: "`dI = sigma * E - gamma * S`", bucket: "bug", why: "Recovery removes infectious people: `- gamma * I`, not `S`." },
-  { id: "k7", label: "`dR = gamma * I`", bucket: "ok", why: "Recovered people come from I at rate γ." },
-  { id: "k8", label: "`assert abs(S + E + I + R - N) < 1e-6`", bucket: "ok", why: "A conservation check: it catches the mismatched `/N` and the `gamma * S` term, but not a wrong parameter value like `sigma = latent_days` (a wrong rate still conserves people)." },
+  { id: "k1", label: "`tau = 1 / 0.5  # six months of treatment`", bucket: "ok", why: "Rate = 1 / mean duration in years." },
+  { id: "k2", label: "`tau = treatment_months`", bucket: "bug", why: "A duration (and in months) used as a rate per year. Should be `12 / treatment_months`." },
+  { id: "k3", label: "`lam = beta * I / N`", bucket: "ok", why: "Force of infection: transmission from active cases, per person." },
+  { id: "k4", label: "`dS = births - lam * S`", bucket: "bug", why: "Missing the background death outflow `- mu * S`: the population drifts upward." },
+  { id: "k5", label: "`incidence = eps * Lr + nu * Lt + rho * R`", bucket: "ok", why: "New and relapse active TB: progression, reactivation and relapse." },
+  { id: "k6", label: "`incidence += (1 - s) * tau * T`", bucket: "bug", why: "People returning from incomplete treatment are infectious again but are not new cases: this double counts." },
+  { id: "k7", label: "`births = mu * total + muTB * I`", bucket: "ok", why: "Births replace all deaths, keeping the population constant." },
+  { id: "k8", label: "`assert abs(total - N) < 1e-6`", bucket: "ok", why: "A conservation check: it catches the missing death outflow, but not a wrong rate value or the incidence double count (neither changes the total)." },
 ];
 
-const W = 560, H = 260, PAD = 34;
+const W = 560, H = 260, PAD = 40;
+const YEARS = NOTIFICATIONS.map(n => n.year);
 
 export default function ParameterLab() {
   const ev = useProgress().lessons[ID]?.evidence || [];
-  const [R0, setR0] = useState(2.8);
-  const [lat, setLat] = useState(2);
-  const [inf, setInf] = useState(6);
-  const [rep, setRep] = useState(0.15);
-  const [logScale, setLogScale] = useState(true);
-  const model = useMemo(() => expectedReported(simulateSEIR({ N: CITY.population, E0: 12, R0, latentDays: lat, infectiousDays: inf, days: 70 }), rep), [R0, lat, inf, rep]);
-  const err = logFitError(OBSERVED, model.slice(0, TODAY));
+  const [beta, setBeta] = useState(12);
+  const [delta, setDelta] = useState(0.9);
+  const run = useMemo(() => runTb({ params: { beta, delta }, endYear: 2025 }), [beta, delta]);
+  const err = fitError(run);
   const fitted = err < FIT_THRESHOLD;
-  const r = growthFromR0(R0, lat, inf);
-  const maxY = Math.max(...OBSERVED, ...(logScale ? model : model.slice(0, TODAY))) * 1.15;
-  const X = (d: number) => PAD + (d / 70) * (W - PAD - 10);
-  const Y = (v: number) => logScale ? H - PAD - (Math.log10(1 + v) / Math.log10(1 + Math.max(maxY, 10))) * (H - PAD - 10) : H - PAD - (v / maxY) * (H - PAD - 10);
-  const path = model.map((v, d) => `${d ? "L" : "M"}${X(d).toFixed(1)},${Math.max(4, Y(Math.min(v, maxY * 4))).toFixed(1)}`).join(" ");
+  const prev2019 = per100k(run.find(y => y.year === 2019)!.I);
+  const inc2025 = per100k(run.find(y => y.year === 2025)!.incidence);
+  const cdr = run.find(y => y.year === 2025)!.notifications / run.find(y => y.year === 2025)!.incidence;
+  const obs = NOTIFICATIONS.map(n => n.notified), model = run.map(y => y.notifications);
+  const maxY = Math.max(...obs, ...model) * 1.25, minY = 0;
+  const X = (yr: number) => PAD + ((yr - YEARS[0]) / (YEARS[YEARS.length - 1] - YEARS[0])) * (W - PAD - 16);
+  const Y = (v: number) => H - PAD - ((v - minY) / (maxY - minY)) * (H - PAD - 12);
+  const path = run.map((y, i) => `${i ? "L" : "M"}${X(y.year).toFixed(1)},${Y(y.notifications).toFixed(1)}`).join(" ");
   const slider = (label: string, v: number, set: (n: number) => void, min: number, max: number, step: number, fmt = (x: number) => x.toFixed(2)) => (
-    <label className="row" style={{ gap: 10, fontSize: ".9rem" }}><span style={{ width: 170 }}>{label}: <b className="mono">{fmt(v)}</b></span><input type="range" min={min} max={max} step={step} value={v} onChange={e => set(+e.target.value)} style={{ flex: 1 }} /></label>
+    <label className="row" style={{ gap: 10, fontSize: ".9rem" }}><span style={{ width: 200 }}>{label}: <b className="mono">{fmt(v)}</b></span><input type="range" min={min} max={max} step={step} value={v} onChange={e => set(+e.target.value)} style={{ flex: 1 }} /></label>
   );
 
   return (
@@ -64,34 +66,30 @@ export default function ParameterLab() {
           onSolved={n => finishPart(ID, EV[0], EV, n === 1 ? 30 : 20)} />
       </LabCard>
 
-      <LabCard title="B. Fit the SEIR model by hand" done={ev.includes(EV[1])} sub={<RichInline text={`Move the sliders until the model's reported cases (line) match Port Calder's first ${TODAY} days (dots). Fit error is the mean |ln(1+observed) − ln(1+model)|; get it under ${FIT_THRESHOLD}.`} />}>
+      <LabCard title="B. Fit the TB model to the notifications" done={ev.includes(EV[1])} sub={<RichInline text={`Move the sliders until the model's annual notifications (line) match Kestrel Valley's 2015-2025 notifications (dots). Fit error is the root-mean-square relative error; get it under ${FIT_THRESHOLD * 100}%.`} />}>
         <div className="grid" style={{ gridTemplateColumns: "minmax(0, 1.3fr) minmax(0, 1fr)", gap: 18 }}>
-          <svg viewBox={`0 0 ${W} ${H}`} className="svgbox" role="img" aria-label="Observed reported cases and model curve">
+          <svg viewBox={`0 0 ${W} ${H}`} className="svgbox" role="img" aria-label="Observed notifications and model curve">
             <line x1={PAD} y1={H - PAD} x2={W - 10} y2={H - PAD} style={{ stroke: "var(--line)" }} />
-            <line x1={X(TODAY)} y1={10} x2={X(TODAY)} y2={H - PAD} style={{ stroke: "var(--line)" }} strokeDasharray="4 4" />
-            <text x={X(TODAY) + 4} y={20} fontSize={11} style={{ fill: "var(--muted)" }}>today (day {TODAY})</text>
-            {[0, 14, 28, 42, 56, 70].map(d => <text key={d} x={X(d)} y={H - PAD + 16} fontSize={10} textAnchor="middle" style={{ fill: "var(--muted)" }}>{d}</text>)}
+            {YEARS.filter((_, i) => i % 2 === 0).map(yr => <text key={yr} x={X(yr)} y={H - PAD + 16} fontSize={10} textAnchor="middle" style={{ fill: "var(--muted)" }}>{yr}</text>)}
+            {[0.25, 0.5, 0.75].map(f => <text key={f} x={PAD - 6} y={Y(maxY * f) + 3} fontSize={10} textAnchor="end" style={{ fill: "var(--muted)" }}>{Math.round(maxY * f)}</text>)}
             <path d={path} fill="none" strokeWidth={2.5} style={{ stroke: fitted ? "var(--ok)" : "var(--ink)" }} />
-            {OBSERVED.map((v, d) => <circle key={d} cx={X(d)} cy={Y(v)} r={3} style={{ fill: "var(--yellow)", stroke: "var(--ink)" }} strokeWidth={0.8} />)}
-            <text x={8} y={16} fontSize={11} style={{ fill: "var(--muted)" }}>reported/day {logScale ? "(log)" : ""}</text>
+            {NOTIFICATIONS.map(n => <circle key={n.year} cx={X(n.year)} cy={Y(n.notified)} r={4} style={{ fill: "var(--yellow)", stroke: "var(--ink)" }} strokeWidth={0.8} />)}
+            <text x={8} y={14} fontSize={11} style={{ fill: "var(--muted)" }}>people notified per year</text>
           </svg>
           <div className="stack" style={{ gap: 8 }}>
-            {slider("R0", R0, setR0, 1, 3.5, 0.05)}
-            {slider("Mean latent (days)", lat, setLat, 1, 6, 0.25)}
-            {slider("Mean infectious (days)", inf, setInf, 1, 8, 0.25)}
-            {slider("Reporting fraction", rep, setRep, 0.05, 0.6, 0.01, x => `${Math.round(x * 100)}%`)}
-            <label className="row" style={{ fontSize: ".85rem" }}><input type="checkbox" checked={logScale} onChange={e => setLogScale(e.target.checked)} /> log scale</label>
+            {slider("Transmission β (contacts/case/yr)", beta, setBeta, 6, 20, 0.25)}
+            {slider("Detection rate δ (per yr)", delta, setDelta, 0.3, 1.6, 0.05)}
             <div className={`banner ${fitted ? "" : "warn"}`} style={fitted ? { background: "var(--ok-soft)", color: "var(--ok)" } : undefined}>
-              Fit error <b className="mono">{err.toFixed(3)}</b>{fitted ? " ✓ good fit" : ""}<br />
-              <span style={{ fontSize: ".85rem" }}>Implied growth rate r = {r.toFixed(3)}/day, doubling every {(Math.log(2) / r).toFixed(1)} days</span>
+              Fit error <b className="mono">{(err * 100).toFixed(1)}%</b>{fitted ? " ✓ good fit" : ""}<br />
+              <span style={{ fontSize: ".85rem" }}>Implied 2025 incidence {Math.round(inc2025)}/100k · notifications ≈ {Math.round(cdr * 100)}% of incidence · 2019 prevalence {Math.round(prev2019)}/100k</span>
             </div>
             <button className="btn primary sm" disabled={!fitted || ev.includes(EV[1])} onClick={() => { finishPart(ID, EV[1], EV, 30); earnBadge("curve-shaper"); }}>{ev.includes(EV[1]) ? "Logged ✓" : fitted ? "Log this fit as evidence" : "Fit the curve first"}</button>
           </div>
         </div>
-        {ev.includes(EV[1]) && <p className="read" style={{ fontSize: ".95rem", marginTop: 12 }}><RichInline text={"Now try R0 = 2.0 with latent 2 days and infectious 5 days, then R0 = 2.4 with longer periods. Several combinations fit almost equally well, because six weeks of growth pin down **r**, not R0 and the durations separately. That's [[w|identifiability]], and why the cell needs the culture study's durations."} /></p>}
+        {ev.includes(EV[1]) && <p className="read" style={{ fontSize: ".95rem", marginTop: 12 }}><RichInline text={`Now find a **second** fit: lower β and lower δ, or higher β and higher δ. Several pairs match the notifications almost equally well, yet imply very different incidence. That's [[w|identifiability]]. The ${PREVALENCE_SURVEY.year} prevalence survey (about **${PREVALENCE_SURVEY.perHundredK}/100k** active TB not on treatment) breaks the tie: which of your fits matches it?`} /></p>}
       </LabCard>
 
-      <LabCard title="C. Review the LLM's model code" done={ev.includes(EV[2])} sub="An LLM drafted the SEIR update step. Sort each line." right={<DragHint>Drag cards into buckets</DragHint>}>
+      <LabCard title="C. Review the LLM's model code" done={ev.includes(EV[2])} sub="An LLM drafted the TB model's update step. Sort each line." right={<DragHint>Drag cards into buckets</DragHint>}>
         <SortIntoBuckets items={CODE} columns={2} buckets={[{ id: "ok", title: "✓ Correct" }, { id: "bug", title: "🐞 Bug" }]} onSolved={() => finishPart(ID, EV[2], EV)} />
       </LabCard>
     </>

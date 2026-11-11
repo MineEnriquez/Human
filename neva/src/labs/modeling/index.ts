@@ -1,10 +1,10 @@
-// Labs for the Outbreak Modeling path: lesson `lab` key -> lazily loaded component.
+// Labs for the Disease Modeling path: lesson `lab` key -> lazily loaded component.
 import { lazy, type ComponentType, type LazyExoticComponent } from "react";
 
 export const MODELING_LABS: Record<string, LazyExoticComponent<ComponentType>> = {
-  "om-llm": lazy(() => import("./ParameterLab")),
-  "om-vdb": lazy(() => import("./AnalogueLab")),
-  "om-rag": lazy(() => import("./RagLab")),
-  "om-mcp": lazy(() => import("./McpLab")),
-  "om-capstone": lazy(() => import("./BriefingRoom")),
+  "dm-llm": lazy(() => import("./ParameterLab")),
+  "dm-vdb": lazy(() => import("./AnalogueLab")),
+  "dm-rag": lazy(() => import("./RagLab")),
+  "dm-mcp": lazy(() => import("./McpLab")),
+  "dm-capstone": lazy(() => import("./StrategyRoom")),
 };
