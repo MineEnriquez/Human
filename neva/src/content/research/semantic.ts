@@ -1,6 +1,6 @@
 // Semantic-search lab logic (pure, tested): keyword (BM25) vs toy vector search vs hybrid (RRF).
-import { makeSearch } from "../search";
-import { STUDIES, rrf, type Study } from "./papers";
+import { makeSearch } from "../search.js";
+import { STUDIES, rrf, type Study } from "./papers.js";
 
 /** BM25 over each study's title + abstract (one record per study). */
 export const studySearch = makeSearch(STUDIES.map(s => ({ id: s.id, doc: s.id, title: s.title, text: s.abstract })));

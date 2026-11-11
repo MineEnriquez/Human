@@ -11,6 +11,8 @@ const CHROME = process.env.CHROME_PATH || ["/Applications/Google Chrome.app/Cont
 if (!CHROME) { console.log("SKIP e2e: no Chrome found (set CHROME_PATH)"); process.exit(0); }
 
 process.env.ANTHROPIC_API_KEY = ""; // keep the run free: AI features show "AI is off"
+process.env.ANTHROPIC_AUTH_TOKEN = "";
+process.env.ANTHROPIC_CONFIG_DIR = "/nonexistent/neva-e2e-config"; // ignore any local `ant auth login`
 const server = await createServer({ server: { port: 5199, strictPort: true }, logLevel: "error" });
 await server.listen();
 const BASE = "http://localhost:5199";
@@ -81,7 +83,12 @@ try {
 
   // Theme toggle cycles System -> Light -> Dark.
   await page.goto(BASE + "/");
-  const btn = page.locator(".theme-btn");
+  // Connect-your-key panel opens from the top bar (AI is off in this run, so it offers to connect).
+  await page.getByRole("button", { name: /Connect Claude/ }).click();
+  ok(await page.getByRole("dialog").getByText("Connect your Claude account").isVisible(), "connect panel opens");
+  await page.keyboard.press("Escape");
+  ok(!(await page.getByRole("dialog").count()), "connect panel closes on Escape");
+  const btn = page.locator('.theme-btn[aria-label^="Theme"]');
   await btn.click(); ok(await page.evaluate(() => document.documentElement.dataset.theme) === "light", "theme: light");
   await btn.click(); ok(await page.evaluate(() => document.documentElement.dataset.theme) === "dark", "theme: dark");
 

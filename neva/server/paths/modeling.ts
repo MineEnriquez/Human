@@ -1,8 +1,8 @@
 // Outbreak Modeling: lab agent tools over the fictional Port Calder surveillance data and SEIR simulator.
 import { z } from "zod";
-import { CHUNKS, search } from "../../src/content/modeling/corpus";
-import { BRIEFING_KEY, CITY, OBSERVED, TODAY, fitGrowthRate, simulateSEIR, summarize } from "../../src/content/modeling/model";
-import type { ServerPath, ToolDef, ToolResult } from "./types";
+import { CHUNKS, search } from "../../src/content/modeling/corpus.js";
+import { BRIEFING_KEY, CITY, OBSERVED, TODAY, fitGrowthRate, simulateSEIR, summarize } from "../../src/content/modeling/model.js";
+import type { ServerPath, ToolDef, ToolResult } from "./types.js";
 
 const num = (d: string) => ({ type: "number", description: d });
 const numOrNull = (d: string) => ({ type: ["number", "null"], description: d + " Use null for none." });

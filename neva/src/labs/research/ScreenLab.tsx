@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AiOffNotice } from "../../components/ConnectKey";
 import { BucketBoard, DragHint, SortableSequence } from "../../components/dnd";
 import { RichInline } from "../../components/Rich";
 import { CRITERIA, KEY, STUDIES, cohenKappa, kappaLabel } from "../../content/research/papers";
@@ -79,7 +80,7 @@ export default function ScreenLab() {
       </LabCard>
 
       <LabCard title="B. Compare with a second reviewer" done={ev.includes(EVIDENCE[1])} sub={<RichInline text="Claude screens the same eight abstracts independently with [[c|structured outputs]] (decision, criterion, reason). Then you'll measure agreement with [[c|Cohen's kappa]]." />}>
-        {aiOn === false && <div className="banner warn">AI is off on this server. You can still compare your decisions with the answer key.</div>}
+        {aiOn === false && <AiOffNotice what="Comparing with Claude" />}
         <div className="row">
           <button className="btn yellow" onClick={compare} disabled={busy || placed < SAMPLE.length || !aiOn}>{busy ? "Claude is screening…" : "Compare with Claude"}</button>
           {aiOn === false && <button className="btn" onClick={compareKey} disabled={placed < SAMPLE.length}>Compare with the answer key</button>}

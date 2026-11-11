@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AiOffNotice } from "../../components/ConnectKey";
 import { AgentConsole } from "../../components/AgentConsole";
 import { BucketBoard, DragHint } from "../../components/dnd";
 import { Rich, RichInline } from "../../components/Rich";
@@ -77,7 +78,7 @@ export default function ReviewBoard() {
         <div style={{ marginTop: 12 }}><label className="lbl" htmlFor="lim">Main limitations</label><input id="lim" className="field" value={limitations} onChange={e => setLimitations(e.target.value)} placeholder="Which GRADE domains concern you, and why?" /></div>
         <div style={{ marginTop: 12 }}><label className="lbl" htmlFor="con">Conclusion</label><input id="con" className="field" value={conclusion} onChange={e => setConclusion(e.target.value)} placeholder="One or two sentences a guideline panel could use" /></div>
         <div style={{ marginTop: 12 }}><label className="lbl" htmlFor="why">Your reasoning</label><textarea id="why" className="answer" value={reasoning} onChange={e => setReasoning(e.target.value)} placeholder="Why did you exclude what you excluded? How did you rate certainty, domain by domain?" /></div>
-        {aiOn === false && <div className="banner warn" style={{ marginTop: 10 }}>Grading needs Claude (ANTHROPIC_API_KEY on the server).</div>}
+        {aiOn === false && <div style={{ marginTop: 10 }}><AiOffNotice what="Grading" /></div>}
         <div className="row" style={{ marginTop: 12 }}>
           <button className="btn yellow" onClick={submit} disabled={!ready || busy || !aiOn}>{busy ? "Otto is reading your report…" : "Submit review report"}</button>
           {!ready && <span className="muted" style={{ fontSize: ".85rem" }}>Decide all {STUDIES.length} records ({sorted}/{STUDIES.length}) and fill every field.</span>}

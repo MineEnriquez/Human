@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from "vitest";
 import { cancer } from "./cancer";
 import { serverPath, SERVER_PATHS } from "./index";

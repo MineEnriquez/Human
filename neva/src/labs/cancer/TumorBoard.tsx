@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AiOffNotice } from "../../components/ConnectKey";
 import { AgentConsole } from "../../components/AgentConsole";
 import { BucketBoard, DragHint } from "../../components/dnd";
 import { Rich, RichInline } from "../../components/Rich";
@@ -75,7 +76,7 @@ export default function TumorBoard() {
           <div><label className="lbl" htmlFor="rep">Reporting and QC decisions</label><input id="rep" className="field" value={reporting} onChange={e => setReporting(e.target.value)} placeholder="What is reported, what isn't, and why?" /></div>
         </div>
         <div style={{ marginTop: 12 }}><label className="lbl" htmlFor="why">Your reasoning</label><textarea id="why" className="answer" value={reasoning} onChange={e => setReasoning(e.target.value)} placeholder="Explain the evidence: VAFs across timepoints, purity and CCF (with assumptions), the skin control, QC flags." /></div>
-        {aiOn === false && <div className="banner warn" style={{ marginTop: 10 }}>Grading needs Claude (ANTHROPIC_API_KEY on the server).</div>}
+        {aiOn === false && <div style={{ marginTop: 10 }}><AiOffNotice what="Grading" /></div>}
         <div className="row" style={{ marginTop: 12 }}>
           <button className="btn yellow" onClick={submit} disabled={!ready || busy || !aiOn}>{busy ? "Otto is reading your report…" : "Submit tumor board report"}</button>
           {!ready && <span className="muted" style={{ fontSize: ".85rem" }}>Classify all {VARIANTS.length} variants ({sorted}/{VARIANTS.length}) and fill every field.</span>}

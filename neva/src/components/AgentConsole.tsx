@@ -1,5 +1,6 @@
 // Chat with a path's tool-using lab assistant (/api/agent). Shows every tool call and result as an MCP host would log it.
 import { useRef, useState } from "react";
+import { AiOffNotice } from "./ConnectKey";
 import { Rich } from "./Rich";
 import { stream, useAi, type ApiMessage } from "../lib/ai";
 
@@ -44,7 +45,7 @@ export function AgentConsole({ path, toolNames, starters, onToolCall, showRpc = 
     setBusy(false); scroll();
   };
 
-  if (aiOn === false) return <div className="banner warn">The lab assistant needs Claude. Set ANTHROPIC_API_KEY on the server and restart it.</div>;
+  if (aiOn === false) return <AiOffNotice what="The lab assistant" />;
   return (
     <div className="stack">
       <div ref={box} className="chat" style={{ maxHeight: height, overflowY: "auto", padding: "4px 2px" }}>

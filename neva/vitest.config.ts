@@ -5,6 +5,6 @@ export default defineConfig({
     environment: "jsdom",
     include: ["src/**/*.test.ts", "src/**/*.test.tsx", "server/**/*.test.ts"],
     // Tests never call the real Claude API.
-    env: { ANTHROPIC_API_KEY: "" },
+    env: { ANTHROPIC_API_KEY: "", ANTHROPIC_AUTH_TOKEN: "", ANTHROPIC_CONFIG_DIR: "/nonexistent/neva-test-config" },
   },
 });

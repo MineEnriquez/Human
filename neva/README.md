@@ -26,11 +26,31 @@ Grotesk, Source Serif 4 and Newsreader.
 ```bash
 cd neva
 npm install
-export ANTHROPIC_API_KEY=sk-ant-...   # or put it in neva/.env (see .env.example)
+ant auth login                        # once; or: export ANTHROPIC_API_KEY=sk-ant-... (or neva/.env)
 npm run dev                           # http://localhost:5173
 ```
 
-Without a key the site still runs: lectures, labs, drag-and-drop and the fixed quizzes work, and the
+**Local development with `ant`.** After `brew install anthropics/tap/ant` and `ant auth login`, the dev server
+uses that login with no API key to copy around. An exported `ANTHROPIC_API_KEY` takes precedence over the login,
+so unset it (or run `env -u ANTHROPIC_API_KEY npm run dev`) to use the login. `/api/status` reports which
+credential is active (`source`: `api-key`, `auth-token` or `ant-login`).
+
+**Visitors' own keys.** Anyone can click **Connect Claude** in the top bar and paste their own Anthropic API key;
+Otto then runs on their account. The key is kept only in their browser (session or device), sent with each AI
+request over HTTPS, used by the server for that request only, and never stored or logged. Claude.ai subscriptions
+don't include API usage, so visitors need an Anthropic Console key.
+
+**Free trial on your key.** Visitors without a key get a daily allowance on the server's key:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `TRIAL_PER_VISITOR` | 10 | AI requests per visitor (IP) per UTC day; 0 disables the trial |
+| `TRIAL_DAILY_CAP` | 300 | AI requests per day across all trial visitors |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | unset | Shared counters. Without them, counts live in memory per server instance, so on Vercel the limits are approximate |
+
+Set a monthly spend limit for your key in the Anthropic Console as a backstop.
+
+Without any key the site still runs: lectures, labs, drag-and-drop and the fixed quizzes work, and the
 AI features show an "AI is off" notice.
 
 Production: `npm run build && npm start` serves `dist/` and the API on port 8787 (`PORT` to change).

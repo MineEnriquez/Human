@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ConnectButton, ConnectPanel } from "./ConnectKey";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { levelOf, onToast, useProgress, type Toast } from "../lib/progress";
 
@@ -34,6 +35,7 @@ export function Layout() {
             <NavLink to="/dashboard">Progress</NavLink>
           </nav>
           <span className="spacer" />
+          <ConnectButton />
           <button className="theme-btn" onClick={cycleTheme} title="Theme: system, light or dark" aria-label={`Theme: ${theme}. Click to change.`}>{LABEL[theme]}</button>
           {p.streak.count > 0 && <span className="streak" title="Days in a row">🔥 {p.streak.count}</span>}
           <Link to="/dashboard" className="xp-pill" title={`${p.xp} XP`}>
@@ -45,6 +47,7 @@ export function Layout() {
         </div>
       </header>
       <main><Outlet /></main>
+      <ConnectPanel />
       <footer className="footer">Neva · AI for the life sciences. Cases, institutions, patients, samples and studies are fictional teaching material. Not medical advice.</footer>
       <div className="toasts" aria-live="polite">
         {toasts.map(t => <div key={t.id} className={`toast ${t.kind}`}><span className="plus">{t.plus}</span>{t.text}</div>)}

@@ -2,6 +2,7 @@
 // The lesson context is frozen when the conversation starts so the system prompt never changes mid-chat;
 // the learner's current stage travels with each new user message instead.
 import { useRef, useState, useSyncExternalStore } from "react";
+import { AiOffNotice } from "./ConnectKey";
 import { Rich } from "./Rich";
 import { stream, useAi, type ApiMessage } from "../lib/ai";
 
@@ -40,7 +41,7 @@ export function ProfessorChat({ convoKey, context, starters, note = "", intro }:
   const end = useRef<HTMLDivElement>(null);
   const send = (t: string) => { if (!t.trim()) return; setText(""); askProfessor(convoKey, context, t, note).then(() => end.current?.scrollIntoView({ block: "end" })); requestAnimationFrame(() => end.current?.scrollIntoView({ block: "end" })); };
 
-  if (aiOn === false) return <div className="banner warn">Otto needs Claude. Set <code>ANTHROPIC_API_KEY</code> on the server (see README) and restart it. Everything else on the site still works.</div>;
+  if (aiOn === false) return <AiOffNotice what="Otto" />;
   return (
     <div className="stack">
       <div className="chat">

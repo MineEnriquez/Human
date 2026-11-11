@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { AiOffNotice } from "../../components/ConnectKey";
 import { BucketBoard, DragHint, SortableSequence } from "../../components/dnd";
 import { RichInline } from "../../components/Rich";
 import { tokenEstimate as tokens, type Chunk, type Hit } from "../../content/search";
@@ -90,7 +91,7 @@ export function RagLabView({ lessonId: ID, path, docs, chunks: CHUNKS, search, q
       </LabCard>
 
       <LabCard title="C. Generate a grounded answer" done={ev.includes(EV[2])} sub={<RichInline text="Claude receives **only** your packed chunks as documents with citations on, and is told not to use outside knowledge. Try packing the wrong chunks too: a good grounded answer admits what's missing." />}>
-        {aiOn === false && <div className="banner warn">AI is off on this server (no ANTHROPIC_API_KEY). Steps A and B still work.</div>}
+        {aiOn === false && <AiOffNotice what="Step C" />}
         <button className="btn yellow" onClick={generate} disabled={busy || !aiOn || !results}>{busy ? "Generating…" : packed.length ? `Ask Claude with ${packed.length} chunk${packed.length > 1 ? "s" : ""}` : "Ask Claude with an empty context"}</button>
         {err && <div className="banner err" style={{ marginTop: 10 }}>{err}</div>}
         {parts.length > 0 && (

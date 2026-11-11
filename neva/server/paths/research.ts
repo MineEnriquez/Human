@@ -1,10 +1,10 @@
 // Research Intelligence: lab agent tools over the fictional Meridian Evidence Unit study database.
 import { z } from "zod";
-import { CHUNKS, PROTOCOL, search } from "../../src/content/research/corpus";
-import { SYNTHESIS_KEY, KEY, STUDIES, studyById } from "../../src/content/research/papers";
-import { studySearch } from "../../src/content/research/semantic";
-import { makeSearch } from "../../src/content/search";
-import type { ServerPath, ToolDef, ToolResult } from "./types";
+import { CHUNKS, PROTOCOL, search } from "../../src/content/research/corpus.js";
+import { SYNTHESIS_KEY, KEY, STUDIES, studyById } from "../../src/content/research/papers.js";
+import { studySearch } from "../../src/content/research/semantic.js";
+import { makeSearch } from "../../src/content/search.js";
+import type { ServerPath, ToolDef, ToolResult } from "./types.js";
 
 const DESIGNS = ["RCT", "cohort", "before-after", "review", "editorial", "conference abstract", "modelling study", "single-arm", "laboratory study"];
 
