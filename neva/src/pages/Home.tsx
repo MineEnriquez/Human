@@ -57,7 +57,7 @@ export function Home() {
         </Carousel>
 
         <div className="section-h" style={{ marginTop: 56 }}><h2>How a case <em>works</em></h2></div>
-        <div className="grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+        <div className="grid how-grid">
           {[
             ["📂", "Case file", "A realistic situation, your role, the question you must answer, and the evidence to collect."],
             ["🎓", "Lecture with checks", "Short segments from Otto, each followed by a check for understanding."],

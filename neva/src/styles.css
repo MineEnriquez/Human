@@ -64,16 +64,18 @@ h1, h2, h3, h4 { font-family: var(--font-ui); letter-spacing: -0.02em; margin: 0
 
 /* ---------- top bar ---------- */
 .topbar { position: sticky; top: 0; z-index: 40; background: var(--band); color: var(--on-band); }
-.topbar-in { max-width: 1240px; margin: 0 auto; padding: 0 24px; height: 64px; display: flex; align-items: center; gap: 28px; }
+.topbar-in { max-width: 1240px; margin: 0 auto; padding: 0 24px; min-height: 64px; display: flex; align-items: center; gap: 24px; }
+.topbar-in > * { flex-shrink: 0; }
+.topbar-in .spacer { flex-shrink: 1; min-width: 0; }
 .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; font: 800 1.35rem var(--font-ui); letter-spacing: -0.03em; }
 /* Site logo: the Neva-and-owl line art (public/logo-mask.png), drawn in the theme yellow on the dark top bar */
 .logo-mark { width: 38px; height: 44px; background: var(--yellow); -webkit-mask: url(/logo-mask.png) center / contain no-repeat; mask: url(/logo-mask.png) center / contain no-repeat; }
 .nav { display: flex; gap: 4px; }
-.nav a { text-decoration: none; padding: 8px 12px; border-radius: 999px; font-weight: 600; font-size: 0.95rem; color: var(--on-band-muted); }
+.nav a { white-space: nowrap; text-decoration: none; padding: 8px 12px; border-radius: 999px; font-weight: 600; font-size: 0.95rem; color: var(--on-band-muted); }
 .nav a:hover { color: var(--on-band); }
 .nav a.active { color: var(--band); background: var(--on-band); }
 .topbar .spacer { flex: 1; }
-.xp-pill { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; text-decoration: none; }
+.xp-pill { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; text-decoration: none; white-space: nowrap; }
 .xp-pill .lvl { background: var(--yellow); color: var(--on-yellow); font-weight: 800; border-radius: 999px; padding: 3px 10px; }
 .xp-pill .bar { width: 110px; height: 6px; border-radius: 3px; background: var(--band-line); overflow: hidden; }
 .xp-pill .bar span { display: block; height: 100%; background: var(--yellow); }
@@ -371,3 +373,25 @@ input[type=range] { accent-color: var(--ink); }
 .carousel-dot.on { background: var(--ink); width: 26px; border-radius: 5px; }
 @media (max-width: 960px) { .carousel-track { grid-auto-columns: calc((100% - 20px) / 2); } }
 @media (max-width: 640px) { .carousel-track { grid-auto-columns: 86%; } }
+
+/* ---------- top bar: degrade gracefully as space runs out (narrow windows or zoomed-in browsers) ---------- */
+.theme-btn { white-space: nowrap; }
+.connect-btn .lbl-short { display: none; }
+@media (max-width: 1240px) { .xp-pill .xp-title, .xp-pill .bar { display: none; } }
+@media (max-width: 1080px) { .connect-btn .lbl-long { display: none; } .connect-btn .lbl-short { display: inline; } .topbar-in { gap: 16px; } }
+@media (max-width: 900px) {
+  /* Links move to their own scrollable row under the logo and controls. */
+  .topbar-in { flex-wrap: wrap; row-gap: 0; padding-top: 8px; }
+  .topbar .nav { order: 10; width: 100%; overflow-x: auto; scrollbar-width: none; padding-bottom: 8px; }
+  .topbar .nav::-webkit-scrollbar { display: none; }
+  .xp-pill .mono { display: none; }
+  .drawer { top: 0; }
+}
+@media (max-width: 560px) {
+  .topbar-in { padding-left: 16px; padding-right: 16px; gap: 10px; }
+  .theme-word { display: none; }
+  .logo { font-size: 1.15rem; }
+}
+.how-grid { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 900px) { .how-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .how-grid { grid-template-columns: 1fr; } }

@@ -17,8 +17,9 @@ const mask = (k: string) => `${k.slice(0, 7)}…${k.slice(-4)}`;
 export function ConnectButton() {
   const s = useAiState();
   if (!s.loaded && !s.userKey) return null;
-  const label = s.userKey ? "● Claude connected" : s.unlimited ? "● Claude (this computer)" : s.trial.enabled ? `Free trial · ${s.trial.remaining} left · Connect` : "Connect Claude";
-  return <button className={`theme-btn ${s.userKey ? "connected" : ""}`} onClick={openConnect} title="Use Otto with your own Anthropic account">{label}</button>;
+  const [long, short] = s.userKey ? ["● Claude connected", "● Claude"] : s.unlimited ? ["● Claude (this computer)", "● Claude"] : s.trial.enabled ? [`Free trial · ${s.trial.remaining} left · Connect`, `Trial ${s.trial.remaining} · Connect`] : ["Connect Claude", "Connect"];
+  // Two labels; CSS shows the short one when the top bar gets tight.
+  return <button className={`theme-btn connect-btn ${s.userKey ? "connected" : ""}`} onClick={openConnect} title="Use Otto with your own Anthropic account" aria-label={long}><span className="lbl-long">{long}</span><span className="lbl-short" aria-hidden>{short}</span></button>;
 }
 
 /** Shown wherever an AI feature can't run right now. */
