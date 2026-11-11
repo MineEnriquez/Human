@@ -44,16 +44,22 @@ export function Carousel({ label, children }: { label: string; children: ReactNo
         ))}
       </div>
       {scrollable && (
-        <div className="carousel-nav">
-          <button className="carousel-btn" onClick={() => go(state.index - 1)} disabled={state.atStart} aria-label="Previous">←</button>
+        <>
+          <button className="carousel-chevron left" onClick={() => go(state.index - 1)} disabled={state.atStart} aria-label="Previous"><Chevron dir="left" /></button>
+          <button className="carousel-chevron right" onClick={() => go(state.index + 1)} disabled={state.atEnd} aria-label="Next"><Chevron dir="right" /></button>
           <div className="carousel-dots">
             {Array.from({ length: pages }, (_, i) => (
               <button key={i} className={`carousel-dot ${Math.min(state.index, pages - 1) === i ? "on" : ""}`} onClick={() => go(i)} aria-label={`Go to slide ${i + 1}`} aria-current={Math.min(state.index, pages - 1) === i ? "true" : undefined} />
             ))}
           </div>
-          <button className="carousel-btn" onClick={() => go(state.index + 1)} disabled={state.atEnd} aria-label="Next">→</button>
-        </div>
+        </>
       )}
     </section>
   );
 }
+
+const Chevron = ({ dir }: { dir: "left" | "right" }) => (
+  <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d={dir === "left" ? "M15 5l-7 7 7 7" : "M9 5l7 7-7 7"} />
+  </svg>
+);
