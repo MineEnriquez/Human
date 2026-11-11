@@ -6,5 +6,5 @@ export const SOFTWARE_LABS: Record<string, LazyExoticComponent<ComponentType>> =
   "se-vdb": lazy(() => import("./VectorDbLab")),
   "se-rag": lazy(() => import("./RagLab")),
   "se-mcp": lazy(() => import("./McpLab")),
-  "se-capstone": lazy(() => import("./IncidentRoom")),
+  "se-capstone": lazy(() => import("./ModelBuilder")),
 };

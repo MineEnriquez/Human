@@ -20,9 +20,9 @@ describe("AI for Software Engineers case dossier", () => {
       expect(DOSSIER.timeline.find(t => t.lesson === l.id)!.when.slice(0, 8)).toBe(sc.when.slice(0, 8));
     }
   });
-  it("ends with the launch deadline after the last case", () => {
-    expect(DOSSIER.deadline).toMatch(/Fri 11 Dec 2026/);
-    expect(DOSSIER.timeline.at(-1)!.when).toMatch(/Fri 11 Dec/);
+  it("ends with the demo deadline after the last case", () => {
+    expect(DOSSIER.deadline).toMatch(/Fri 12 Feb 2027/);
+    expect(DOSSIER.timeline.at(-1)!.when).toMatch(/Fri 12 Feb/);
   });
   it("shows sensible rewards for every stage", () => {
     for (const l of PATH.lessons) {

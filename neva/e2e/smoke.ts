@@ -53,7 +53,7 @@ try {
     await steps.nth(2).click();
     await page.waitForSelector(".lab", { timeout: 10000 }).catch(() => null);
     ok(await page.locator(".lab").count() >= 1, `${l.id}: lab renders`);
-    ok(!(await page.getByText(/is missing/).count()), `${l.id}: lab registered`);
+    ok(!(await page.getByRole("heading", { name: /^Lab ".*" is missing$/ }).count()), `${l.id}: lab registered`);
     if (!l.boss) {
       await steps.filter({ hasText: "Quiz" }).click();
       ok(await page.locator(".check").count() === l.quiz.length, `${l.id}: ${l.quiz.length} quiz questions`);

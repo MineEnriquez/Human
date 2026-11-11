@@ -7,7 +7,7 @@ answers, writes new questions and coaches you through a live investigation.
 
 | Path | Field | Case setting (all fictional) |
 |---|---|---|
-| **AI for Software Engineers** | Software engineering | Launch week at Lumenrail, an online booking and payments platform: an AI-written PR, duplicate tickets, a docs bot, on-call tools and a 3 a.m. incident. The general-audience path: no science background needed |
+| **AI for Software Engineers** | Software engineering | Build the Model Builder, an AI agent that writes models with Epiloom (a fictional disease-modelling framework designed like Starsim), and make its code reliable |
 | **Cancer Genomics** | Genetics | A relapsed acute myeloid leukemia at the Cascade Ridge Cancer Research Center: tumor sequencing and a single-cell atlas |
 | **Disease Modeling** | Disease modeling | Tuberculosis in the high-burden Kestrel Valley District; the programme must choose which strategy to fund to 2035 |
 | **Research Intelligence** | Research | A systematic review at the Meridian Evidence Unit |
@@ -61,22 +61,30 @@ Production: `npm run build && npm start` serves `dist/` and the API on port 8787
 
 ### AI for Software Engineers (start here)
 
-For any software engineer: every AI term is defined on first use. The fictional company Lumenrail launches Instant
-Payouts on Friday 11 Dec 2026, and you are the engineering team's new AI lead. The path has a case dossier
-(timeline, seven people, stakes) and a scene for each case, like Cancer Genomics.
+For any software engineer: every AI term is defined on first use. The case is building the **Model Builder**, a
+generative agent for **Epiloom**, a fictional open-source Python framework for disease modelling whose design is
+modelled on [Starsim](https://starsim.org) (MIT licence): a `Sim` with pluggable diseases, networks (random,
+age-assortative male-female, maternal, mixing pools), births/deaths/pregnancy, campaign and targeted interventions,
+connectors for co-infection, calibration, common random numbers and explicit units. Researchers at the fictional
+Harbor Institute want reliable models from plain-English questions; the demo is Fri 12 Feb 2027.
+
+The agent's pipeline uses every topic in the course: question → structured spec with explicit unknowns (LLMs) →
+find the right example (vector database) → grounded code citing the docs (RAG) → tools over MCP (`search_docs`,
+`get_api`, `find_examples`, `validate_code`, `run_model`) → a requirement-to-code trace.
 
 | # | AI topic | Case | Lab |
 |---|---|---|---|
-| 1 | LLMs | The Hallucinated API | Tokenize code, sample a completion after `ledger.` with no docs in context, check an AI-written PR's claims against the docs, diff and CI |
-| 2 | Vector databases | Duplicate Tickets | Ticket record anatomy, top-k similarity with drag-in filters, pick the true duplicate (not the most similar-sounding) |
-| 3 | RAG | Ask the Runbook | Cited answers from the team's deploy policy, severity levels, on-call policy, runbooks, SLOs and ADRs |
-| 4 | MCP | Wire Up the Tools | Handshake order, tool approval policy for production tools, live tool-using assistant |
-| 5 | Capstone | The 3 a.m. Incident | Agent with `search_logs`, `get_metrics`, `list_deploys`, `search_runbooks`; classify cause, symptoms and red herrings and choose the mitigation (checked exactly), then a blameless postmortem graded by Otto |
+| 1 | LLMs | From Question to Spec | Sort an LLM's spec fields (captured / wrong / should ask), sample the next identifier after `el.`, run the validator on generated code and sort its findings |
+| 2 | Vector databases | Find the Right Example | Example record anatomy, top-k with drag-in filters (feature, level of detail), pick the example that fits the spec rather than the closest look-alike |
+| 3 | RAG | Grounded in the Docs | Cited answers from Epiloom's API pages and guides (units, mother-to-child setup, comparing scenarios with common random numbers), with a deprecated page to avoid |
+| 4 | MCP | The Epiloom MCP Server | Handshake order, tool policy (auto / ask / never), live agent, a prompt injection hidden in a community README |
+| 5 | Capstone | The Model Builder | Review the agent's draft spec against the researcher's question (8 requirements, checked exactly), choose the code version that passes validation (checked exactly), run the simplified engine, and write what the model can't answer, clarifying questions, reliability checks and traceability |
 
-The incident has one defensible answer, derived from the case data: a config change pushed outside the deploy
-pipeline shrank the database connection pool from 50 to 5, so requests timed out waiting for connections. A traffic
-bump from the nightly batch, a noisy warning and two other deploys are red herrings. One log line is a prompt-injection
-attempt, for the lesson on treating tool output as data.
+Key code in `src/content/software/`: `epiloom.ts` (API reference and examples library), `spec.ts` (model spec type,
+the capstone question, reference and draft specs), `validator.ts` (static checks: unknown/deprecated symbols,
+arguments, units, spec rules such as sexual network, `MaternalNet` + `Pregnancy`, connector direction, targeted
+eligibility, one shared seed, horizon) and `engine.ts` (a simplified two-group engine for comparing scenarios, not an
+agent-based run).
 
 ### Cancer Genomics
 

@@ -27,7 +27,7 @@ export function Home() {
           </div>
           <div className="hero-card">
             <div className="who" style={{ color: "var(--on-band)" }}><span className="avatar bot" role="img" aria-label="Otto" />Otto</div>
-            <p className="q">"Your coding assistant's PR calls <code>ledger.transfer_atomic()</code> and explains exactly why it's safe. The function isn't in the library's docs. <b>What would you check before you merge?</b>"</p>
+            <p className="q">"The agent wrote the disease model in a minute, and it runs. It uses <code>el.RandomNet</code> for syphilis. <b>What else would you check before a researcher sees the results?</b>"</p>
             <p style={{ color: "var(--on-band-muted)", fontSize: ".9rem", margin: 0 }}>Socratic tutoring, AI-graded seminars, live tool-using agents, and answers that cite their sources.</p>
           </div>
         </div>
