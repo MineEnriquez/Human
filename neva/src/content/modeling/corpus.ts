@@ -1,42 +1,41 @@
-// FICTIONAL evidence library of the Port Calder Health Department modeling cell, already chunked.
-// Every study, team and number here is invented for teaching. General definitions are real.
-// Used by the RAG lab and by the capstone agent's search_evidence tool.
+// FICTIONAL evidence library of the Kestrel Valley District TB programme, already chunked.
+// District studies, pilots, people and numbers are invented for teaching; general background notes describe real TB
+// biology and programme concepts. Model values are illustrative. Used by the RAG lab and the capstone's search_evidence tool.
 import { makeSearch, type Chunk } from "../search.js";
+import { PREVALENCE_SURVEY } from "./model.js";
 
 export const CHUNKS: Chunk[] = [
-  // HHS: fictional household transmission study
-  { id: "HHS-1", doc: "HHS", title: "Harbourside Household Study (fictional): design", text: "The Harbourside Household Study followed 212 households with a confirmed CRV case in Port Calder. Household contacts were swabbed every day for 14 days and asked to report symptom onset dates." },
-  { id: "HHS-2", doc: "HHS", title: "HHS: incubation period", text: "Among 96 contacts with a single known exposure day, the mean incubation period from exposure to symptom onset was 4.1 days (range 2-8 days)." },
-  { id: "HHS-3", doc: "HHS", title: "HHS: secondary attack rate", text: "The household secondary attack rate was 18%: 142 of 789 household contacts became infected within 14 days of the first case's symptom onset." },
-  { id: "HHS-4", doc: "HHS", title: "HHS: serial interval", text: "The mean serial interval, the time between symptom onset in the first case and symptom onset in the household contact they infected, was 6.8 days. Some pairs had negative serial intervals, which can happen when transmission occurs before the infector develops symptoms and the contact's incubation period is short enough that their symptoms start first." },
+  // BG: background notes (real concepts, stated generally)
+  { id: "BG-1", doc: "Background", title: "Background: how TB spreads", text: "Tuberculosis is caused by the bacterium Mycobacterium tuberculosis. It spreads through the air when a person with active TB of the lungs coughs or speaks. People with latent infection have no symptoms and are not infectious." },
+  { id: "BG-2", doc: "Background", title: "Background: infection is not disease", text: "Most people infected with M. tuberculosis never develop active TB. A commonly cited estimate is a lifetime risk of roughly 5-10% for people without HIV, with much of that risk in the first two years after infection. HIV, malnutrition, diabetes and some other conditions raise the risk." },
+  { id: "BG-3", doc: "Background", title: "Background: notifications are not incidence", text: "Notifications count people diagnosed with TB and reported to the programme. Incidence is the number of new cases of active TB that occur, detected or not. The gap between them is made up of people who are never diagnosed, diagnosed late, or diagnosed but not reported." },
+  { id: "BG-4", doc: "Background", title: "Background: treatment and drug resistance", text: "Drug-susceptible TB is treated with a combination of antibiotics, usually for about six months; shorter regimens are recommended for some groups. Stopping treatment early risks relapse and drug resistance. Drug-resistant TB needs different regimens and is not separated in the district's model." },
 
-  // VCS: fictional viral culture study
-  { id: "VCS-1", doc: "VCS", title: "Viral Culture Substudy (fictional): latent period", text: "Daily cultures from 61 newly infected contacts first grew live virus a mean of 3.0 days after exposure. The modeling cell uses this as the mean latent period: the time from infection until a person becomes infectious." },
-  { id: "VCS-2", doc: "VCS", title: "VCS: infectious period", text: "Live virus could be cultured for a mean of 4.0 days after it was first detected. The modeling cell uses this as the mean infectious period." },
+  // KCC: fictional household contact cohort
+  { id: "KCC-1", doc: "KCC", title: "Kestrel Contact Cohort (fictional): design", text: "The Kestrel Contact Cohort followed 1,840 household contacts of people with pulmonary TB in the district for five years, screening them every six months." },
+  { id: "KCC-2", doc: "KCC", title: "KCC: progression after recent infection", text: "Among contacts who were newly infected, about 7% developed active TB, most of them within two years of infection. For its model the programme uses a progression rate of 0.07 per year from recent infection and a rate of 0.93 per year for moving from recent to remote (stable) latent infection, so people spend about one year, on average, in the recent-infection stage." },
+  { id: "KCC-3", doc: "KCC", title: "KCC: reactivation of remote infection", text: "After the first few years, the risk of progressing from latent infection is much lower. The model uses a reactivation rate of 0.0006 per year for remote latent infection, about a 2-3% risk over 40 years at a constant rate (illustrative)." },
+  { id: "KCC-4", doc: "KCC", title: "Model note: untreated active TB", text: "In the programme's model, untreated active TB ends through self-cure or TB death at about 0.2 per year each (illustrative values), and people are detected and start treatment at the case detection rate." },
 
-  // SERO: fictional seroprevalence pilot
-  { id: "SERO-1", doc: "SERO", title: "Seroprevalence pilot (fictional): reporting fraction", text: "A blood-donor antibody pilot in week 5 estimated that about 30% of CRV infections in Port Calder appear in the reported case counts. Mild and asymptomatic infections are usually never tested." },
+  // PREV: fictional prevalence survey
+  { id: "PREV-1", doc: "PREV", title: `District TB prevalence survey ${PREVALENCE_SURVEY.year} (fictional)`, text: `The ${PREVALENCE_SURVEY.year} household survey screened a random sample of adults with symptom questions, chest X-ray and molecular testing. It found about ${PREVALENCE_SURVEY.perHundredK} people with active TB per 100,000 population who were not on treatment (95% interval ${Math.round(PREVALENCE_SURVEY.perHundredK * 0.8)}-${Math.round(PREVALENCE_SURVEY.perHundredK * 1.2)}).` },
+  { id: "PREV-2", doc: "PREV", title: "Method note: why the survey matters", text: "Notifications alone cannot tell the model whether there is a lot of TB with poor detection or less TB with good detection: both produce similar notification counts. The prevalence survey measures how many undetected cases there are, which separates transmission from detection when the model is fitted." },
 
-  // CONTACT: fictional contact survey
-  { id: "CON-1", doc: "CONTACT", title: "Port Calder contact survey (fictional): who meets whom", text: "In the 2025 contact diary survey, children aged 5-17 reported the most daily contacts, mostly at school. School contacts made up about one third of all reported close contacts in the city." },
-  { id: "CON-2", doc: "CONTACT", title: "Contact survey: school closure scenario", text: "Allowing for children meeting more often outside school when schools close, the survey team estimates that a full school closure would cut overall transmission-relevant contacts by 20-30%. The cell uses 25% as its central assumption." },
+  // PILOT: fictional programme pilots and costs
+  { id: "ACF-1", doc: "PILOT", title: "Active case finding pilot (fictional)", text: "A 2023 pilot screened communities with mobile chest X-ray and molecular testing. Scaled up district-wide, the programme estimates it would raise the case detection rate from 0.70 to 1.10 per year, at about 1.2 million dollars per year. In other districts, notifications first rose as undetected cases were found, then fell." },
+  { id: "TPT-1", doc: "PILOT", title: "TB preventive treatment for household contacts (fictional pilot)", text: "Offering TB preventive treatment to household contacts of notified patients is estimated to prevent about 20% of progression from recent infection across the district, allowing for coverage and completion. Cost: about 600,000 dollars per year." },
+  { id: "TX-1", doc: "PILOT", title: "Treatment adherence support (fictional pilot)", text: "In 2025, 80% of people who started treatment completed it successfully; most of the rest were lost to follow-up. Adherence support with transport vouchers and community follow-up raised success to about 90% in the pilot clinics, at about 500,000 dollars per year district-wide." },
+  { id: "BUD-1", doc: "BUDGET", title: "District budget note (fictional)", text: "From 2027 the district can fund new TB strategies up to 1.2 million dollars per year. Options can be combined if their total cost stays within the budget." },
 
-  // NOTE: modeling cell method notes
-  { id: "NOTE-1", doc: "NOTE", title: "Method note: incubation vs latent period", text: "The incubation period runs from infection to symptom onset. The latent period runs from infection to the start of infectiousness. They differ: if the latent period is shorter than the incubation period, people can transmit before they feel ill. SEIR models need the latent period, not the incubation period." },
-  { id: "NOTE-2", doc: "NOTE", title: "Method note: serial vs generation interval", text: "The generation interval is the time between infection of an infector and infection of the person they infect. The serial interval is the time between their symptom onsets. Under common assumptions the two have similar means, but the serial interval is more variable and can be negative. For an SEIR model with exponentially distributed periods, the mean generation interval equals the mean latent period plus the mean infectious period." },
-  { id: "NOTE-3", doc: "NOTE", title: "Method note: from growth rate to R", text: "Early in an epidemic, cases grow roughly exponentially at rate r per day, and the doubling time is ln(2)/r. For an SEIR model with exponentially distributed latent and infectious periods, R0 = (1 + r × mean latent period) × (1 + r × mean infectious period). Fit r only to the exponential phase, after the first noisy days." },
-  { id: "NOTE-4", doc: "NOTE", title: "Method note: R0 and Rt", text: "R0 is the average number of people one case infects in a fully susceptible population. Rt is the effective reproduction number at time t, which falls as people become immune or contacts are reduced. An epidemic grows while Rt is above 1 and shrinks when it falls below 1." },
-  { id: "NOTE-5", doc: "NOTE", title: "Method note: reporting does not change growth", text: "A constant reporting fraction scales the case curve down but does not change its growth rate or its timing. It does matter when converting reported cases into infections or hospital demand." },
-
-  // SOP: forecast release policy
-  { id: "SOP-1", doc: "SOP", title: "Forecast SOP: release rules", text: "No forecast leaves the modeling cell without review by a second modeler and sign-off by the Director of Public Health. Every published forecast shows a range of scenarios, states its key assumptions, and is labelled as a projection, not a prediction." },
+  // SOP
+  { id: "SOP-1", doc: "SOP", title: "Projection SOP: release rules", text: "No projection leaves the programme without review by a second modeller and sign-off by the District Health Director. Every published projection shows scenarios, states its key assumptions and uncertainties, and is labelled as a projection, not a prediction." },
 ];
 
 export const search = makeSearch(CHUNKS);
 
 /** Questions offered in the RAG lab, with the chunks a good answer needs (checked by the tests). */
 export const RAG_QUESTIONS: { q: string; needs: string[] }[] = [
-  { q: "How long is CRV's mean latent period and mean infectious period, from the culture data?", needs: ["VCS-1", "VCS-2"] },
-  { q: "What fraction of CRV infections end up in the reported case counts?", needs: ["SERO-1"] },
-  { q: "How much would closing schools reduce transmission contacts?", needs: ["CON-2"] },
+  { q: "What did the district's prevalence survey find about undetected active TB?", needs: ["PREV-1"] },
+  { q: "How much progression would preventive treatment for household contacts prevent, and at what cost?", needs: ["TPT-1"] },
+  { q: "What share of newly infected household contacts developed active TB, and how quickly?", needs: ["KCC-2"] },
 ];

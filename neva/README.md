@@ -7,7 +7,7 @@ answers, writes new questions and coaches you through a live investigation.
 | Path | Field | Case setting (all fictional) |
 |---|---|---|
 | **Cancer Genomics** | Genetics | A relapsed acute myeloid leukemia at the Cascade Ridge Cancer Research Center: tumor sequencing and a single-cell atlas |
-| **Outbreak Modeling** | Disease modeling | A new respiratory virus in Port Calder; the city must decide on school closures |
+| **Disease Modeling** | Disease modeling | Tuberculosis in the high-burden Kestrel Valley District; the programme must choose which strategy to fund to 2035 |
 | **Research Intelligence** | Research | A systematic review at the Meridian Evidence Unit |
 
 Each path has five cases teaching the same AI stack in order: LLMs → vector databases → RAG → MCP → a capstone
@@ -71,18 +71,20 @@ annotates single cells against a healthy bone-marrow reference atlas. Research-l
 | 4 | MCP | Wire Up the Lab | Order the host/client/server messages, sort tools by approval policy, watch a live tool-using host |
 | 5 | Capstone | The Tumor Board | Direct a tool-using agent, classify every variant (founder, lost, relapse, germline, artifact), file a report graded by Otto |
 
-### Outbreak Modeling
+### Disease Modeling (tuberculosis)
 
-The case data comes from a deterministic SEIR model with known parameters, so the capstone answer is
-computed from the model, not typed in.
+The district's notifications come from a deterministic TB compartmental model (uninfected, recent and remote latent
+infection, active TB, on treatment, recovered; illustrative rates per year), so the capstone answer is computed from
+the model, not typed in. Fitting notifications alone is deliberately not identifiable; the 2019 prevalence survey
+separates burden from detection.
 
 | # | AI topic | Case | Lab |
 |---|---|---|---|
-| 1 | LLMs | The Parameter Hunt | Sort an LLM's extracted parameters (unit errors, hallucinated values), fit an SEIR curve with sliders, review LLM-written model code |
-| 2 | Vector databases | Similar Epidemics | Past outbreaks as curve vectors: cosine vs Euclidean vs normalised distance, drag-in filters |
-| 3 | RAG | Evidence-Based Priors | Retrieve incubation, serial-interval and contact evidence with citations |
-| 4 | MCP | The Simulation Server | Handshake order, tool approval policy, live simulation tools |
-| 5 | Capstone | The Briefing Room | Agent with `get_case_counts`, `fit_growth_rate`, `run_seir`, `search_evidence`; R0 and peak day checked exactly |
+| 1 | LLMs | The Parameter Hunt | Sort an LLM's extracted TB parameters (risk vs rate, per month vs per year, unreported values), fit the TB model to notifications with sliders, review LLM-written model code |
+| 2 | Vector databases | Similar Settings | Other districts' notification trajectories as vectors: cosine vs Euclidean vs normalised distance, drag-in filters (HIV band, setting, case finding) |
+| 3 | RAG | Evidence-Based Priors | Retrieve the prevalence survey, contact-cohort and pilot evidence with citations |
+| 4 | MCP | The Simulation Server | Handshake order, tool approval policy, live TB model tools |
+| 5 | Capstone | The Strategy Room | Agent with `get_notifications`, `fit_tb_model`, `run_tb_model`, `search_evidence`; 2025 incidence and the strongest single strategy checked exactly; recommendation within a $1.2M/year budget graded by Otto |
 
 ### Research Intelligence
 
@@ -142,7 +144,7 @@ case file shows:
 | `/api/screen` | Second reviewer for abstract screening | structured outputs |
 | `/api/rag` | Answers only from the chunks the learner packed | document blocks + **citations** |
 | `/api/agent` | Each path's lab assistant, calling that path's tools | tool use loop, strict schemas, eager input streaming |
-| `/api/capstone-grade` | Grades the outbreak report | structured outputs |
+| `/api/capstone-grade` | Grades each path's capstone report | structured outputs |
 
 Every call uses `claude-opus-5-5` with server-side refusal fallback (`fallbacks: "default"`). Life-science
 content can occasionally trip a safety classifier on legitimate research questions, and the fallback
@@ -159,7 +161,7 @@ npm run test:e2e   # browser smoke test: every path, lesson, lecture, lab and qu
 The unit tests check:
 - content integrity for every lesson: depth, quiz answer indices and colour markup
 - that each answer key is consistent with its case data
-- the simulators and statistics: SEIR, growth fit, Cohen's kappa, RRF
+- the simulators and statistics: the TB model and its fitting, rate/risk conversions, Cohen's kappa, RRF
 - retrieval: each RAG question's source chunk ranks in the top 3
 - server tools and input validation, plus API routing and guards
 - the markup renderer, including HTML injection
@@ -185,4 +187,4 @@ To add a path: create `src/content/<path>/lessons.ts` (export `PATH`), labs in `
 (export a lab map), `server/paths/<path>.ts` (export a `ServerPath`), and register each one.
 
 All institutions, cities, patients, samples, studies and documents are fictional teaching material. Gene names,
-variant notation, marker genes and methods (SEIR, GRADE, PRISMA, MCP...) are real and described accurately. This is not medical advice.
+variant notation, marker genes and methods (TB compartmental models, GRADE, PRISMA, MCP...) are real and described accurately. This is not medical advice.

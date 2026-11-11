@@ -1,34 +1,37 @@
-// FICTIONAL library of past outbreaks, stored as vectors (weekly reported cases, first 6 weeks) + metadata.
-// Used by the Similar Epidemics (vector database) lab. All places and numbers are invented.
-import { OBSERVED } from "./model";
+// FICTIONAL library of other districts' TB notification trajectories, stored as vectors + metadata.
+// Each vector is annual notifications per 100,000 population, 2015-2025 (11 dimensions).
+// Used by the Similar Settings (vector database) lab. All districts and numbers are invented.
+import { NOTIFICATIONS, per100k } from "./model.js";
 
 export type Analogue = {
   id: string;
   name: string;
-  family: "respiratory" | "enteric" | "vector-borne";
-  setting: "city" | "island" | "school" | "hospital";
+  setting: "urban" | "rural" | "mixed";
+  hiv: "low" | "high"; // HIV prevalence band among adults
+  acf: boolean; // ran an active case-finding programme during 2015-2025
   population: number;
-  year: number;
-  vec: number[]; // weekly reported cases, weeks 1-6
-  outcome: string; // what happened next (fictional)
+  vec: number[]; // notifications per 100,000, 2015..2025
+  outcome: string; // what the district learned (fictional)
 };
 
-/** Weekly totals of a daily series (6 weeks). */
-export const weekly = (daily: number[]) => Array.from({ length: 6 }, (_, w) => daily.slice(w * 7, w * 7 + 7).reduce((a, b) => a + b, 0));
-const grow = (start: number, factor: number) => Array.from({ length: 6 }, (_, w) => Math.round(start * factor ** w));
+const YEARS = 11;
+const flat = (level: number, wobble = 0.02) => Array.from({ length: YEARS }, (_, i) => Math.round(level * (1 + wobble * Math.sin(i * 1.7))));
+const trend = (start: number, perYear: number) => Array.from({ length: YEARS }, (_, i) => Math.round(start * (1 + perYear) ** i));
+/** Active case finding starting in year index `at`: notifications jump as backlog is found, then fall below the old level. */
+const acfShape = (level: number, at: number) => Array.from({ length: YEARS }, (_, i) => Math.round(i < at ? level : i === at ? level * 1.35 : i === at + 1 ? level * 1.2 : level * (1.02 - 0.06 * (i - at - 1))));
 
-/** Port Calder's first six weeks: the query vector. */
-export const QUERY = { id: "PC-2026", name: "Port Calder 2026 (now)", vec: weekly(OBSERVED) };
+/** Kestrel Valley's own notifications per 100,000, 2015-2025: the query vector. */
+export const QUERY = { id: "KV", name: "Kestrel Valley District (now)", vec: NOTIFICATIONS.map(n => Math.round(per100k(n.notified))) };
 
 export const ANALOGUES: Analogue[] = [
-  { id: "MV-24", name: "Marrow Vale 2024", family: "respiratory", setting: "city", population: 180_000, year: 2024, vec: grow(5, 2.3), outcome: "Peaked in week 11; estimated R0 1.8-2.2." },
-  { id: "AB-19", name: "Ashford Bay 2019", family: "respiratory", setting: "city", population: 310_000, year: 2019, vec: grow(16, 2.25), outcome: "Peaked in week 9 after an early start in schools; estimated R0 1.9-2.3." },
-  { id: "KI-22", name: "Kellen Island 2022", family: "respiratory", setting: "island", population: 40_000, year: 2022, vec: grow(1, 2.4), outcome: "Peaked in week 8; the island's size limited spread." },
-  { id: "CV-17", name: "Corvin 2017", family: "respiratory", setting: "city", population: 900_000, year: 2017, vec: grow(40, 1.7), outcome: "Slow growth, doubling about every 9 days; peaked in week 16." },
-  { id: "NG-23", name: "Northgate School cluster 2023", family: "respiratory", setting: "school", population: 1_200, year: 2023, vec: [3, 41, 88, 30, 6, 1], outcome: "Burned out in a month after half the pupils were infected." },
-  { id: "SB-20", name: "St. Brannock ward outbreak 2020", family: "respiratory", setting: "hospital", population: 400, year: 2020, vec: [2, 9, 14, 6, 2, 0], outcome: "Controlled by ward closure in week 4." },
-  { id: "RS-21", name: "Riverside 2021", family: "enteric", setting: "city", population: 220_000, year: 2021, vec: [180, 95, 30, 9, 3, 1], outcome: "Point-source food outbreak; over within six weeks." },
-  { id: "HD-18", name: "Halden 2018", family: "vector-borne", setting: "city", population: 260_000, year: 2018, vec: [8, 12, 19, 27, 39, 55], outcome: "Seasonal mosquito-borne rise that ended with the first cold weeks." },
+  { id: "CT", name: "Calloway Town District", setting: "mixed", hiv: "low", acf: false, population: 540_000, vec: flat(160), outcome: "Stable notifications; its 2021 prevalence survey suggested about 7 in 10 cases were being detected." },
+  { id: "LM", name: "Lowmere District", setting: "rural", hiv: "low", acf: false, population: 210_000, vec: flat(55), outcome: "Low, stable burden; a different epidemic level, not a different shape." },
+  { id: "SC", name: "Sable Coast District", setting: "urban", hiv: "high", acf: false, population: 900_000, vec: flat(420, 0.015), outcome: "High burden driven partly by HIV; stable notifications." },
+  { id: "BH", name: "Brennock Hills District", setting: "rural", hiv: "low", acf: false, population: 380_000, vec: trend(185, -0.03), outcome: "Slow decline attributed to improving housing and nutrition." },
+  { id: "HF", name: "Harrow Flats District", setting: "mixed", hiv: "low", acf: true, population: 620_000, vec: acfShape(165, 4), outcome: "ACF from 2019: notifications rose for two years as undetected cases were found, then fell below the old level." },
+  { id: "IV", name: "Iverly District", setting: "urban", hiv: "high", acf: false, population: 750_000, vec: trend(390, -0.045), outcome: "Fast decline after expanding HIV treatment; not a like-for-like setting." },
+  { id: "OV", name: "Ostrin Valley District", setting: "rural", hiv: "low", acf: true, population: 300_000, vec: acfShape(140, 2), outcome: "ACF from 2017 with a similar rise-then-fall pattern; programme costs were higher in remote villages." },
+  { id: "PM", name: "Pell Marsh District", setting: "mixed", hiv: "low", acf: false, population: 450_000, vec: trend(110, 0.05), outcome: "Rising notifications after a new laboratory improved diagnosis, not necessarily more disease." },
 ];
 
 // ------------------------------------------------------------------ similarity
@@ -41,7 +44,7 @@ export const unit = (a: number[]) => { const n = norm(a); return a.map(x => x / 
 export type Metric = "cosine" | "euclidean" | "euclidean-normalised";
 export const METRICS: { id: Metric; label: string; higherIsCloser: boolean }[] = [
   { id: "cosine", label: "Cosine similarity", higherIsCloser: true },
-  { id: "euclidean", label: "Euclidean distance (raw counts)", higherIsCloser: false },
+  { id: "euclidean", label: "Euclidean distance (raw rates)", higherIsCloser: false },
   { id: "euclidean-normalised", label: "Euclidean distance (unit-length vectors)", higherIsCloser: false },
 ];
 
