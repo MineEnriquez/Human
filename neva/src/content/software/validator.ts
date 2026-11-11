@@ -146,6 +146,13 @@ export function validateCode(code: string, spec?: ModelSpec | null): Issue[] {
     if (!seeds.length) add({ line: lineOf("Sim"), category: "reliability", rule: "crn-seed", severity: "error", message: "Scenarios are compared, but no rand_seed is set: runs can't be reproduced or compared with common random numbers." });
     else if (distinct.size > 1) add({ line: code.split("\n").findIndex(l => /rand_seed/.test(l)) + 1, category: "reliability", rule: "crn-seed", severity: "error", message: `Scenarios use different seeds (${[...distinct].join(", ")}): the difference between them mixes the intervention effect with random noise. Use one seed for all.` });
   }
+  if (spec.scenarios.length) {
+    // Every scenario in the spec, including the "doing nothing" baseline, needs its own labelled sim.
+    const labels = new Set([...code.matchAll(/(?:\blabel\s*=\s*|make_sim\(\s*)['"]([\w-]+)['"]/g)].map(m => m[1]));
+    const wantsBaseline = spec.scenarios.includes("baseline");
+    if (!labels.size) add({ line: lineOf("Sim"), category: "requirement", rule: "missing-scenario", severity: "error", message: `The spec compares ${spec.scenarios.join(", ")}, but no sim is labelled with a scenario name${wantsBaseline ? ", and there is no baseline (doing nothing) to compare against" : ""}.` });
+    else for (const sc of spec.scenarios) if (!labels.has(sc)) add({ line: lineOf("Sim"), category: "requirement", rule: "missing-scenario", severity: "error", message: sc === "baseline" ? "There is no baseline (doing nothing) sim, so neither strategy can be compared against doing nothing." : `No sim is labelled '${sc}', so that scenario isn't run.` });
+  }
   if (spec.horizon) {
     const start = num(/\bstart\s*=\s*(\d{4})/.exec(code)?.[1]), stop = num(/\bstop\s*=\s*(\d{4})/.exec(code)?.[1]);
     if (start !== spec.horizon.start || stop !== spec.horizon.stop) add({ line: lineOf("Sim"), category: "requirement", rule: "horizon", severity: "error", message: `The spec runs ${spec.horizon.start}-${spec.horizon.stop}; the code runs ${isNaN(start) ? "?" : start}-${isNaN(stop) ? "?" : stop}.` });

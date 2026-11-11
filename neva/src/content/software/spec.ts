@@ -57,7 +57,7 @@ export const REQUIREMENTS: { id: string; label: string; key: ReqClass; why: stri
   { id: "r1", label: "Two diseases: HIV and syphilis, both sexually transmitted", key: "captured", why: "The draft lists both with sexual transmission." },
   { id: "r2", label: "Congenital syphilis (mother-to-child transmission) is the main outcome", key: "captured", why: "mtct: true and congenital cases are an outcome." },
   { id: "r3", label: "Time horizon 2027-2037", key: "captured", why: "The horizon matches." },
-  { id: "r4", label: "People with HIV are more susceptible to syphilis", key: "wrong", why: "The draft reverses the direction: source syphilis, target HIV." },
+  { id: "r4", label: "Researcher's assumption: people with HIV are more susceptible to syphilis", key: "wrong", why: "The draft reverses the direction: source syphilis, target HIV." },
   { id: "r5", label: "Targeted outreach reaches a higher-risk group year-round", key: "wrong", why: "The draft makes it routine delivery to everyone (no target group): that's a second mass programme." },
   { id: "r6", label: "Partners tend to be similar in age", key: "missing", why: "age_assortative is false; the question asks for it." },
   { id: "r7", label: "Compare against doing nothing (a baseline scenario)", key: "missing", why: "Scenarios list only mass and targeted." },

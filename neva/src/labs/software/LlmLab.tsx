@@ -24,6 +24,7 @@ const CATS: { id: IssueCategory; title: string }[] = [
   { id: "reliability", title: "Reliability risk" },
 ];
 const WHY: Record<string, string> = {
+  "missing-scenario": "The spec compares strategies against doing nothing; the code must build a labelled sim for every scenario, baseline included.",
   "unknown-symbol": "Not in Epiloom's API: a plausible name the model produced.",
   unit: "Rates need el.peryear()/el.freqperyear(), durations el.years(): a bare number or the wrong helper is ambiguous or wrong.",
   "sexual-network": "Syphilis is sexually transmitted; it needs el.MFNet.",

@@ -61,7 +61,7 @@ sim_targeted = el.Sim(n_agents=20_000, start=2027, stop=2037, rand_seed=2, disea
 el.parallel(sim_mass, sim_targeted)`;
 
 export const CODE_V2 = `import epiloom as el
-# v2: revised against the reviewed spec; every requirement traced to a line
+# v2: second draft
 def make_sim(label, interventions):
     hiv = el.HIV(beta={'mf': [el.peryear(0.05), el.peryear(0.03)]}, init_prev=0.08)
     syph = el.Syphilis(beta={'mf': [el.peryear(0.3), el.peryear(0.2)], 'maternal': [el.peryear(0.9), el.peryear(0)]},
@@ -80,7 +80,7 @@ targeted = el.RoutineDelivery(product=tx, start_year=2028, prob=0.07, eligibilit
 el.parallel(make_sim('baseline', []), make_sim('mass', [mass]), make_sim('targeted', [targeted]))`;
 
 export const CODE_V3 = `import epiloom as el
-# v3: "cleaned up" by a second model pass
+# v3: refactored by a second model pass
 def make_sim(label, interventions, seed):
     hiv = el.HIV(beta={'mf': [el.peryear(0.05), el.peryear(0.03)]}, init_prev=0.08)
     syph = el.Syphilis(beta={'mf': [el.peryear(0.3), el.peryear(0.2)], 'maternal': [el.peryear(0.9), el.peryear(0)]},
@@ -99,8 +99,8 @@ el.parallel(make_sim('baseline', [], seed=1), make_sim('mass', [mass], seed=2), 
 
 export const CODE_VERSIONS = [
   { id: "v1", label: "v1: first draft", code: CODE_V1 },
-  { id: "v2", label: "v2: revised against the reviewed spec", code: CODE_V2 },
-  { id: "v3", label: "v3: 'cleaned up' by a second model pass", code: CODE_V3 },
+  { id: "v2", label: "v2: second draft", code: CODE_V2 },
+  { id: "v3", label: "v3: refactored by a second model pass", code: CODE_V3 },
 ];
 /** The version that passes every check against the reference spec. */
 export const SHIP_VERSION = "v2";

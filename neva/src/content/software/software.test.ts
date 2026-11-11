@@ -48,6 +48,10 @@ describe("validator", () => {
     expect(msg).toMatch(/different seeds \(1, 2, 3\)/);
   });
   it("catches single_rng=True and different seeds", () => {
+    // Every scenario in the spec, including the baseline, needs a labelled sim.
+    const v2 = CODE_VERSIONS.find(v => v.id === "v2")!.code;
+    expect(validateCode(v2.replace("make_sim('baseline', []), ", ""), REFERENCE_SPEC).map(i => i.rule)).toEqual(["missing-scenario"]);
+    expect(validateCode(CODE_VERSIONS.find(v => v.id === "v1")!.code, REFERENCE_SPEC).map(i => i.rule)).toContain("missing-scenario");
     expect(validateCode("el.options(single_rng=True)").map(i => i.rule)).toContain("crn-off");
     expect(validateCode("el.Sim(rand_seed=1)\nel.Sim(rand_seed=2)", { ...REFERENCE_SPEC, interventions: [], mtct: false, coinfection: null, diseases: [], horizon: null }).map(i => i.rule)).toContain("crn-seed");
   });
