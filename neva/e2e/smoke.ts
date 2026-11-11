@@ -81,7 +81,12 @@ try {
 
   // Theme toggle cycles System -> Light -> Dark.
   await page.goto(BASE + "/");
-  const btn = page.locator(".theme-btn");
+  // Connect-your-key panel opens from the top bar (AI is off in this run, so it offers to connect).
+  await page.getByRole("button", { name: /Connect Claude/ }).click();
+  ok(await page.getByRole("dialog").getByText("Connect your Claude account").isVisible(), "connect panel opens");
+  await page.keyboard.press("Escape");
+  ok(!(await page.getByRole("dialog").count()), "connect panel closes on Escape");
+  const btn = page.locator('.theme-btn[aria-label^="Theme"]');
   await btn.click(); ok(await page.evaluate(() => document.documentElement.dataset.theme) === "light", "theme: light");
   await btn.click(); ok(await page.evaluate(() => document.documentElement.dataset.theme) === "dark", "theme: dark");
 
