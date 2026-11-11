@@ -17,7 +17,7 @@ const mask = (k: string) => `${k.slice(0, 7)}…${k.slice(-4)}`;
 export function ConnectButton() {
   const s = useAiState();
   if (!s.loaded && !s.userKey) return null;
-  const label = s.userKey ? "● Claude connected" : s.trial.enabled ? `Free trial · ${s.trial.remaining} left · Connect` : "Connect Claude";
+  const label = s.userKey ? "● Claude connected" : s.unlimited ? "● Claude (this computer)" : s.trial.enabled ? `Free trial · ${s.trial.remaining} left · Connect` : "Connect Claude";
   return <button className={`theme-btn ${s.userKey ? "connected" : ""}`} onClick={openConnect} title="Use Otto with your own Anthropic account">{label}</button>;
 }
 

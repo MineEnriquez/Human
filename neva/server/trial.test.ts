@@ -13,7 +13,7 @@ function call(method: string, url: string, headers: Record<string, string> = {},
   return handleApi(req, res).then(() => ({ status, json: out ? JSON.parse(out.split("\n")[0]) : null }));
 }
 const env = { ...process.env };
-beforeEach(() => { resetTrialCounters(); process.env.TRIAL_PER_VISITOR = "2"; process.env.TRIAL_DAILY_CAP = "3"; delete process.env.UPSTASH_REDIS_REST_URL; });
+beforeEach(() => { resetTrialCounters(); process.env.TRIAL_ENFORCE = "1"; process.env.TRIAL_PER_VISITOR = "2"; process.env.TRIAL_DAILY_CAP = "3"; delete process.env.UPSTASH_REDIS_REST_URL; });
 afterEach(() => { process.env = { ...env }; vi.restoreAllMocks(); });
 
 describe("trial counters", () => {
@@ -72,6 +72,14 @@ describe("AI gate", () => {
     process.env.ANTHROPIC_API_KEY = "";
     const r = await call("POST", "/api/professor", { [USER_KEY_HEADER]: "not-a-key" });
     expect(r.status).toBe(503);
+  });
+  it("local runs (no TRIAL_ENFORCE, not on Vercel, not production) are unlimited on the owner's credentials", async () => {
+    delete process.env.TRIAL_ENFORCE; delete process.env.VERCEL; process.env.NODE_ENV = "development";
+    process.env.ANTHROPIC_API_KEY = "sk-ant-owner-test";
+    const s = (await call("GET", "/api/status")).json;
+    expect(s).toMatchObject({ ai: true, unlimited: true, trial: { enabled: false } });
+    process.env.VERCEL = "1";
+    expect((await call("GET", "/api/status")).json).toMatchObject({ unlimited: false, trial: { enabled: true } });
   });
   it("verify-key rejects keys that don't look like Anthropic keys without calling out", async () => {
     const r = await call("POST", "/api/verify-key", { [USER_KEY_HEADER]: "hello" });

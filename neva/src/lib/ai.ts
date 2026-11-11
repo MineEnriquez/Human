@@ -22,8 +22,8 @@ function readKey(): { key: string; mode: KeyMode } | null {
 
 // ---------------------------------------------------------------- status store
 export type Trial = { enabled: boolean; limit: number; remaining: number };
-type State = { loaded: boolean; serverAi: boolean; trial: Trial; userKey: { key: string; mode: KeyMode } | null };
-let state: State = { loaded: false, serverAi: false, trial: { enabled: false, limit: 0, remaining: 0 }, userKey: readKey() };
+type State = { loaded: boolean; serverAi: boolean; unlimited: boolean; trial: Trial; userKey: { key: string; mode: KeyMode } | null };
+let state: State = { loaded: false, serverAi: false, unlimited: false, trial: { enabled: false, limit: 0, remaining: 0 }, userKey: readKey() };
 const subs = new Set<() => void>();
 const set = (p: Partial<State>) => { state = { ...state, ...p }; subs.forEach(f => f()); };
 export const useAiState = () => useSyncExternalStore(cb => { subs.add(cb); return () => subs.delete(cb); }, () => state);
@@ -32,7 +32,7 @@ let loading: Promise<void> | null = null;
 export function refreshStatus(): Promise<void> {
   return (loading ??= fetch("/api/status")
     .then(r => r.json())
-    .then(j => set({ loaded: true, serverAi: Boolean(j.ai), trial: j.trial || { enabled: false, limit: 0, remaining: 0 } }))
+    .then(j => set({ loaded: true, serverAi: Boolean(j.ai), unlimited: Boolean(j.unlimited), trial: j.trial || { enabled: false, limit: 0, remaining: 0 } }))
     .catch(() => set({ loaded: true }))
     .finally(() => { loading = null; }));
 }
@@ -43,7 +43,7 @@ export function useAi(): boolean | null {
   const s = useAiState();
   if (s.userKey) return true;
   if (!s.loaded) return null;
-  return s.serverAi && s.trial.enabled && s.trial.remaining > 0;
+  return s.serverAi && (s.unlimited || (s.trial.enabled && s.trial.remaining > 0));
 }
 
 /** Ask the server to check a key (a model lookup, no tokens spent), then keep it in this browser. */

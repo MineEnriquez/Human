@@ -5,7 +5,20 @@
 // approximate; set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN to keep them exact across instances.
 //   TRIAL_PER_VISITOR  AI requests per visitor (IP) per UTC day   (default 10; 0 disables the trial)
 //   TRIAL_DAILY_CAP    AI requests across all trial visitors/day  (default 300)
+//   TRIAL_ENFORCE      1/0 to force the trial on/off; by default it applies only to public deployments
 import type { IncomingMessage } from "node:http";
+
+/**
+ * The trial only limits public deployments (Vercel, or `npm start` with NODE_ENV=production).
+ * When you run Neva on your own machine (`npm run dev`), your own credentials are unlimited.
+ * Set TRIAL_ENFORCE=1 to test the limits locally, or TRIAL_ENFORCE=0 to switch them off anywhere.
+ */
+export function trialEnforced(): boolean {
+  const f = process.env.TRIAL_ENFORCE;
+  if (f === "1" || f === "true") return true;
+  if (f === "0" || f === "false") return false;
+  return Boolean(process.env.VERCEL) || process.env.NODE_ENV === "production";
+}
 
 export const trialLimits = () => ({
   perVisitor: Math.max(0, Number(process.env.TRIAL_PER_VISITOR ?? 10)),

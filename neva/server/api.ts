@@ -17,7 +17,7 @@ import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 import { serverPath } from "./paths/index.js";
 import { credentialSource } from "./credentials.js";
-import { consumeTrial, trialLimits, trialRemaining, visitorId } from "./trial.js";
+import { consumeTrial, trialEnforced, trialLimits, trialRemaining, visitorId } from "./trial.js";
 
 if (existsSync(".env")) process.loadEnvFile(".env");
 
@@ -408,8 +408,10 @@ export async function handleApi(req: IncomingMessage, res: ServerResponse) {
   const path = (req.url || "").split("?")[0];
   if (path === "/api/status") {
     const { perVisitor } = trialLimits();
-    const remaining = hasKey() ? await trialRemaining(visitorId(req)) : 0;
-    return json(res, 200, { ai: hasKey(), source: credentialSource(), byok: true, model: MODEL, trial: { enabled: hasKey() && perVisitor > 0, limit: perVisitor, remaining } });
+    // Local runs (npm run dev) use the owner's credentials without limits; public deployments get the trial.
+    const unlimited = hasKey() && !trialEnforced();
+    const remaining = hasKey() && !unlimited ? await trialRemaining(visitorId(req)) : 0;
+    return json(res, 200, { ai: hasKey(), source: credentialSource(), unlimited, byok: true, model: MODEL, trial: { enabled: hasKey() && !unlimited && perVisitor > 0, limit: perVisitor, remaining } });
   }
   if (req.method !== "POST") return json(res, 405, { error: "POST only" });
   if (path === "/api/verify-key") return verifyKey(req, res);
@@ -419,6 +421,6 @@ export async function handleApi(req: IncomingMessage, res: ServerResponse) {
   const key = userKey(req);
   if (key) return als.run({ client: new Anthropic({ apiKey: key }), byok: true }, () => route(req, res));
   if (!hasKey()) return json(res, 503, { code: "no_key", error: "Connect your Anthropic API key to use Otto (AI is off on this server: ANTHROPIC_API_KEY is not set)." });
-  if (!(await consumeTrial(visitorId(req)))) return json(res, 429, { code: "trial_exhausted", error: "You've used today's free Otto requests. Connect your own Anthropic API key to keep going." });
+  if (trialEnforced() && !(await consumeTrial(visitorId(req)))) return json(res, 429, { code: "trial_exhausted", error: "You've used today's free Otto requests. Connect your own Anthropic API key to keep going." });
   return als.run({ client: owner(), byok: false }, () => route(req, res));
 }
