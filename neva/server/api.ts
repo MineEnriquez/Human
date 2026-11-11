@@ -16,6 +16,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 import { serverPath } from "./paths/index.js";
+import { credentialSource } from "./credentials.js";
 import { consumeTrial, trialLimits, trialRemaining, visitorId } from "./trial.js";
 
 if (existsSync(".env")) process.loadEnvFile(".env");
@@ -33,9 +34,17 @@ export const USER_KEY_HEADER = "x-anthropic-api-key";
 type Ctx = { client: Anthropic; byok: boolean };
 const als = new AsyncLocalStorage<Ctx>();
 let ownerClient: Anthropic | null = null;
-const owner = () => (ownerClient ??= new Anthropic());
+const owner = () => {
+  if (!ownerClient) {
+    // An empty exported key would outrank an `ant auth login` profile inside the SDK, so drop empty ones.
+    for (const k of ["ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"]) if (process.env[k] !== undefined && !process.env[k]!.trim()) delete process.env[k];
+    ownerClient = new Anthropic();
+  }
+  return ownerClient;
+};
 const ai = () => als.getStore()?.client ?? owner();
-const hasKey = () => Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
+/** The site owner's credentials: an API key, an auth token, or an `ant auth login` profile (local development). */
+const hasKey = () => credentialSource() !== null;
 const userKey = (req: IncomingMessage): string | null => {
   const v = req.headers?.[USER_KEY_HEADER];
   const k = (Array.isArray(v) ? v[0] : v)?.trim();
@@ -85,7 +94,7 @@ function ndjson(res: ServerResponse) {
   return (o: unknown) => res.write(JSON.stringify(o) + "\n");
 }
 function errMessage(e: unknown): string {
-  if (e instanceof Anthropic.AuthenticationError) return als.getStore()?.byok ? "Your Anthropic API key was rejected. Reconnect it with a valid key." : "The server's Anthropic API key was rejected. Check ANTHROPIC_API_KEY.";
+  if (e instanceof Anthropic.AuthenticationError) return als.getStore()?.byok ? "Your Anthropic API key was rejected. Reconnect it with a valid key." : "The server's Anthropic credentials were rejected. Check ANTHROPIC_API_KEY, or run `ant auth login` again.";
   if (e instanceof Anthropic.PermissionDeniedError && als.getStore()?.byok) return "Your Anthropic API key isn't allowed to use this model. Check its workspace and billing in the Anthropic Console.";
   if (e instanceof Anthropic.RateLimitError) return "Too many requests right now. Wait a minute and try again.";
   if (e instanceof Anthropic.BadRequestError) return "The request was rejected: " + e.message;
@@ -400,7 +409,7 @@ export async function handleApi(req: IncomingMessage, res: ServerResponse) {
   if (path === "/api/status") {
     const { perVisitor } = trialLimits();
     const remaining = hasKey() ? await trialRemaining(visitorId(req)) : 0;
-    return json(res, 200, { ai: hasKey(), byok: true, model: MODEL, trial: { enabled: hasKey() && perVisitor > 0, limit: perVisitor, remaining } });
+    return json(res, 200, { ai: hasKey(), source: credentialSource(), byok: true, model: MODEL, trial: { enabled: hasKey() && perVisitor > 0, limit: perVisitor, remaining } });
   }
   if (req.method !== "POST") return json(res, 405, { error: "POST only" });
   if (path === "/api/verify-key") return verifyKey(req, res);

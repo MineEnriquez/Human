@@ -26,9 +26,14 @@ Grotesk, Source Serif 4 and Newsreader.
 ```bash
 cd neva
 npm install
-export ANTHROPIC_API_KEY=sk-ant-...   # or put it in neva/.env (see .env.example)
+ant auth login                        # once; or: export ANTHROPIC_API_KEY=sk-ant-... (or neva/.env)
 npm run dev                           # http://localhost:5173
 ```
+
+**Local development with `ant`.** After `brew install anthropics/tap/ant` and `ant auth login`, the dev server
+uses that login with no API key to copy around. An exported `ANTHROPIC_API_KEY` takes precedence over the login,
+so unset it (or run `env -u ANTHROPIC_API_KEY npm run dev`) to use the login. `/api/status` reports which
+credential is active (`source`: `api-key`, `auth-token` or `ant-login`).
 
 **Visitors' own keys.** Anyone can click **Connect Claude** in the top bar and paste their own Anthropic API key;
 Otto then runs on their account. The key is kept only in their browser (session or device), sent with each AI
