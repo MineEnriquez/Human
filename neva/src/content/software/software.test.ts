@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { runTool, software } from "../../../server/paths/software";
 import { RAG_QUESTIONS, search } from "./corpus";
 import {
-  DEPLOYS, DUPLICATE_OF_NEW, EVENTS, INCIDENT_KEY, LOGS, MITIGATIONS, NEW_TICKET, PAYOUTS_METRICS, PR_CLAIMS, TICKETS, TIMES,
+  DEPLOYS, DUPLICATE_OF_NEW, EVENTS, HOLD_SECONDS, INCIDENT_KEY, LOGS, MITIGATIONS, NEW_TICKET, PAYOUTS_METRICS, PR_CLAIMS, TICKETS, TIMES,
   failedRequests, onset, similarity, toMin, topK,
 } from "./data";
 
@@ -88,8 +88,22 @@ describe("incident data supports exactly the key", () => {
     expect(LOGS.filter(l => /ignore previous instructions/i.test(l.message))).toHaveLength(1);
   });
   it("computes the impact from the metrics", () => {
-    expect(failedRequests()).toBeGreaterThan(15000);
-    expect(failedRequests()).toBeLessThan(30000);
+    // 02:40-03:25 (nine 5-minute buckets) at ~2,600 req/min with ~80% failing.
+    expect(failedRequests()).toBeGreaterThan(85000);
+    expect(failedRequests()).toBeLessThan(100000);
+  });
+  it("is consistent with Little's law (connections in use = requests/s x hold time)", () => {
+    const M = PAYOUTS_METRICS;
+    TIMES.forEach((t, i) => {
+      const needed = (M.requests_per_min[i] / 60) * HOLD_SECONDS;
+      if (M.db_pool_max[i] === 50) expect(Math.abs(M.db_pool_in_use[i] - needed)).toBeLessThan(2);
+      else expect(M.error_rate_pct[i] / 100).toBeGreaterThan(t === "02:40" ? 0.5 : 1 - 5 / needed - 0.02);
+    });
+    // Even at normal traffic (no batch), a 5-connection pool can't keep up: pausing the batch isn't a fix.
+    expect(1 - 5 / ((1800 / 60) * HOLD_SECONDS)).toBeGreaterThan(0.7);
+  });
+  it("puts p99 at or above the 3 s acquire timeout once requests are timing out", () => {
+    PAYOUTS_METRICS.p99_latency_ms.forEach((v, i) => { if (PAYOUTS_METRICS.db_pool_max[i] === 5) expect(v).toBeGreaterThanOrEqual(3000); });
   });
 });
 

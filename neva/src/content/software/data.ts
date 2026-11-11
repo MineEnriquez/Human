@@ -7,10 +7,10 @@
 export const LEDGER_DOCS = `ledgerkit v2.4 (Lumenrail's internal ledger client, fictional). Functions: ledger.post_entry(account_id, amount_cents, idempotency_key) records one entry; amount_cents is an integer. ledger.get_balance(account_id) returns the balance in cents. There is no transfer function: a transfer is two post_entry calls with the same idempotency key prefix. The client does NOT retry; callers retry with the same idempotency key so a repeated request is not applied twice. Config: LEDGER_TIMEOUT_MS (milliseconds, default 2000). get_balance_v1 is deprecated.`;
 
 /** The PR's diff summary and CI result, as the reviewer sees them. */
-export const PR_SOURCE = `PR #482 "Instant payouts: ledger writes" (fictional). Diff: payouts/ledger.py calls ledger.transfer_atomic(from_account, to_account, amount_cents); every ledger call now passes idempotency_key=payout.id; amounts are converted to integer cents before any ledger call; config/payouts.env sets LEDGER_TIMEOUT_MS=5; flags.yaml adds instant_payouts_v2 with default: off; the last get_balance_v1 call is replaced with get_balance. CI: 212 passed, 2 failed (test_transfer_rollback, test_timeout_budget).`;
+export const PR_SOURCE = `PR #482 "Instant payouts: ledger writes" (fictional). Diff: payouts/ledger.py calls ledger.transfer_atomic(from_account, to_account, amount_cents); every post_entry call now passes an idempotency key derived from payout.id (payout.id + ':debit' / ':credit'); amounts are converted to integer cents before any ledger call; config/payouts.env sets LEDGER_TIMEOUT_MS=5; flags.yaml adds instant_payouts_v2 with default: off; the last get_balance_v1 call is replaced with get_balance. CI: 212 passed, 2 failed (test_transfer_rollback, test_timeout_budget).`;
 
 export const PR_CLAIMS = [
-  { id: "c1", label: "Passes an idempotency key on every ledger call.", bucket: "sup", why: "The diff adds idempotency_key=payout.id to every call." },
+  { id: "c1", label: "Passes an idempotency key on every ledger write.", bucket: "sup", why: "The diff adds a key derived from payout.id to every post_entry call." },
   { id: "c2", label: "Uses `ledger.transfer_atomic()` so the debit and credit happen in one step.", bucket: "fab", why: "ledgerkit v2.4 has no transfer function. The name is plausible (other libraries have one), so the model invented it." },
   { id: "c3", label: "Sets `LEDGER_TIMEOUT_MS=5` so calls fail fast after 5 seconds.", bucket: "fab", why: "The unit is milliseconds: 5 means 5 ms, not 5 s. Fluent, and wrong by a factor of 1,000." },
   { id: "c4", label: "All existing tests pass.", bucket: "fab", why: "CI shows 2 failures. The claim contradicts the source." },
@@ -71,7 +71,14 @@ export const METRICS: Metric[] = ["requests_per_min", "error_rate_pct", "p99_lat
 
 const DEPLOY_MIN = toMin("02:40");
 const BATCH_MIN = toMin("02:30");
-/** payouts-api metrics per bucket. Before 02:40 the pool max is 50; D-884 sets it to 5. */
+/**
+ * payouts-api metrics per bucket. Before 02:40 the pool max is 50; D-884 sets it to 5.
+ * Consistent with Little's law (connections in use = requests/s x hold time): each payout request holds one
+ * database connection for its whole duration, about 0.63 s (it calls the payment provider inside the
+ * transaction), so ~30 req/s needs ~19 connections and the batch's ~43 req/s needs ~27. A pool of 5 can serve
+ * only ~8 req/s, so most requests wait out the 3 s acquire timeout and fail, with or without the batch.
+ */
+export const HOLD_SECONDS = 0.63;
 export const PAYOUTS_METRICS: Record<Metric, number[]> = (() => {
   const out: Record<Metric, number[]> = { requests_per_min: [], error_rate_pct: [], p99_latency_ms: [], db_pool_in_use: [], db_pool_max: [], db_cpu_pct: [] };
   const wiggle = [0, 3, -2, 4, -1, 2, -3, 1, 0, -2, 3, -1, 2, 0, -3, 1, 2, -1];
@@ -83,8 +90,11 @@ export const PAYOUTS_METRICS: Record<Metric, number[]> = (() => {
     out.requests_per_min.push(rpm);
     out.db_pool_max.push(after ? 5 : 50);
     out.db_pool_in_use.push(after ? 5 : (batch ? 27 : 19) + (wiggle[i] > 0 ? 1 : 0));
-    out.error_rate_pct.push(after ? +(m === DEPLOY_MIN ? 4.8 : 17.5 + wiggle[i] * 0.3).toFixed(1) : +(0.2 + Math.abs(wiggle[i]) * 0.02).toFixed(2));
-    out.p99_latency_ms.push(after ? 3000 + wiggle[i] * 10 : (batch ? 210 : 180) + wiggle[i] * 4);
+    // After the deploy: share of demand a 5-connection pool can't serve (the 02:40 bucket ramps up as the config reloads).
+    const unserved = Math.max(0, 1 - 5 / HOLD_SECONDS / (rpm / 60));
+    out.error_rate_pct.push(after ? +(m === DEPLOY_MIN ? 60 : unserved * 100 + wiggle[i] * 0.3).toFixed(1) : +(0.2 + Math.abs(wiggle[i]) * 0.02).toFixed(2));
+    // p99 before: requests take ~0.63 s on average; after: the slowest 1% are requests that waited out the 3 s timeout.
+    out.p99_latency_ms.push(after ? 3000 + Math.abs(wiggle[i]) * 10 : (batch ? 1050 : 950) + wiggle[i] * 8);
     // With 5 connections the database does *less* work, so its CPU drops: the database is not the bottleneck.
     out.db_cpu_pct.push(after ? 22 + wiggle[i] : (batch ? 41 : 34) + wiggle[i]);
   });
@@ -118,10 +128,10 @@ export const FLAGS = [{ name: "instant_payouts_v2", state: "off", changed: "Mon 
 /** Events the learner classifies in the capstone report. */
 export type EventClass = "cause" | "symptom" | "unrelated";
 export const EVENTS: { id: string; label: string }[] = [
-  { id: "e-deploy", label: "02:40 Deploy D-884: payouts-api pool max 50 → 5" },
+  { id: "e-deploy", label: "02:40 Deploy D-884: payouts-api config change" },
   { id: "e-timeouts", label: "02:41 Pool timeouts: 'timed out acquiring a connection'" },
-  { id: "e-503", label: "02:41 HTTP 503s on POST /v1/payouts (error rate ~0.2% → ~17%)" },
-  { id: "e-latency", label: "02:40 onward: p99 latency ~0.2 s → ~3 s" },
+  { id: "e-503", label: "02:41 HTTP 503s on POST /v1/payouts (error rate ~0.2% → ~80%)" },
+  { id: "e-latency", label: "02:40 onward: p99 latency ~1 s → ~3 s (the acquire timeout)" },
   { id: "e-batch", label: "02:30 Nightly payout batch: traffic +45%" },
   { id: "e-checkout", label: "01:15 Deploy D-881: checkout-web copy changes" },
   { id: "e-jwks", label: "02:52 auth-service JWKS refresh slow (1.2 s)" },
@@ -148,13 +158,13 @@ export const INCIDENT_KEY: { classes: Record<string, EventClass>; mitigation: st
     "e-auth-deploy": "unrelated",
   },
   mitigation: "rollback-d884",
-  rootCause: "Deploy D-884 at 02:40, a config change pushed directly through the config service (so the canary that would have stopped it never ran), lowered payouts-api's database connection pool from 50 to 5. With 5 connections all in use, requests waited the full 3-second acquire timeout and failed with 503s, so the error rate jumped from about 0.2% to about 17% and p99 latency to about 3 s from the same 5-minute bucket.",
+  rootCause: "Deploy D-884 at 02:40, a config change pushed directly through the config service (so the canary that would have stopped it never ran), lowered payouts-api's database connection pool from 50 to 5. With 5 connections all in use, requests waited the full 3-second acquire timeout and failed with 503s, so the error rate jumped from about 0.2% to about 80% and p99 latency from about 1 s to about 3 s from the same 5-minute bucket.",
   whyNotOthers: "The nightly batch raised traffic at 02:30, but errors stayed near 0.2% for the ten minutes before the deploy, with the pool at about 27 of 50. Database CPU fell after 02:40, so the database itself was not overloaded. D-881 and the JWKS warning are in other services; D-886 came 30 minutes after the errors began. Restarting pods keeps the bad config; scaling the database doesn't change the pool limit; pausing the batch reduces load but leaves payouts failing at the 5-connection limit.",
 };
 
-/** Requests that failed between the deploy and the page-in, from the metrics (for the impact section). */
+/** Requests that failed from the deploy (02:40) until the page-in (03:25), from the metrics (for the impact section). */
 export function failedRequests(): number {
-  return TIMES.reduce((n, t, i) => (toMin(t) >= DEPLOY_MIN ? n + Math.round(PAYOUTS_METRICS.requests_per_min[i] * 5 * PAYOUTS_METRICS.error_rate_pct[i] / 100) : n), 0);
+  return TIMES.reduce((n, t, i) => (toMin(t) >= DEPLOY_MIN && toMin(t) < toMin("03:25") ? n + Math.round(PAYOUTS_METRICS.requests_per_min[i] * 5 * PAYOUTS_METRICS.error_rate_pct[i] / 100) : n), 0);
 }
 /** First bucket where the error rate exceeds `pct`. */
 export function onset(pct = 1): string | null {

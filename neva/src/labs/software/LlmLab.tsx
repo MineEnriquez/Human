@@ -26,7 +26,8 @@ function tokenizeIllustrative(text: string): Tok[] {
   return out;
 }
 
-// Next token after `ledger.` with no docs in the context: illustrative probabilities from patterns in other libraries.
+// Next identifier after `ledger.` with no docs in the context: illustrative probabilities from patterns in other
+// libraries. Each identifier is shown as one choice for simplicity; in reality it is several tokens.
 const NEXT = [
   { tok: "post_entry", logit: 2.6, real: true }, { tok: "transfer", logit: 2.3, real: false }, { tok: "get_balance", logit: 2.0, real: true },
   { tok: "transfer_atomic", logit: 1.8, real: false }, { tok: "commit", logit: 0.9, real: false },

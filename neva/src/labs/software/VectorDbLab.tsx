@@ -98,7 +98,7 @@ export default function VectorDbLab() {
         )}
       </LabCard>
 
-      <LabCard title="C. Which ticket is the duplicate?" done={ev.includes(EV[2])} sub="Read the Payouts tickets near the new report. Pick the one that is the same bug, not just the most similar-sounding.">
+      <LabCard title="C. Which ticket is the duplicate?" done={ev.includes(EV[2])} sub="Read the Payouts tickets near the new report. Pick the duplicate, and confirm it is the same bug rather than just a similar-sounding one.">
         <div className="stack" style={{ gap: 8 }}>
           {candidates.map(t => (
             <button key={t.id} className={`opt ${pick === t.id ? (t.id === DUPLICATE_OF_NEW ? "right" : "wrong") : ""}`} onClick={() => choose(t.id)}>

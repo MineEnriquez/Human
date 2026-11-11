@@ -22,7 +22,7 @@ export const DOSSIER: Dossier = {
   cast: [
     { name: "Priya Nandakumar", role: "Engineering manager, Payments", needs: "A launch she can defend: no surprises in the code, the docs or on-call" },
     { name: "Tomás Reyes", role: "Staff engineer", needs: "To know which parts of the assistant's PR are real before he approves it" },
-    { name: "Leo Brandt", role: "Support lead", needs: "Duplicate tickets linked to the right bug, not just the most similar one" },
+    { name: "Leo Brandt", role: "Support lead", needs: "Duplicate tickets linked to the right bug, confirmed as the same bug and not just a similar-sounding one" },
     { name: "Sam Adeyemi", role: "Product manager, Instant Payouts", needs: "Policy answers he can quote, with the sentence they come from" },
     { name: "Mei Lin Zhou", role: "Security engineer", needs: "An assistant that can read production, not one that can break it" },
     { name: "Hana Okafor", role: "Site reliability engineer, primary on-call this week", needs: "A root cause and a mitigation she can trust at 3 a.m." },
@@ -55,7 +55,7 @@ export const SCENES: Record<string, { from: { name: string; role: string; ask: s
     from: { name: "Leo Brandt", role: "Support lead", ask: "A customer changed their bank details and their payout is stuck. Is this a known bug? I don't want to file a fourth duplicate." },
     when: "Tue 8 Dec 2026, 14:00",
     deliverable: "The ticket the new report duplicates, with the similarity evidence and one reason the runner-up is not the same bug.",
-    success: ["Run a top-k similarity search and read the scores", "Use metadata filters and show how a wrong filter misleads", "Pick the true duplicate, not just the most similar-sounding ticket"],
+    success: ["Run a top-k similarity search and read the scores", "Use metadata filters and show how a wrong filter misleads", "Pick the duplicate and confirm it is the same bug, not just a similar-sounding one"],
     hook: "Similar words, different bugs. A vector database finds look-alikes in milliseconds; deciding which one is the same problem is still your job.",
   },
   "se-rag": {
