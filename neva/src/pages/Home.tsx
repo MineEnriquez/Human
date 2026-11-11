@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Carousel } from "../components/Carousel";
 import { Legend, RichInline } from "../components/Rich";
 import { PATHS } from "../content/paths";
 import { lessonDone, useProgress } from "../lib/progress";
@@ -34,7 +35,7 @@ export function Home() {
 
       <div className="page">
         <div className="section-h"><h2>Choose a <em>path</em></h2><Legend /></div>
-        <div className="grid paths">
+        <Carousel label="Learning paths">
           {PATHS.map(path => {
             const n = path.lessons.filter(l => lessonDone(p, l.id, l.boss)).length;
             const inner = (
@@ -53,7 +54,7 @@ export function Home() {
               ? <Link key={path.id} to={`/paths/${path.id}`} className="card path-card">{inner}</Link>
               : <div key={path.id} className="card path-card locked" aria-disabled>{inner}</div>;
           })}
-        </div>
+        </Carousel>
 
         <div className="section-h" style={{ marginTop: 56 }}><h2>How a case <em>works</em></h2></div>
         <div className="grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
