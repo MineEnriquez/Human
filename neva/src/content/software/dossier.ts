@@ -20,11 +20,11 @@ export const DOSSIER: Dossier = {
     { when: "Fri 11 Dec, 10:00", what: "Instant Payouts launch, if the team can stand behind it." },
   ],
   cast: [
-    { name: "Priya Nandakumar", role: "Engineering manager, Payments", needs: "A launch she can defend: no surprises in the code, the docs or on-call" },
+    { name: "Elizabeth Cu", role: "Engineering manager, Payments", needs: "A launch she can defend: no surprises in the code, the docs or on-call" },
     { name: "Tomás Reyes", role: "Staff engineer", needs: "To know which parts of the assistant's PR are real before he approves it" },
     { name: "Leo Brandt", role: "Support lead", needs: "Duplicate tickets linked to the right bug, confirmed as the same bug and not just a similar-sounding one" },
     { name: "Sam Adeyemi", role: "Product manager, Instant Payouts", needs: "Policy answers he can quote, with the sentence they come from" },
-    { name: "Mei Lin Zhou", role: "Security engineer", needs: "An assistant that can read production, not one that can break it" },
+    { name: "Kevin Quenka", role: "Security engineer", needs: "An assistant that can read production, not one that can break it" },
     { name: "Hana Okafor", role: "Site reliability engineer, primary on-call this week", needs: "A root cause and a mitigation she can trust at 3 a.m." },
     { name: "You", role: "AI lead, Lumenrail engineering", needs: "To use AI to move fast without letting it decide" },
   ],
@@ -66,7 +66,7 @@ export const SCENES: Record<string, { from: { name: string; role: string; ask: s
     hook: "Before you trust an answer, ask where it came from. Before you trust a citation, read it.",
   },
   "se-mcp": {
-    from: { name: "Mei Lin Zhou", role: "Security engineer", ask: "On-call wants the assistant wired to logs, metrics and deploys before the launch. Tell me exactly which tools it gets, and which ones need a human to say yes." },
+    from: { name: "Kevin Quenka", role: "Security engineer", ask: "On-call wants the assistant wired to logs, metrics and deploys before the launch. Tell me exactly which tools it gets, and which ones need a human to say yes." },
     when: "Wed 9 Dec 2026, 16:30",
     deliverable: "A tool policy for the on-call MCP server (auto-run, ask first, don't expose) and an audited trace of a live session.",
     success: ["Order a full MCP session from initialize to the model's answer", "Sort every tool by the approval it needs", "Audit a live tool call: what ran, with which arguments, what came back"],

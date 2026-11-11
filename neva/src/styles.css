@@ -367,8 +367,13 @@ input[type=range] { accent-color: var(--ink); }
 .carousel-slide > * { flex: 1; }
 .carousel-slide > .card { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
 .carousel-slide > .card:hover, .carousel-slide > .card:focus-visible { transform: translateY(-4px); box-shadow: 0 14px 32px rgba(0,0,0,.16), 0 3px 8px rgba(0,0,0,.08); border-color: var(--ink); }
-:root[data-theme="dark"] .carousel-slide > .card:hover { box-shadow: 0 14px 32px rgba(0,0,0,.55), 0 0 0 1px var(--band-line); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .carousel-slide > .card:hover { box-shadow: 0 14px 32px rgba(0,0,0,.55), 0 0 0 1px var(--band-line); } }
+/* Dark theme: a dark shadow is invisible on a dark page, so the cards get a soft light glow instead. */
+:root[data-theme="dark"] .carousel-slide > .card { box-shadow: 0 0 0 1px rgba(255,255,255,.05), 0 8px 24px rgba(255,255,255,.08); }
+:root[data-theme="dark"] .carousel-slide > .card:hover, :root[data-theme="dark"] .carousel-slide > .card:focus-visible { box-shadow: 0 0 0 1px rgba(255,255,255,.14), 0 12px 34px rgba(255,255,255,.17), 0 2px 10px rgba(255,255,255,.08); border-color: rgba(255,255,255,.35); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .carousel-slide > .card { box-shadow: 0 0 0 1px rgba(255,255,255,.05), 0 8px 24px rgba(255,255,255,.08); }
+  :root:not([data-theme="light"]) .carousel-slide > .card:hover, :root:not([data-theme="light"]) .carousel-slide > .card:focus-visible { box-shadow: 0 0 0 1px rgba(255,255,255,.14), 0 12px 34px rgba(255,255,255,.17), 0 2px 10px rgba(255,255,255,.08); border-color: rgba(255,255,255,.35); }
+}
 .carousel-chevron { position: absolute; top: calc(50% - 30px); transform: translateY(-50%); z-index: 2; width: 46px; height: 46px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--sheet); color: var(--ink); display: grid; place-items: center; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.14); transition: opacity .15s ease, transform .15s ease, background .15s ease; }
 .carousel-chevron.left { left: -22px; }
 .carousel-chevron.right { right: -22px; }
