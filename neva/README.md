@@ -1,11 +1,13 @@
-# Neva: AI for the life sciences
+# Neva: learn AI by solving real cases
 
 A case-based course site that teaches how modern AI works (LLMs, vector databases, RAG and MCP)
-through casework in three fields. Otto, an AI tutor, teaches Socratically, grades open
+through casework in four fields: software engineering (the general-audience path), cancer genomics,
+disease modeling and research. Otto, an AI tutor, teaches Socratically, grades open
 answers, writes new questions and coaches you through a live investigation.
 
 | Path | Field | Case setting (all fictional) |
 |---|---|---|
+| **AI for Software Engineers** | Software engineering | Launch week at Lumenrail, an online booking and payments platform: an AI-written PR, duplicate tickets, a docs bot, on-call tools and a 3 a.m. incident. The general-audience path: no science background needed |
 | **Cancer Genomics** | Genetics | A relapsed acute myeloid leukemia at the Cascade Ridge Cancer Research Center: tumor sequencing and a single-cell atlas |
 | **Disease Modeling** | Disease modeling | Tuberculosis in the high-burden Kestrel Valley District; the programme must choose which strategy to fund to 2035 |
 | **Research Intelligence** | Research | A systematic review at the Meridian Evidence Unit |
@@ -56,6 +58,25 @@ AI features show an "AI is off" notice.
 Production: `npm run build && npm start` serves `dist/` and the API on port 8787 (`PORT` to change).
 
 ## The paths
+
+### AI for Software Engineers (start here)
+
+For any software engineer: every AI term is defined on first use. The fictional company Lumenrail launches Instant
+Payouts on Friday 11 Dec 2026, and you are the engineering team's new AI lead. The path has a case dossier
+(timeline, seven people, stakes) and a scene for each case, like Cancer Genomics.
+
+| # | AI topic | Case | Lab |
+|---|---|---|---|
+| 1 | LLMs | The Hallucinated API | Tokenize code, sample a completion after `ledger.` with no docs in context, check an AI-written PR's claims against the docs, diff and CI |
+| 2 | Vector databases | Duplicate Tickets | Ticket record anatomy, top-k similarity with drag-in filters, pick the true duplicate (not the most similar-sounding) |
+| 3 | RAG | Ask the Runbook | Cited answers from the team's deploy policy, severity levels, on-call policy, runbooks, SLOs and ADRs |
+| 4 | MCP | Wire Up the Tools | Handshake order, tool approval policy for production tools, live tool-using assistant |
+| 5 | Capstone | The 3 a.m. Incident | Agent with `search_logs`, `get_metrics`, `list_deploys`, `search_runbooks`; classify cause, symptoms and red herrings and choose the mitigation (checked exactly), then a blameless postmortem graded by Otto |
+
+The incident has one defensible answer, derived from the case data: a config change pushed outside the deploy
+pipeline shrank the database connection pool from 50 to 5, so requests timed out waiting for connections. A traffic
+bump from the nightly batch, a noisy warning and two other deploys are red herrings. One log line is a prompt-injection
+attempt, for the lesson on treating tool output as data.
 
 ### Cancer Genomics
 

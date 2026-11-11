@@ -30,7 +30,7 @@ export function Layout() {
           <Link to="/" className="logo"><span className="logo-mark" role="img" aria-label="Neva logo: Minerva with Otto the owl" />Neva</Link>
           <nav className="nav">
             <NavLink to="/" end>Home</NavLink>
-            <NavLink to="/paths/cancer-genomics">Paths</NavLink>
+            <NavLink to="/paths/software-engineering">Paths</NavLink>
             <NavLink to="/office-hours">Office hours</NavLink>
             <NavLink to="/dashboard">Progress</NavLink>
           </nav>
@@ -48,7 +48,7 @@ export function Layout() {
       </header>
       <main><Outlet /></main>
       <ConnectPanel />
-      <footer className="footer">Neva · AI for the life sciences. Cases, institutions, patients, samples and studies are fictional teaching material. Not medical advice.</footer>
+      <footer className="footer">Neva · Learn AI by solving real cases. Companies, institutions, people, patients, data and studies are fictional teaching material. Not medical advice.</footer>
       <div className="toasts" aria-live="polite">
         {toasts.map(t => <div key={t.id} className={`toast ${t.kind}`}><span className="plus">{t.plus}</span>{t.text}</div>)}
       </div>

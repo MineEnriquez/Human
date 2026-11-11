@@ -24,9 +24,10 @@ const checkOk = (c: Check, where: string) => {
 };
 
 describe("course registry", () => {
-  it("has three paths with unique ids", () => {
-    expect(PATHS).toHaveLength(3);
-    expect(new Set(PATHS.map(p => p.id)).size).toBe(3);
+  it("has four paths with unique ids, AI for Software Engineers first", () => {
+    expect(PATHS).toHaveLength(4);
+    expect(new Set(PATHS.map(p => p.id)).size).toBe(4);
+    expect(PATHS[0].id).toBe("software-engineering");
   });
   it("live paths have five lessons ending in a capstone, and a setting for the professor", () => {
     for (const p of live) {

@@ -13,15 +13,15 @@ export function Home() {
       <section className="hero">
         <div className="hero-in">
           <div>
-            <div className="eyebrow" style={{ color: "var(--on-band-muted)" }}>AI for the life sciences</div>
+            <div className="eyebrow" style={{ color: "var(--on-band-muted)" }}>AI for software, science and research</div>
             <h1>Learn AI by <em>solving real scenarios</em>.</h1>
-            <p className="lede">LLMs, vector databases, retrieval-augmented generation and MCP, taught by an AI professor through casework in genomics, disease modeling and research.</p>
+            <p className="lede">LLMs, vector databases, retrieval-augmented generation and MCP, taught by Otto, an AI professor, through casework in software engineering, cancer genomics, disease modeling and research.</p>
             <div className="row">
               <Link className="btn yellow" to={`/lesson/${next.id}`}>{done ? "Continue your case" : "Open your first case"} →</Link>
               <Link className="btn" style={{ background: "transparent", color: "var(--on-band)", borderColor: "var(--on-band)" }} to="/paths/cancer-genomics">See the path</Link>
             </div>
             <div className="stat-row">
-              <div><b>3</b>paths</div><div><b>5</b>cases per path</div><div><b>6</b>AI features</div><div><b>{p.xp}</b>your XP</div>
+              <div><b>{PATHS.length}</b>paths</div><div><b>5</b>cases per path</div><div><b>6</b>AI features</div><div><b>{p.xp}</b>your XP</div>
             </div>
           </div>
           <div className="hero-card">

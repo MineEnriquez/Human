@@ -3,7 +3,7 @@
 //   **bold**  `code`  paragraphs, "- " bullet lists, "1. " numbered lists, "#### " sub-headings
 import { Fragment, type ReactNode } from "react";
 
-const KIND: Record<string, string> = { c: "Core AI concept", b: "Biology / data", t: "Tool or system", w: "Pitfall" };
+const KIND: Record<string, string> = { c: "Core AI concept", b: "Domain term or data", t: "Tool or system", w: "Pitfall" };
 
 function inline(s: string, key = ""): ReactNode[] {
   const out: ReactNode[] = [];
@@ -49,7 +49,7 @@ export function Legend() {
     <div className="legend" aria-label="Colour key">
       <span>Colour key:</span>
       <span className="k k-c">concept</span>
-      <span className="k k-b">biology / data</span>
+      <span className="k k-b">domain / data</span>
       <span className="k k-t">tool / system</span>
       <span className="k k-w">pitfall</span>
     </div>
