@@ -21,7 +21,7 @@ const CARDS = [
   { id: "x6", label: "Treatment exit rate τ: **6 per year**", bucket: "bad", why: "Six months of treatment means τ = 1/0.5 = 2 per year. The duration was copied into a rate field." },
   { id: "x7", label: "Treatment exit rate τ: **2 per year**", bucket: "ok", why: "Correctly derived from six months: 1 / 0.5 years." },
   { id: "x8", label: "Treatment success: **80%**", bucket: "ok", why: "Stated for 2025." },
-  { id: "x9", label: "Case detection rate: **0.70 per year**", bucket: "missing", why: "The cohort report never mentions detection. The model filled a row it was asked for." },
+  { id: "x9", label: "Detection rate: **0.70 per year**", bucket: "missing", why: "The cohort report never mentions detection. The model filled a row it was asked for." },
   { id: "x10", label: "District population: **6 million**", bucket: "bad", why: "The source says 600,000. One digit of scale is easy for a fluent model to slip." },
 ];
 
@@ -78,10 +78,10 @@ export default function ParameterLab() {
           </svg>
           <div className="stack" style={{ gap: 8 }}>
             {slider("Transmission β (contacts/case/yr)", beta, setBeta, 6, 20, 0.25)}
-            {slider("Case detection rate δ (per yr)", delta, setDelta, 0.3, 1.6, 0.05)}
+            {slider("Detection rate δ (per yr)", delta, setDelta, 0.3, 1.6, 0.05)}
             <div className={`banner ${fitted ? "" : "warn"}`} style={fitted ? { background: "var(--ok-soft)", color: "var(--ok)" } : undefined}>
               Fit error <b className="mono">{(err * 100).toFixed(1)}%</b>{fitted ? " ✓ good fit" : ""}<br />
-              <span style={{ fontSize: ".85rem" }}>Implied 2025 incidence {Math.round(inc2025)}/100k · detecting {Math.round(cdr * 100)}% of cases · 2019 prevalence {Math.round(prev2019)}/100k</span>
+              <span style={{ fontSize: ".85rem" }}>Implied 2025 incidence {Math.round(inc2025)}/100k · notifications ≈ {Math.round(cdr * 100)}% of incidence · 2019 prevalence {Math.round(prev2019)}/100k</span>
             </div>
             <button className="btn primary sm" disabled={!fitted || ev.includes(EV[1])} onClick={() => { finishPart(ID, EV[1], EV, 30); earnBadge("curve-shaper"); }}>{ev.includes(EV[1]) ? "Logged ✓" : fitted ? "Log this fit as evidence" : "Fit the curve first"}</button>
           </div>

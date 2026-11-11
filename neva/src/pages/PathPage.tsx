@@ -55,7 +55,7 @@ export function PathPage() {
                   <div className="eyebrow">{l.topic}</div>
                   <h3>{l.title}</h3>
                   <div className="case">Case: {l.caseTitle}{l.brief.when ? ` · ${l.brief.when}` : ""}</div>
-                  {l.brief.from && <div className="muted" style={{ fontSize: ".85rem", marginTop: 4 }}>Brought by {l.brief.from.name}, {l.brief.from.role.toLowerCase()}</div>}
+                  {l.brief.from && <div className="muted" style={{ fontSize: ".85rem", marginTop: 4 }}>Brought by {l.brief.from.name}, {l.brief.from.role.charAt(0).toLowerCase() + l.brief.from.role.slice(1)}</div>}
                   <div className="meta">
                     <span className="tag soon">up to {totalXp(l)} XP</span>{(l.boss ? ["brief", "lab"] : ["brief", "lecture", "lab", "seminar", "quiz"]).map(s => <span key={s} className={`tag ${st[s as keyof typeof st] ? "live" : ""}`}>{st[s as keyof typeof st] ? "✓" : "○"} {s}</span>)}
                   </div>

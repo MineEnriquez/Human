@@ -12,7 +12,7 @@
 //
 //   λ      = beta · I / N                  force of infection (beta: effective contacts per active case per year)
 //   dS/dt  = births − λS − μS
-//   dLr/dt = λS + p·λ(Lt + R) − (eps + kappa + μ)·Lr          p: partial protection of prior infection
+//   dLr/dt = λS + p·λ(Lt + R) − (eps + kappa + μ)·Lr          p: relative susceptibility to reinfection (1 − p = partial protection)
 //   dLt/dt = kappa·Lr − p·λ·Lt − (nu + μ)·Lt
 //   dI/dt  = eps·Lr + nu·Lt + rho·R + (1 − s)·tau·T − (delta + sc + muTB + μ)·I
 //   dT/dt  = delta·I − (tau + μ)·T
