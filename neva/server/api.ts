@@ -9,12 +9,14 @@
 //   POST /api/rag             -> NDJSON stream: answer grounded ONLY in the chunks the learner packed, with citations
 //   POST /api/agent           -> NDJSON stream: lab assistant agent that calls the path's tools (manual tool loop)
 //   POST /api/capstone-grade  -> JSON: grades the capstone report against the path's answer key
+import { AsyncLocalStorage } from "node:async_hooks";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { existsSync } from "node:fs";
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { z } from "zod";
 import { serverPath } from "./paths/index.js";
+import { consumeTrial, trialLimits, trialRemaining, visitorId } from "./trial.js";
 
 if (existsSync(".env")) process.loadEnvFile(".env");
 
@@ -24,9 +26,21 @@ export const MODEL = "claude-opus-5-5";
 // recommended fallback model inside the same call.
 const FALLBACK = { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const };
 
-let client: Anthropic | null = null;
-const ai = () => (client ??= new Anthropic());
+// Each AI request runs with either the visitor's own key ("bring your own key") or the site owner's key
+// (free trial). The client for the current request lives in AsyncLocalStorage so handlers just call ai().
+// Visitor keys arrive in a header, are used for that request only, and are never stored or logged.
+export const USER_KEY_HEADER = "x-anthropic-api-key";
+type Ctx = { client: Anthropic; byok: boolean };
+const als = new AsyncLocalStorage<Ctx>();
+let ownerClient: Anthropic | null = null;
+const owner = () => (ownerClient ??= new Anthropic());
+const ai = () => als.getStore()?.client ?? owner();
 const hasKey = () => Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
+const userKey = (req: IncomingMessage): string | null => {
+  const v = req.headers?.[USER_KEY_HEADER];
+  const k = (Array.isArray(v) ? v[0] : v)?.trim();
+  return k && /^sk-ant-[A-Za-z0-9_-]{20,300}$/.test(k) ? k : null;
+};
 
 type Msg = Anthropic.Beta.BetaMessageParam;
 
@@ -71,12 +85,18 @@ function ndjson(res: ServerResponse) {
   return (o: unknown) => res.write(JSON.stringify(o) + "\n");
 }
 function errMessage(e: unknown): string {
-  if (e instanceof Anthropic.AuthenticationError) return "The server's Anthropic API key was rejected. Check ANTHROPIC_API_KEY.";
+  if (e instanceof Anthropic.AuthenticationError) return als.getStore()?.byok ? "Your Anthropic API key was rejected. Reconnect it with a valid key." : "The server's Anthropic API key was rejected. Check ANTHROPIC_API_KEY.";
+  if (e instanceof Anthropic.PermissionDeniedError && als.getStore()?.byok) return "Your Anthropic API key isn't allowed to use this model. Check its workspace and billing in the Anthropic Console.";
   if (e instanceof Anthropic.RateLimitError) return "Too many requests right now. Wait a minute and try again.";
   if (e instanceof Anthropic.BadRequestError) return "The request was rejected: " + e.message;
   if (e instanceof Anthropic.APIError) return `Claude API error ${e.status ?? ""}. Try again.`;
   if (e instanceof Error && /credentials|api key/i.test(e.message)) return "No Anthropic API key is configured on the server.";
   return "Couldn't reach Claude. Check the server log and your connection.";
+}
+/** Logs only the error's class, status and message: never request headers, so visitor keys can't leak into logs. */
+function logError(where: string, e: unknown) {
+  const status = e instanceof Anthropic.APIError ? ` ${e.status ?? ""}` : "";
+  console.error(where, (e as Error)?.constructor?.name + status, String((e as Error)?.message || e).replace(/sk-ant-[A-Za-z0-9_-]+/g, "sk-ant-***"));
 }
 const REFUSAL = "Otto can't help with that request. Try rephrasing it around the case.";
 
@@ -105,7 +125,7 @@ async function professor(req: IncomingMessage, res: ServerResponse) {
     // The assistant turn goes back verbatim (thinking blocks included) so history stays append-only.
     send({ type: "done", content: final.content });
   } catch (e) {
-    console.error("[professor]", e);
+    logError("[professor]", e);
     send({ type: "error", message: errMessage(e) });
   }
   res.end();
@@ -136,7 +156,7 @@ async function grade(req: IncomingMessage, res: ServerResponse) {
     if (r.stop_reason === "refusal" || !r.parsed_output) return json(res, 502, { error: REFUSAL });
     json(res, 200, r.parsed_output);
   } catch (e) {
-    console.error("[grade]", e);
+    logError("[grade]", e);
     json(res, 502, { error: errMessage(e) });
   }
 }
@@ -165,7 +185,7 @@ async function quiz(req: IncomingMessage, res: ServerResponse) {
     if (r.stop_reason === "refusal" || !out || out.options.length !== 4) return json(res, 502, { error: "The question came back malformed. Try again." });
     json(res, 200, out);
   } catch (e) {
-    console.error("[quiz]", e);
+    logError("[quiz]", e);
     json(res, 502, { error: errMessage(e) });
   }
 }
@@ -192,7 +212,7 @@ async function coldcall(req: IncomingMessage, res: ServerResponse) {
     if (r.stop_reason === "refusal" || !out || out.rubric.length < 2) return json(res, 502, { error: "The cold call came back malformed. Try again." });
     json(res, 200, { question: out.question, rubric: out.rubric.slice(0, 3) });
   } catch (e) {
-    console.error("[coldcall]", e);
+    logError("[coldcall]", e);
     json(res, 502, { error: errMessage(e) });
   }
 }
@@ -221,7 +241,7 @@ async function screen(req: IncomingMessage, res: ServerResponse) {
     if (r.stop_reason === "refusal" || !r.parsed_output) return json(res, 502, { error: REFUSAL });
     json(res, 200, r.parsed_output);
   } catch (e) {
-    console.error("[screen]", e);
+    logError("[screen]", e);
     json(res, 502, { error: errMessage(e) });
   }
 }
@@ -264,7 +284,7 @@ async function rag(req: IncomingMessage, res: ServerResponse) {
     if (final.stop_reason === "refusal") send({ type: "error", message: REFUSAL });
     send({ type: "done" });
   } catch (e) {
-    console.error("[rag]", e);
+    logError("[rag]", e);
     send({ type: "error", message: errMessage(e) });
   }
   res.end();
@@ -311,7 +331,7 @@ async function agent(req: IncomingMessage, res: ServerResponse) {
     }
     send({ type: "done", messages: added });
   } catch (e) {
-    console.error("[agent]", e);
+    logError("[agent]", e);
     send({ type: "error", message: errMessage(e) });
     send({ type: "done", messages: added });
   }
@@ -343,26 +363,53 @@ async function capstoneGrade(req: IncomingMessage, res: ServerResponse) {
     if (r.stop_reason === "refusal" || !r.parsed_output) return json(res, 502, { error: REFUSAL });
     json(res, 200, r.parsed_output);
   } catch (e) {
-    console.error("[capstone-grade]", e);
+    logError("[capstone-grade]", e);
     json(res, 502, { error: errMessage(e) });
   }
 }
 
+// ------------------------------------------------------------------ /api/verify-key
+/** Checks a visitor's key without spending tokens (a model lookup), so the connect panel can confirm it works. */
+async function verifyKey(req: IncomingMessage, res: ServerResponse) {
+  const key = userKey(req);
+  if (!key) return json(res, 400, { ok: false, error: "That doesn't look like an Anthropic API key (it should start with sk-ant-)." });
+  try {
+    await new Anthropic({ apiKey: key, maxRetries: 1 }).models.retrieve(MODEL);
+    json(res, 200, { ok: true });
+  } catch (e) {
+    if (e instanceof Anthropic.AuthenticationError) return json(res, 401, { ok: false, error: "Anthropic rejected this key. Check that it's copied in full and still active." });
+    if (e instanceof Anthropic.PermissionDeniedError || e instanceof Anthropic.NotFoundError) return json(res, 403, { ok: false, error: `This key can't use ${MODEL}. Check its workspace and billing in the Anthropic Console.` });
+    json(res, 502, { ok: false, error: "Couldn't reach Anthropic to check the key. Try again." });
+  }
+}
+
 // ------------------------------------------------------------------ router
+const ROUTES: Record<string, (req: IncomingMessage, res: ServerResponse) => Promise<void>> = {
+  "/api/professor": professor,
+  "/api/grade": grade,
+  "/api/quiz": quiz,
+  "/api/coldcall": coldcall,
+  "/api/screen": screen,
+  "/api/rag": rag,
+  "/api/agent": agent,
+  "/api/capstone-grade": capstoneGrade,
+};
+
 export async function handleApi(req: IncomingMessage, res: ServerResponse) {
   const path = (req.url || "").split("?")[0];
-  if (path === "/api/status") return json(res, 200, { ai: hasKey(), model: MODEL });
-  if (req.method !== "POST") return json(res, 405, { error: "POST only" });
-  if (!hasKey()) return json(res, 503, { error: "AI is off: set ANTHROPIC_API_KEY on the server to enable Otto." });
-  switch (path) {
-    case "/api/professor": return professor(req, res);
-    case "/api/grade": return grade(req, res);
-    case "/api/quiz": return quiz(req, res);
-    case "/api/coldcall": return coldcall(req, res);
-    case "/api/screen": return screen(req, res);
-    case "/api/rag": return rag(req, res);
-    case "/api/agent": return agent(req, res);
-    case "/api/capstone-grade": return capstoneGrade(req, res);
+  if (path === "/api/status") {
+    const { perVisitor } = trialLimits();
+    const remaining = hasKey() ? await trialRemaining(visitorId(req)) : 0;
+    return json(res, 200, { ai: hasKey(), byok: true, model: MODEL, trial: { enabled: hasKey() && perVisitor > 0, limit: perVisitor, remaining } });
   }
-  json(res, 404, { error: "Unknown endpoint" });
+  if (req.method !== "POST") return json(res, 405, { error: "POST only" });
+  if (path === "/api/verify-key") return verifyKey(req, res);
+  const route = ROUTES[path];
+  if (!route) return json(res, 404, { error: "Unknown endpoint" });
+
+  const key = userKey(req);
+  if (key) return als.run({ client: new Anthropic({ apiKey: key }), byok: true }, () => route(req, res));
+  if (!hasKey()) return json(res, 503, { code: "no_key", error: "Connect your Anthropic API key to use Otto (AI is off on this server: ANTHROPIC_API_KEY is not set)." });
+  if (!(await consumeTrial(visitorId(req)))) return json(res, 429, { code: "trial_exhausted", error: "You've used today's free Otto requests. Connect your own Anthropic API key to keep going." });
+  return als.run({ client: owner(), byok: false }, () => route(req, res));
 }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AiOffNotice } from "./ConnectKey";
 import { Link } from "react-router-dom";
 import { Legend, Rich, RichInline } from "./Rich";
 import type { Check, Lesson, Path, QuizQ } from "../content/paths";
@@ -160,7 +161,7 @@ export function Seminar({ pathId, lesson, onNext }: { pathId: string; lesson: Le
     <div className="stack" style={{ gap: 16 }}>
       <div className="check" style={{ background: "var(--yellow-soft)" }}><div className="eyebrow">Seminar question</div><Rich text={`**${lesson.seminar.question}**`} /></div>
       <p className="muted" style={{ margin: 0 }}>Answer in your own words, like you would in a seminar. Otto grades against a 3-point rubric; 2+ points completes the stage, and each point earns XP once. {best != null && `Your best so far: ${best}/3.`}</p>
-      {aiOn === false && <div className="banner warn">Grading needs Claude (ANTHROPIC_API_KEY on the server). You can skip to the quiz.</div>}
+      {aiOn === false && <AiOffNotice what="Seminar grading (you can skip to the quiz)" />}
       <textarea className="answer" value={answer} onChange={e => setAnswer(e.target.value)} placeholder="Your answer…" aria-label="Your seminar answer" />
       <div className="row">
         <button className="btn yellow" onClick={submit} disabled={busy || answer.trim().length < 30 || !aiOn}>{busy ? "Grading…" : tries ? "Revise and resubmit" : "Submit to Otto"}</button>

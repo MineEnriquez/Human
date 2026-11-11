@@ -1,3 +1,4 @@
+// @vitest-environment node
 // Routing and guard behaviour of the API, without calling Claude.
 import { EventEmitter } from "node:events";
 import type { IncomingMessage, ServerResponse } from "node:http";
@@ -22,7 +23,7 @@ describe("handleApi", () => {
     process.env.ANTHROPIC_API_KEY = "";
     const r = await call("GET", "/api/status");
     expect(r.status).toBe(200);
-    expect(r.json).toEqual({ ai: false, model: MODEL });
+    expect(r.json).toMatchObject({ ai: false, byok: true, model: MODEL, trial: { enabled: false } });
     expect(MODEL).toBe("claude-opus-5-5");
   });
   it("refuses AI calls with a clear 503 when no key is configured", async () => {

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AiOffNotice } from "../../components/ConnectKey";
 import { AgentConsole } from "../../components/AgentConsole";
 import { Rich, RichInline } from "../../components/Rich";
 import { BRIEFING_EVIDENCE } from "../../content/modeling/lessons";
@@ -71,7 +72,7 @@ export default function BriefingRoom() {
         <div style={{ marginTop: 12 }}><label className="lbl" htmlFor="cl">Effect of closing schools from day 45</label><input id="cl" className="field" value={closure} onChange={e => setClosure(e.target.value)} placeholder="Peak timing, peak size, share infected, under which assumption?" /></div>
         <div style={{ marginTop: 12 }}><label className="lbl" htmlFor="rec">Recommendation</label><input id="rec" className="field" value={rec} onChange={e => setRec(e.target.value)} placeholder="What should the director decide, and what else should happen?" /></div>
         <div style={{ marginTop: 12 }}><label className="lbl" htmlFor="why">Your reasoning</label><textarea id="why" className="answer" value={reasoning} onChange={e => setReasoning(e.target.value)} placeholder="Which window did you fit, which evidence gave the durations, how did you get R0, what are the main uncertainties?" /></div>
-        {aiOn === false && <div className="banner warn" style={{ marginTop: 10 }}>Grading needs Claude (ANTHROPIC_API_KEY on the server).</div>}
+        {aiOn === false && <div style={{ marginTop: 10 }}><AiOffNotice what="Grading" /></div>}
         <div className="row" style={{ marginTop: 12 }}>
           <button className="btn yellow" onClick={submit} disabled={!ready || busy || !aiOn}>{busy ? "Otto is reading your briefing…" : "Submit briefing"}</button>
           {!ready && <span className="muted" style={{ fontSize: ".85rem" }}>Fill every field.</span>}

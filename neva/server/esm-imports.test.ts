@@ -1,3 +1,4 @@
+// @vitest-environment node
 // Vercel runs api/*.ts as unbundled ES modules, where Node requires explicit file extensions on relative
 // imports. This test walks the server's import graph and fails on any extensionless relative import.
 import { existsSync, readFileSync } from "node:fs";
@@ -20,7 +21,7 @@ function walk(entry: string, seen = new Set<string>(), bad: string[] = []) {
 
 describe("server ESM imports", () => {
   it("use explicit .js extensions everywhere Vercel will load them", () => {
-    const entries = ["status", "professor", "grade", "quiz", "coldcall", "screen", "rag", "agent", "capstone-grade"].map(e => `api/${e}.ts`);
+    const entries = ["status", "professor", "grade", "quiz", "coldcall", "screen", "rag", "agent", "capstone-grade", "verify-key"].map(e => `api/${e}.ts`);
     const bad = entries.flatMap(e => walk(e));
     expect(bad).toEqual([]);
   });

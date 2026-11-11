@@ -349,3 +349,8 @@ input[type=range] { accent-color: var(--ink); }
 .avatar.bot::before { content: ""; position: absolute; inset: 3px 5px 4px; background: var(--on-yellow); -webkit-mask: url(/otto-mask.png) center / contain no-repeat; mask: url(/otto-mask.png) center / contain no-repeat; }
 .prof-fab .avatar.bot, .hook .avatar.bot { width: 36px; height: 36px; }
 .drawer-h .avatar.bot { width: 40px; height: 40px; }
+
+/* ---------- connect-your-key panel ---------- */
+.modal-bg { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.45); display: grid; place-items: center; padding: 20px; }
+.modal { width: min(560px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 12px; }
+.theme-btn.connected { border-color: var(--ok); color: var(--on-band); }
