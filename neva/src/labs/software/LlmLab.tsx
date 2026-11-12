@@ -63,7 +63,7 @@ export default function LlmLab() {
           onSolved={n => { finishPart(ID, EV[0], EV, n === 1 ? 30 : 20); if (n === 1) earnBadge("fact-checker"); }} />
       </LabCard>
 
-      <LabCard title="B. Sampling the next identifier" done={p.includes(EV[1])} sub={<>The model is writing <code>networks=[el.</code> for syphilis with <b>no Epiloom docs in the context</b>. Change the temperature and sample 10 completions.</>}>
+      <LabCard title="B. Sampling the next identifier" done={p.includes(EV[1])} sub={<>The model is writing <code>networks=[el.</code> for syphilis with <b>no Epiloom docs in the context</b>. Change the temperature and sample 10 completions. (An illustrative sampler: some current Claude and OpenAI reasoning models fix temperature instead of exposing it.)</>}>
         <div className="row"><label htmlFor="temp" className="muted">Temperature {T.toFixed(2)}</label><input id="temp" type="range" min={0.05} max={2} step={0.05} value={T} onChange={e => setT(+e.target.value)} style={{ flex: 1, maxWidth: 320 }} /></div>
         <div className="stack" style={{ margin: "14px 0", gap: 6 }}>
           {NEXT.map((n, i) => (

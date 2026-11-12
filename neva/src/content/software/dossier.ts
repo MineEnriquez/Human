@@ -71,7 +71,7 @@ export const SCENES: Record<string, { from: { name: string; role: string; ask: s
     from: { name: "Marcus Feld", role: "Security and infrastructure", ask: "We're exposing Epiloom to the agent as an MCP server. Tell me which tools it can run on its own, and which need a person." },
     when: "Wed 10 Feb, 14:00",
     deliverable: "A tool policy for the Epiloom MCP server (auto-run, ask first, don't expose) and a reviewed trace of a live session.",
-    success: ["Order a full MCP session from initialize to the model's answer", "Sort every tool by the approval it needs", "Spot an instruction hidden in a README and refuse it"],
+    success: ["Order an MCP tool call from discovery to the model's answer", "Sort every tool by the approval it needs", "Spot an instruction hidden in a README and refuse it"],
     hook: "Tools turn an agent from a talker into an actor. Decide what it may do before it decides for you.",
   },
   "se-capstone": {
