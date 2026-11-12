@@ -10,7 +10,7 @@ const ID = "dm-llm";
 /** Root-mean-square relative error of modelled vs observed notifications that counts as a good fit. */
 export const FIT_THRESHOLD = 0.03;
 
-const EXCERPT = `Kestrel Contact Cohort (fictional). We followed 1,840 household contacts of people with pulmonary TB in Kestrel Valley District (population 600,000) for five years. Among contacts who were newly infected, about 7% developed active TB, most of them within two years. The programme's model uses a progression rate of 0.07 per year from recent infection and a stabilisation rate of 0.93 per year to remote latent infection, and a reactivation rate of 0.0006 per year for remote infection. Treatment for drug-susceptible TB lasts six months; in 2025, 80% of people who started treatment completed it successfully.`;
+const EXCERPT = `Kestrel Contact Cohort (fictional). We followed 1,840 household contacts of people with pulmonary TB in Kestrel Valley District (population 600,000) for five years. Among contacts who were newly infected, about 7% developed active TB, most of them within two years. The programme's model uses a progression rate of 0.07 per year from recent infection and a stabilisation rate of 0.93 per year to remote latent infection, and a reactivation rate of 0.0006 per year for remote infection. Treatment for drug-susceptible TB lasts six months; in 2025, treatment success (cured or treatment completed) was 80% of people who started treatment.`;
 
 const CARDS = [
   { id: "x1", label: "Progression rate from recent infection: **0.07 per year**", bucket: "ok", why: "Stated." },
