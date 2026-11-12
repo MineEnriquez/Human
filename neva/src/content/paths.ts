@@ -6,7 +6,7 @@ import { PATH as modeling } from "./modeling/lessons";
 import { PATH as research } from "./research/lessons";
 import type { Path } from "./types";
 
-export type { Check, Lesson, Path, QuizQ, Segment } from "./types";
+export type { Check, Lesson, Path, QuizQ, Ref, Segment } from "./types";
 
 export const PATHS: Path[] = [software, cancer, modeling, research];
 

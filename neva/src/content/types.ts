@@ -1,7 +1,9 @@
 // Shared content types. Markup in strings: [[c|concept]] [[b|biology/data]] [[t|tool/system]] [[w|pitfall]], **bold**, `code`.
 
 export type Check = { q: string; options: string[]; answer: number; explain: string };
-export type Segment = { title: string; body: string; check?: Check };
+/** A link to official documentation or the primary source (paper, specification, guideline) behind a claim. */
+export type Ref = { title: string; url: string; publisher: string };
+export type Segment = { title: string; body: string; check?: Check; refs?: Ref[] };
 export type QuizQ = Check;
 export type Lesson = {
   id: string;

@@ -71,6 +71,13 @@ describe.each(all.map(l => [l.id, l] as const))("lesson %s", (id, l) => {
     l.quiz.forEach((q, i) => checkOk(q, `${id} quiz ${i + 1}`));
     l.lecture.forEach((s, i) => s.check && checkOk(s.check, `${id} check ${i + 1}`));
   });
+  it("cites references as well-formed HTTPS links with a title and publisher", () => {
+    for (const s of l.lecture) for (const r of s.refs || []) {
+      expect(r.url, `${s.title}`).toMatch(/^https:\/\/[^\s]+$/);
+      expect(r.title.length, r.url).toBeGreaterThan(3);
+      expect(r.publisher.length, r.url).toBeGreaterThan(1);
+    }
+  });
   it("uses only valid colour markup", () => {
     for (const t of strings(l)) {
       for (const m of t.matchAll(/\[\[([^|\]]*)\|/g)) expect(["c", "b", "t", "w"], `markup kind in: ${t.slice(0, 60)}`).toContain(m[1]);

@@ -409,3 +409,8 @@ input[type=range] { accent-color: var(--ink); }
 .how-grid { grid-template-columns: repeat(3, 1fr); }
 @media (max-width: 900px) { .how-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 560px) { .how-grid { grid-template-columns: 1fr; } }
+
+/* ---------- further reading under lecture segments ---------- */
+.refs { margin: 4px 0 6px; padding: 10px 14px; border-radius: 10px; background: var(--paper); font-size: .88rem; }
+.refs ul { margin: 6px 0 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 3px; }
+.refs a { font-weight: 600; text-decoration-thickness: 1px; text-underline-offset: 2px; }

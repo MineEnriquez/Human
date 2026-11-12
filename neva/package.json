@@ -10,7 +10,8 @@
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "tsx e2e/smoke.ts"
+    "test:e2e": "tsx e2e/smoke.ts",
+    "check:links": "tsx scripts/check-links.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.7.0",
