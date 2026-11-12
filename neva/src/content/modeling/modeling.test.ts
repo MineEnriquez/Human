@@ -303,10 +303,13 @@ describe("lesson content", () => {
     expect((text.match(/\[\[/g) || []).length).toBe((text.match(/\]\]/g) || []).length);
   });
 
-  it("the MCP handshake includes the initialize result and notifications/initialized", () => {
-    expect(HANDSHAKE[1].label).toContain("initialize");
-    expect(HANDSHAKE[2].label).toContain("initialize result");
-    expect(HANDSHAKE[3].label).toContain("notifications/initialized");
+  it("the MCP sequence follows the current spec (2026-07-28): discover, then tools/list with _meta, then tools/call", () => {
+    expect(HANDSHAKE[1].label).toContain("server/discover");
+    expect(HANDSHAKE[3].label).toContain("tools/list");
+    expect(HANDSHAKE[3].label).toContain("_meta");
+    expect(HANDSHAKE.some(h => h.label.includes("tools/call"))).toBe(true);
+    // The legacy handshake is mentioned only as earlier-revision behaviour, never as a step.
+    expect(HANDSHAKE.some(h => /notifications\/initialized/.test(h.label))).toBe(false);
   });
 });
 

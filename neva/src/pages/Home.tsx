@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Carousel } from "../components/Carousel";
 import { Legend, RichInline } from "../components/Rich";
 import { PATHS } from "../content/paths";
 import { lessonDone, useProgress } from "../lib/progress";
@@ -13,20 +14,20 @@ export function Home() {
       <section className="hero">
         <div className="hero-in">
           <div>
-            <div className="eyebrow" style={{ color: "var(--on-band-muted)" }}>AI for the life sciences</div>
+            <div className="eyebrow" style={{ color: "var(--on-band-muted)" }}>AI for software, science and research</div>
             <h1>Learn AI by <em>solving real scenarios</em>.</h1>
-            <p className="lede">LLMs, vector databases, retrieval-augmented generation and MCP, taught by an AI professor through casework in genomics, disease modeling and research.</p>
+            <p className="lede">LLMs, vector databases, retrieval-augmented generation and MCP, taught by Otto, an AI professor, through casework in software engineering, cancer genomics, disease modeling and research.</p>
             <div className="row">
               <Link className="btn yellow" to={`/lesson/${next.id}`}>{done ? "Continue your case" : "Open your first case"} →</Link>
               <Link className="btn" style={{ background: "transparent", color: "var(--on-band)", borderColor: "var(--on-band)" }} to="/paths/cancer-genomics">See the path</Link>
             </div>
             <div className="stat-row">
-              <div><b>3</b>paths</div><div><b>5</b>cases per path</div><div><b>6</b>AI features</div><div><b>{p.xp}</b>your XP</div>
+              <div><b>{PATHS.length}</b>paths</div><div><b>5</b>cases per path</div><div><b>6</b>AI features</div><div><b>{p.xp}</b>your XP</div>
             </div>
           </div>
           <div className="hero-card">
             <div className="who" style={{ color: "var(--on-band)" }}><span className="avatar bot" role="img" aria-label="Otto" />Otto</div>
-            <p className="q">"A relapse cell's nearest neighbours in the reference atlas are normal myeloid progenitors. Your colleague calls it a healthy cell. <b>What would you check before you agree?</b>"</p>
+            <p className="q">"The agent wrote the disease model in a minute, and it runs. It uses <code>el.RandomNet</code> for syphilis. <b>What else would you check before a researcher sees the results?</b>"</p>
             <p style={{ color: "var(--on-band-muted)", fontSize: ".9rem", margin: 0 }}>Socratic tutoring, AI-graded seminars, live tool-using agents, and answers that cite their sources.</p>
           </div>
         </div>
@@ -34,7 +35,7 @@ export function Home() {
 
       <div className="page">
         <div className="section-h"><h2>Choose a <em>path</em></h2><Legend /></div>
-        <div className="grid paths">
+        <Carousel label="Learning paths">
           {PATHS.map(path => {
             const n = path.lessons.filter(l => lessonDone(p, l.id, l.boss)).length;
             const inner = (
@@ -53,17 +54,17 @@ export function Home() {
               ? <Link key={path.id} to={`/paths/${path.id}`} className="card path-card">{inner}</Link>
               : <div key={path.id} className="card path-card locked" aria-disabled>{inner}</div>;
           })}
-        </div>
+        </Carousel>
 
         <div className="section-h" style={{ marginTop: 56 }}><h2>How a case <em>works</em></h2></div>
-        <div className="grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+        <div className="grid how-grid">
           {[
             ["📂", "Case file", "A realistic situation, your role, the question you must answer, and the evidence to collect."],
             ["🎓", "Lecture with checks", "Short segments from Otto, each followed by a check for understanding."],
             ["🧪", "Hands-on lab", "Drag-and-drop exercises and live AI: tokenizers, vector search, RAG with citations, MCP tool calls."],
             ["💬", "Seminar", "Answer an open question in your own words. [[c|AI grading]] against a rubric, with a Socratic nudge."],
             ["✅", "Quiz", "Case-based questions, plus fresh challenge questions written by AI on demand."],
-            ["🏆", "Capstone", "Direct a [[t|tool-using AI agent]] through the outbreak and file a report graded by Otto."],
+            ["🏆", "Capstone", "Direct a [[t|tool-using AI agent]] through the case and file a report graded by Otto."],
           ].map(([ico, h, t]) => (
             <div key={h} className="card pad"><div style={{ fontSize: "1.6rem" }}>{ico}</div><h3 style={{ fontSize: "1.1rem", margin: "6px 0" }}>{h}</h3><p className="read" style={{ fontSize: ".98rem", margin: 0 }}><RichInline text={t} /></p></div>
           ))}

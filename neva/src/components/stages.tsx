@@ -122,6 +122,12 @@ export function Lecture({ pathId, lesson, onNext, onAsk }: { pathId: string; les
         <div key={i} className="segment">
           <h3>{s.title}</h3>
           <Rich text={s.body} />
+          {s.refs && s.refs.length > 0 && (
+            <div className="refs">
+              <div className="eyebrow">Further reading</div>
+              <ul>{s.refs.map(r => <li key={r.url}><a href={r.url} target="_blank" rel="noopener noreferrer">{r.title}</a> <span className="muted">· {r.publisher}</span></li>)}</ul>
+            </div>
+          )}
           {s.check && <CheckQ c={s.check} onAnswered={right => { setAnswered(n => n + 1); if (right) award(`${lesson.id}:check${i}`, XP.check, "Check passed"); }} />}
           <div className="row" style={{ gap: 8 }}>
             <button className="btn ghost sm" style={{ marginTop: 10 }} onClick={() => onAsk(`Can you explain "${s.title.replace(/^\d+\.\s*/, "")}" another way, using the case?`)}>🎓 Ask Otto about this</button>

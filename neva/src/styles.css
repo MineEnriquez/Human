@@ -1,7 +1,7 @@
 /* Neva design system: clean neutral theme.
    Neutral greys and near-black/near-white (no beige or brown), yellow as the brand accent, and no blue hues.
    Off-white instead of pure white and near-black instead of pure black keep glare down; text stays above WCAG AA.
-   Layout and typography inspired by pratt.edu; Hanken Grotesk (UI) + Source Serif 4 (reading text). */
+   Layout inspired by pratt.edu; one modern sans-serif throughout (Graphik if available, else Hanken Grotesk). */
 :root {
   /* Neutral greys (no beige/brown), off-white instead of pure white, near-black ink; still no blue hues. */
   --paper: #f2f2f2; --sheet: #fbfbfb; --ink: #1a1a1a; --muted: #5c5c5c; --line: #e0e0e0;
@@ -13,13 +13,11 @@
   --k-c: #b02a6a; --k-c-bg: #fbe3ee; --k-b: #1f7a3d; --k-b-bg: #e2f3e7; --k-t: #1a1a1a; --k-t-bg: #ffd24d; --k-w: #c4282f; --k-w-bg: #fde5e4;
   /* sequence-type colours in the vector map */
   --st-258: #1a1a1a; --st-307: #e0662a; --st-11: #c4282f; --st-147: #b02a6a;
-  /* Typefaces follow pratt.edu's roles: Graphik for UI and headings, Tiempos Text for reading text, Tiempos Fine
-     (light italic) for emphasised words in headlines. Graphik and Tiempos are commercial fonts: they're used when
-     installed on the reader's machine or when licensed files are added to src/assets/fonts/ (see the README there).
-     Otherwise the free stand-ins after them in each stack are used. */
+  /* One modern sans-serif for everything: Graphik when installed (or licensed files in src/assets/fonts/),
+     otherwise Hanken Grotesk. No serif faces. */
   --font-ui: "Graphik", "Graphik Web", "Hanken Grotesk", "Helvetica Neue", Arial, system-ui, sans-serif;
-  --font-read: "Tiempos Text", "TiemposText", "Source Serif 4", Georgia, serif;
-  --font-fine: "Tiempos Fine", "TiemposFine", "Newsreader", "Source Serif 4", Georgia, serif;
+  --font-read: var(--font-ui);
+  --font-fine: var(--font-ui);
   --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
   --accent-hover: #333333;
   --r: 14px; --shadow: 0 1px 0 rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.06);
@@ -64,16 +62,18 @@ h1, h2, h3, h4 { font-family: var(--font-ui); letter-spacing: -0.02em; margin: 0
 
 /* ---------- top bar ---------- */
 .topbar { position: sticky; top: 0; z-index: 40; background: var(--band); color: var(--on-band); }
-.topbar-in { max-width: 1240px; margin: 0 auto; padding: 0 24px; height: 64px; display: flex; align-items: center; gap: 28px; }
+.topbar-in { max-width: 1240px; margin: 0 auto; padding: 0 24px; min-height: 64px; display: flex; align-items: center; gap: 24px; }
+.topbar-in > * { flex-shrink: 0; }
+.topbar-in .spacer { flex-shrink: 1; min-width: 0; }
 .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; font: 800 1.35rem var(--font-ui); letter-spacing: -0.03em; }
 /* Site logo: the Neva-and-owl line art (public/logo-mask.png), drawn in the theme yellow on the dark top bar */
 .logo-mark { width: 38px; height: 44px; background: var(--yellow); -webkit-mask: url(/logo-mask.png) center / contain no-repeat; mask: url(/logo-mask.png) center / contain no-repeat; }
 .nav { display: flex; gap: 4px; }
-.nav a { text-decoration: none; padding: 8px 12px; border-radius: 999px; font-weight: 600; font-size: 0.95rem; color: var(--on-band-muted); }
+.nav a { white-space: nowrap; text-decoration: none; padding: 8px 12px; border-radius: 999px; font-weight: 600; font-size: 0.95rem; color: var(--on-band-muted); }
 .nav a:hover { color: var(--on-band); }
 .nav a.active { color: var(--band); background: var(--on-band); }
 .topbar .spacer { flex: 1; }
-.xp-pill { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; text-decoration: none; }
+.xp-pill { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; text-decoration: none; white-space: nowrap; }
 .xp-pill .lvl { background: var(--yellow); color: var(--on-yellow); font-weight: 800; border-radius: 999px; padding: 3px 10px; }
 .xp-pill .bar { width: 110px; height: 6px; border-radius: 3px; background: var(--band-line); overflow: hidden; }
 .xp-pill .bar span { display: block; height: 100%; background: var(--yellow); }
@@ -101,10 +101,13 @@ h1, h2, h3, h4 { font-family: var(--font-ui); letter-spacing: -0.02em; margin: 0
 /* ---------- hero ---------- */
 .hero { background: var(--band); color: var(--on-band); }
 .hero-in { max-width: 1240px; margin: 0 auto; padding: 72px 24px 88px; display: grid; grid-template-columns: 1.3fr 1fr; gap: 48px; align-items: center; }
-.hero h1 { font-size: clamp(2.6rem, 6vw, 5rem); line-height: 0.98; font-weight: 800; letter-spacing: -0.04em; }
-/* Emphasis inside headlines uses the fine serif italic, as pratt.edu does (h1 em, h2 em). */
-h1 em, h2 em { font-family: var(--font-fine); font-style: italic; font-weight: 300; letter-spacing: -0.01em; }
-.hero h1 em { background: var(--yellow); color: var(--on-yellow); padding: 0 .12em; }
+/* Line height leaves room for the highlight boxes so a highlighted line never covers the line above it. */
+.hero h1 { font-size: clamp(2.6rem, 6vw, 5rem); line-height: 1.16; font-weight: 800; letter-spacing: -0.04em; }
+/* Emphasis inside headlines: same sans-serif, upright; the hero highlights it in yellow, section headings in a soft underline. */
+h1 em, h2 em { font-style: normal; font-weight: thin; letter-spacing: inherit; }
+h2 em { box-shadow: inset 0 -0.28em 0 var(--yellow-soft); }
+/* The highlight is a band trimmed to the letters (not the font's full ascent/descent box), so the two lines' boxes never overlap. */
+.hero h1 em { background: linear-gradient(to bottom, transparent 14%, var(--yellow) 14%, var(--yellow) 90%, transparent 90%); color: var(--on-yellow); padding: 0 .12em; }
 .hero p.lede { font: 400 1.25rem/1.5 var(--font-read); color: var(--on-band); max-width: 36ch; margin: 22px 0 30px; }
 .hero .stat-row { display: flex; gap: 28px; margin-top: 34px; color: var(--on-band-muted); font-size: .9rem; }
 .hero .stat-row b { display: block; color: var(--on-band); font-size: 1.6rem; }
@@ -158,7 +161,7 @@ h1 em, h2 em { font-family: var(--font-fine); font-style: italic; font-weight: 3
 .stage-h h2 { font-size: 1.5rem; font-weight: 800; }
 
 /* reading text */
-.read { font: 400 1.08rem/1.7 var(--font-read); max-width: 70ch; }
+.read { font: 400 1.05rem/1.65 var(--font-read); max-width: 70ch; }
 .read p { margin: 0 0 .9em; }
 .read ul, .read ol { margin: 0 0 .9em; padding-left: 1.3em; }
 .read li { margin: .25em 0; }
@@ -302,7 +305,7 @@ label.lbl { font-weight: 700; font-size: .9rem; display: block; margin-bottom: 6
 
 @media (max-width: 960px) { .vdb-grid { grid-template-columns: 1fr !important; } }
 input[type=range] { accent-color: var(--ink); }
-.hero h1 em { -webkit-box-decoration-break: clone; box-decoration-break: clone; padding: 0 .08em; }
+.hero h1 em { -webkit-box-decoration-break: clone; box-decoration-break: clone; }
 .theme-btn { background: none; border: 1px solid var(--band-line); color: var(--on-band); border-radius: 999px; padding: 4px 10px; font-size: .8rem; font-weight: 600; cursor: pointer; }
 .theme-btn:hover { border-color: var(--on-band-muted); }
 /* text on yellow and on ink stays legible in both themes */
@@ -354,3 +357,60 @@ input[type=range] { accent-color: var(--ink); }
 .modal-bg { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.45); display: grid; place-items: center; padding: 20px; }
 .modal { width: min(560px, 100%); max-height: calc(100vh - 40px); overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 12px; }
 .theme-btn.connected { border-color: var(--ok); color: var(--on-band); }
+
+/* ---------- carousel (one row; scroll-snap, edge chevrons, dots) ---------- */
+.carousel { position: relative; }
+/* Vertical padding (offset by negative margins) leaves room for the hover shadow inside the scrolling track. */
+.carousel-track { display: grid; grid-auto-flow: column; grid-auto-columns: calc((100% - 2 * 20px) / 3); column-gap: 20px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; padding: 14px 10px 30px; margin: -14px -10px -16px; scroll-padding: 0 10px; scrollbar-width: none; overscroll-behavior-x: contain; }
+.carousel-track::-webkit-scrollbar { display: none; }
+.carousel-track:focus-visible { outline: 3px solid var(--yellow); outline-offset: -2px; border-radius: var(--r); }
+.carousel-slide { scroll-snap-align: start; display: flex; }
+.carousel-slide > * { flex: 1; }
+.carousel-slide > .card { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+.carousel-slide > .card:hover, .carousel-slide > .card:focus-visible { transform: translateY(-4px); box-shadow: 0 14px 32px rgba(0,0,0,.16), 0 3px 8px rgba(0,0,0,.08); border-color: var(--ink); }
+/* Dark theme: a dark shadow is invisible on a dark page, so the cards get a soft light glow instead. */
+:root[data-theme="dark"] .carousel-slide > .card { box-shadow: 0 0 0 1px rgba(255,255,255,.05), 0 8px 24px rgba(255,255,255,.08); }
+:root[data-theme="dark"] .carousel-slide > .card:hover, :root[data-theme="dark"] .carousel-slide > .card:focus-visible { box-shadow: 0 0 0 1px rgba(255,255,255,.14), 0 12px 34px rgba(255,255,255,.17), 0 2px 10px rgba(255,255,255,.08); border-color: rgba(255,255,255,.35); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .carousel-slide > .card { box-shadow: 0 0 0 1px rgba(255,255,255,.05), 0 8px 24px rgba(255,255,255,.08); }
+  :root:not([data-theme="light"]) .carousel-slide > .card:hover, :root:not([data-theme="light"]) .carousel-slide > .card:focus-visible { box-shadow: 0 0 0 1px rgba(255,255,255,.14), 0 12px 34px rgba(255,255,255,.17), 0 2px 10px rgba(255,255,255,.08); border-color: rgba(255,255,255,.35); }
+}
+.carousel-chevron { position: absolute; top: calc(50% - 30px); transform: translateY(-50%); z-index: 2; width: 46px; height: 46px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--sheet); color: var(--ink); display: grid; place-items: center; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.14); transition: opacity .15s ease, transform .15s ease, background .15s ease; }
+.carousel-chevron.left { left: -22px; }
+.carousel-chevron.right { right: -22px; }
+.carousel-chevron:hover:not(:disabled) { background: var(--yellow); color: var(--on-yellow); border-color: var(--yellow); transform: translateY(-50%) scale(1.06); }
+.carousel-chevron:disabled { opacity: 0; pointer-events: none; }
+.carousel-dots { display: flex; gap: 8px; justify-content: center; margin-top: 14px; }
+.carousel-dot { width: 10px; height: 10px; border-radius: 50%; border: 0; padding: 0; background: var(--line); cursor: pointer; transition: width .2s ease, background .2s ease; }
+.carousel-dot.on { background: var(--ink); width: 26px; border-radius: 5px; }
+@media (max-width: 1300px) { .carousel-chevron.left { left: 6px; } .carousel-chevron.right { right: 6px; } }
+@media (prefers-reduced-motion: reduce) { .carousel-track { scroll-behavior: auto; } .carousel-slide > .card, .carousel-chevron { transition: none; } .carousel-slide > .card:hover { transform: none; } }
+@media (max-width: 960px) { .carousel-track { grid-auto-columns: calc((100% - 20px) / 2); } }
+@media (max-width: 640px) { .carousel-track { grid-auto-columns: 86%; } }
+
+/* ---------- top bar: degrade gracefully as space runs out (narrow windows or zoomed-in browsers) ---------- */
+.theme-btn { white-space: nowrap; }
+.connect-btn .lbl-short { display: none; }
+@media (max-width: 1240px) { .xp-pill .xp-title, .xp-pill .bar { display: none; } }
+@media (max-width: 1080px) { .connect-btn .lbl-long { display: none; } .connect-btn .lbl-short { display: inline; } .topbar-in { gap: 16px; } }
+@media (max-width: 900px) {
+  /* Links move to their own scrollable row under the logo and controls. */
+  .topbar-in { flex-wrap: wrap; row-gap: 0; padding-top: 8px; }
+  .topbar .nav { order: 10; width: 100%; overflow-x: auto; scrollbar-width: none; padding-bottom: 8px; }
+  .topbar .nav::-webkit-scrollbar { display: none; }
+  .xp-pill .mono { display: none; }
+  .drawer { top: 0; }
+}
+@media (max-width: 560px) {
+  .topbar-in { padding-left: 16px; padding-right: 16px; gap: 10px; }
+  .theme-word { display: none; }
+  .logo { font-size: 1.15rem; }
+}
+.how-grid { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 900px) { .how-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .how-grid { grid-template-columns: 1fr; } }
+
+/* ---------- further reading under lecture segments ---------- */
+.refs { margin: 4px 0 6px; padding: 10px 14px; border-radius: 10px; background: var(--paper); font-size: .88rem; }
+.refs ul { margin: 6px 0 0; padding-left: 1.1em; display: flex; flex-direction: column; gap: 3px; }
+.refs a { font-weight: 600; text-decoration-thickness: 1px; text-underline-offset: 2px; }

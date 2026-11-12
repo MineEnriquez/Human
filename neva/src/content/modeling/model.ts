@@ -31,7 +31,7 @@ export type TbParams = {
   sc: number; // self-cure rate of untreated active TB, per year
   muTB: number; // TB death rate of untreated active TB, per year
   tau: number; // rate of finishing treatment (1 / mean treatment duration), per year
-  s: number; // treatment success: share of people finishing treatment who are cured
+  s: number; // treatment success: share of people leaving treatment whose outcome is cured or treatment completed (WHO: success = cured + completed)
   rho: number; // relapse after cure, per year
   mu: number; // background death rate, per year
 };

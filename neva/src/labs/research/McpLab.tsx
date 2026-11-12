@@ -2,10 +2,9 @@ import { McpLabView } from "../shared/McpLabView";
 
 const HANDSHAKE = [
   { id: "h1", label: "[[t|Host]] starts an MCP client and connects to the unit's shared bibliographic server (Streamable HTTP)", why: "One client per server, inside the host app." },
-  { id: "h2", label: "Client → Server: `initialize` (protocol version, capabilities, client info)", why: "The session always starts by negotiating version and capabilities." },
-  { id: "h3", label: "Server → Client: initialize result (its capabilities: tools, resources)", why: "The server says what it offers." },
-  { id: "h4", label: "Client → Server: `notifications/initialized`", why: "A notification (no id, no response): the client is ready for normal operation." },
-  { id: "h5", label: "Client → Server: `tools/list`", why: "Discover tools with their names, descriptions and input schemas." },
+  { id: "h2", label: "Client → Server: `server/discover`", why: "Optional first call in the current MCP revision (2026-07-28): which protocol versions and capabilities does the server support? (Servers on 2025-11-25 and earlier use an initialize handshake instead.)" },
+  { id: "h3", label: "Server → Client: supported versions, capabilities (tools, resources) and server info", why: "The server says what it offers." },
+  { id: "h5", label: "Client → Server: `tools/list` (protocol version and capabilities in `_meta`)", why: "Every request carries its own version and capabilities; there is no session to set up. Tools come back with names, descriptions and input schemas." },
   { id: "h6", label: "Host gives the tool definitions + the reviewer's question to the [[c|LLM]]", why: "Now the model knows which tools exist and what arguments they take." },
   { id: "h7", label: "LLM → Host: request `search_studies(\"molecular identification blood culture\")`", why: "The model only asks; the host applies its policy." },
   { id: "h8", label: "Client → Server: `tools/call`", why: "The host's client makes the real call." },

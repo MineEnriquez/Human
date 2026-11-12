@@ -75,7 +75,7 @@ export const SCENES: Record<string, { from: { name: string; role: string; ask: s
     from: { name: "Peter Odhiambo", role: "Laboratory and diagnostics coordinator, acting IT lead", ask: "I can connect the assistant to the model and the surveillance database for tomorrow. Tell me which tools it may use alone and which need someone to say yes." },
     when: "Wed 2 Dec 2026, 10:00",
     deliverable: "A tool policy for the programme's MCP server (auto-run, ask first, don't expose) and a reviewed trace of a live session.",
-    success: ["Order a full MCP session from initialize to the model's answer", "Sort every tool by the approval it needs", "Audit a live tool call: what ran, with which arguments, what came back"],
+    success: ["Order a full MCP exchange, from discovering the server to the model's answer", "Sort every tool by the approval it needs", "Audit a live tool call: what ran, with which arguments, what came back"],
     hook: "Giving a model tools is giving it hands. Decide now which hands need a second person watching.",
   },
   "dm-capstone": {

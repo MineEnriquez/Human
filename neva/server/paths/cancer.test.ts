@@ -45,7 +45,7 @@ describe("cancer tools", () => {
 
 describe("server path registry", () => {
   it("knows all three paths and falls back to Cancer Genomics", () => {
-    expect(Object.keys(SERVER_PATHS).sort()).toEqual(["cancer-genomics", "disease-modeling", "research-intelligence"]);
+    expect(Object.keys(SERVER_PATHS).sort()).toEqual(["cancer-genomics", "disease-modeling", "research-intelligence", "software-engineering"]);
     expect(serverPath("nope").id).toBe("cancer-genomics");
     expect(serverPath(undefined).id).toBe("cancer-genomics");
   });

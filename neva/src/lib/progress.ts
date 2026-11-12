@@ -21,6 +21,8 @@ export const BADGES: Record<string, { icon: string; name: string; how: string }>
   perfect: { icon: "💯", name: "Perfect Recall", how: "Ace a quiz with no mistakes" },
   streak3: { icon: "🔥", name: "On a Roll", how: "Learn three days in a row" },
   "case-closed": { icon: "🏆", name: "Case Closed", how: "Pass the Tumor Board capstone" },
+  "right-example": { icon: "🧩", name: "Right Example", how: "Pick the example that fits the spec, not just the closest one" },
+  "model-builder": { icon: "🧬", name: "Model Builder", how: "Pass the Model Builder capstone" },
   "curve-shaper": { icon: "📈", name: "Curve Shaper", how: "Fit the TB model to the district's notifications" },
   "briefing-done": { icon: "🏛️", name: "Briefing Delivered", how: "Pass the Strategy Room capstone" },
   "second-reviewer": { icon: "🧾", name: "Second Reviewer", how: "Reach substantial agreement (κ > 0.60) with Claude when screening" },

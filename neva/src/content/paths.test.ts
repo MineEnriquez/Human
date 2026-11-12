@@ -24,9 +24,10 @@ const checkOk = (c: Check, where: string) => {
 };
 
 describe("course registry", () => {
-  it("has three paths with unique ids", () => {
-    expect(PATHS).toHaveLength(3);
-    expect(new Set(PATHS.map(p => p.id)).size).toBe(3);
+  it("has four paths with unique ids, AI for Software Engineers first", () => {
+    expect(PATHS).toHaveLength(4);
+    expect(new Set(PATHS.map(p => p.id)).size).toBe(4);
+    expect(PATHS[0].id).toBe("software-engineering");
   });
   it("live paths have five lessons ending in a capstone, and a setting for the professor", () => {
     for (const p of live) {
@@ -69,6 +70,13 @@ describe.each(all.map(l => [l.id, l] as const))("lesson %s", (id, l) => {
     expect(l.quiz.length).toBeGreaterThanOrEqual(5);
     l.quiz.forEach((q, i) => checkOk(q, `${id} quiz ${i + 1}`));
     l.lecture.forEach((s, i) => s.check && checkOk(s.check, `${id} check ${i + 1}`));
+  });
+  it("cites references as well-formed HTTPS links with a title and publisher", () => {
+    for (const s of l.lecture) for (const r of s.refs || []) {
+      expect(r.url, `${s.title}`).toMatch(/^https:\/\/[^\s]+$/);
+      expect(r.title.length, r.url).toBeGreaterThan(3);
+      expect(r.publisher.length, r.url).toBeGreaterThan(1);
+    }
   });
   it("uses only valid colour markup", () => {
     for (const t of strings(l)) {

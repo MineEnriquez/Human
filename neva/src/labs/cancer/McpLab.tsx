@@ -2,10 +2,9 @@ import { McpLabView } from "../shared/McpLabView";
 
 const HANDSHAKE = [
   { id: "h1", label: "[[t|Host]] starts an MCP client and connects to the lab's server", why: "One client per server, inside the host app." },
-  { id: "h2", label: "Client → Server: `initialize`", why: "Agree protocol version and capabilities first." },
-  { id: "h2b", label: "Server → Client: `initialize` result with its capabilities", why: "The server says what it supports (tools, resources, prompts)." },
-  { id: "h2c", label: "Client → Server: `notifications/initialized`", why: "The client confirms; normal requests can start." },
-  { id: "h3", label: "Client → Server: `tools/list`", why: "Discover what the server offers." },
+  { id: "h2", label: "Client → Server: `server/discover`", why: "Optional first call in the current MCP revision (2026-07-28): which protocol versions and capabilities does the server support? (Servers on 2025-11-25 and earlier use an initialize handshake instead.)" },
+  { id: "h2b", label: "Server → Client: supported versions, capabilities and server info", why: "The server says what it supports (tools, resources, prompts)." },
+  { id: "h3", label: "Client → Server: `tools/list` (protocol version and capabilities in `_meta`)", why: "Every request carries its own version and capabilities; no session to set up." },
   { id: "h4", label: "Server → Client: tool names, descriptions, **input schemas**", why: "The schema tells the model what arguments are valid." },
   { id: "h5", label: "Host gives the tool definitions + the user's question to the [[c|LLM]]", why: "Now the model knows the tools exist." },
   { id: "h6", label: "LLM → Host: request `get_vaf_timeline(IDH2-R140Q)`", why: "The model only *asks*. The host decides whether to run it." },

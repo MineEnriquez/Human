@@ -2,11 +2,11 @@ import { McpLabView } from "../shared/McpLabView";
 
 export const HANDSHAKE = [
   { id: "h1", label: "[[t|Host]] starts an MCP client and connects to the programme's model server (Streamable HTTP)", why: "One client per server, inside the host app." },
-  { id: "h2", label: "Client → Server: `initialize` (protocol version, client capabilities)", why: "Agree the protocol version and capabilities first." },
-  { id: "h3", label: "Server → Client: initialize result (server offers **tools** and **resources**)", why: "Now the client knows what it can ask for." },
-  { id: "h4", label: "Client → Server: `notifications/initialized`", why: "A notification (no id, no reply) that ends the handshake." },
-  { id: "h5", label: "Client → Server: `tools/list`", why: "Discover run_tb_model, get_notifications and the others." },
-  { id: "h6", label: "Host gives the tool definitions + the analyst's question to the [[c|LLM]]", why: "The schemas tell the model which arguments are valid." },
+  { id: "h2", label: "Client → Server: `server/discover`", why: "Optional first call in the current MCP revision (2026-07-28): which protocol versions and capabilities does the server support? (Servers on 2025-11-25 and earlier use an initialize handshake instead.)" },
+  { id: "h3", label: "Server → Client: supported versions, capabilities (**tools** and **resources**) and server info", why: "Now the client knows what it can ask for." },
+  { id: "h4", label: "Client → Server: `tools/list` (protocol version and capabilities in `_meta`)", why: "Every request carries its own version and capabilities; there's no session to set up." },
+  { id: "h5", label: "Server → Client: run_tb_model, get_notifications and the others, with **input schemas**", why: "The schemas tell the model which arguments are valid." },
+  { id: "h6", label: "Host gives the tool definitions + the analyst's question to the [[c|LLM]]", why: "Now the model knows the tools exist." },
   { id: "h7", label: "LLM → Host: request `run_tb_model` with strategy `acf` to 2035", why: "The model only asks. The host applies policy." },
   { id: "h8", label: "Client → Server: `tools/call` run_tb_model", why: "The real call, made by the host's client." },
   { id: "h9", label: "Server → Client: projection; host passes it back to the LLM", why: "The model writes its answer, or calls another tool." },
