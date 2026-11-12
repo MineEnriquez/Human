@@ -1,7 +1,7 @@
 /* Neva design system: clean neutral theme.
    Neutral greys and near-black/near-white (no beige or brown), yellow as the brand accent, and no blue hues.
    Off-white instead of pure white and near-black instead of pure black keep glare down; text stays above WCAG AA.
-   Layout and typography inspired by pratt.edu; Hanken Grotesk (UI) + Source Serif 4 (reading text). */
+   Layout inspired by pratt.edu; one modern sans-serif throughout (Graphik if available, else Hanken Grotesk). */
 :root {
   /* Neutral greys (no beige/brown), off-white instead of pure white, near-black ink; still no blue hues. */
   --paper: #f2f2f2; --sheet: #fbfbfb; --ink: #1a1a1a; --muted: #5c5c5c; --line: #e0e0e0;
@@ -13,13 +13,11 @@
   --k-c: #b02a6a; --k-c-bg: #fbe3ee; --k-b: #1f7a3d; --k-b-bg: #e2f3e7; --k-t: #1a1a1a; --k-t-bg: #ffd24d; --k-w: #c4282f; --k-w-bg: #fde5e4;
   /* sequence-type colours in the vector map */
   --st-258: #1a1a1a; --st-307: #e0662a; --st-11: #c4282f; --st-147: #b02a6a;
-  /* Typefaces follow pratt.edu's roles: Graphik for UI and headings, Tiempos Text for reading text, Tiempos Fine
-     (light italic) for emphasised words in headlines. Graphik and Tiempos are commercial fonts: they're used when
-     installed on the reader's machine or when licensed files are added to src/assets/fonts/ (see the README there).
-     Otherwise the free stand-ins after them in each stack are used. */
+  /* One modern sans-serif for everything: Graphik when installed (or licensed files in src/assets/fonts/),
+     otherwise Hanken Grotesk. No serif faces. */
   --font-ui: "Graphik", "Graphik Web", "Hanken Grotesk", "Helvetica Neue", Arial, system-ui, sans-serif;
-  --font-read: "Tiempos Text", "TiemposText", "Source Serif 4", Georgia, serif;
-  --font-fine: "Tiempos Fine", "TiemposFine", "Newsreader", "Source Serif 4", Georgia, serif;
+  --font-read: var(--font-ui);
+  --font-fine: var(--font-ui);
   --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
   --accent-hover: #333333;
   --r: 14px; --shadow: 0 1px 0 rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.06);
@@ -103,10 +101,13 @@ h1, h2, h3, h4 { font-family: var(--font-ui); letter-spacing: -0.02em; margin: 0
 /* ---------- hero ---------- */
 .hero { background: var(--band); color: var(--on-band); }
 .hero-in { max-width: 1240px; margin: 0 auto; padding: 72px 24px 88px; display: grid; grid-template-columns: 1.3fr 1fr; gap: 48px; align-items: center; }
-.hero h1 { font-size: clamp(2.6rem, 6vw, 5rem); line-height: 0.98; font-weight: 800; letter-spacing: -0.04em; }
-/* Emphasis inside headlines uses the fine serif italic, as pratt.edu does (h1 em, h2 em). */
-h1 em, h2 em { font-family: var(--font-fine); font-style: italic; font-weight: 300; letter-spacing: -0.01em; }
-.hero h1 em { background: var(--yellow); color: var(--on-yellow); padding: 0 .12em; }
+/* Line height leaves room for the highlight boxes so a highlighted line never covers the line above it. */
+.hero h1 { font-size: clamp(2.6rem, 6vw, 5rem); line-height: 1.16; font-weight: 800; letter-spacing: -0.04em; }
+/* Emphasis inside headlines: same sans-serif, upright; the hero highlights it in yellow, section headings in a soft underline. */
+h1 em, h2 em { font-style: normal; font-weight: thin; letter-spacing: inherit; }
+h2 em { box-shadow: inset 0 -0.28em 0 var(--yellow-soft); }
+/* The highlight is a band trimmed to the letters (not the font's full ascent/descent box), so the two lines' boxes never overlap. */
+.hero h1 em { background: linear-gradient(to bottom, transparent 14%, var(--yellow) 14%, var(--yellow) 90%, transparent 90%); color: var(--on-yellow); padding: 0 .12em; }
 .hero p.lede { font: 400 1.25rem/1.5 var(--font-read); color: var(--on-band); max-width: 36ch; margin: 22px 0 30px; }
 .hero .stat-row { display: flex; gap: 28px; margin-top: 34px; color: var(--on-band-muted); font-size: .9rem; }
 .hero .stat-row b { display: block; color: var(--on-band); font-size: 1.6rem; }
@@ -160,7 +161,7 @@ h1 em, h2 em { font-family: var(--font-fine); font-style: italic; font-weight: 3
 .stage-h h2 { font-size: 1.5rem; font-weight: 800; }
 
 /* reading text */
-.read { font: 400 1.08rem/1.7 var(--font-read); max-width: 70ch; }
+.read { font: 400 1.05rem/1.65 var(--font-read); max-width: 70ch; }
 .read p { margin: 0 0 .9em; }
 .read ul, .read ol { margin: 0 0 .9em; padding-left: 1.3em; }
 .read li { margin: .25em 0; }
@@ -304,7 +305,7 @@ label.lbl { font-weight: 700; font-size: .9rem; display: block; margin-bottom: 6
 
 @media (max-width: 960px) { .vdb-grid { grid-template-columns: 1fr !important; } }
 input[type=range] { accent-color: var(--ink); }
-.hero h1 em { -webkit-box-decoration-break: clone; box-decoration-break: clone; padding: 0 .08em; }
+.hero h1 em { -webkit-box-decoration-break: clone; box-decoration-break: clone; }
 .theme-btn { background: none; border: 1px solid var(--band-line); color: var(--on-band); border-radius: 999px; padding: 4px 10px; font-size: .8rem; font-weight: 600; cursor: pointer; }
 .theme-btn:hover { border-color: var(--on-band-muted); }
 /* text on yellow and on ink stays legible in both themes */

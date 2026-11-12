@@ -17,11 +17,9 @@ where you lead an investigation with a tool-using AI agent.
 
 ## Fonts
 
-Typefaces follow pratt.edu's roles: **Graphik** for UI and headings, **Tiempos Text** for reading text, and
-**Tiempos Fine** light italic for emphasised words in headlines. They are commercial fonts and are not included.
-Readers who have them installed see them; to serve them to everyone, add licensed WOFF2 files to
-`src/assets/fonts/` (see the README there; the files are git-ignored). Until then the free stand-ins are Hanken
-Grotesk, Source Serif 4 and Newsreader.
+One modern sans-serif throughout: **Graphik** when it's installed on the reader's machine or licensed WOFF2 files
+are added to `src/assets/fonts/` (see the README there; the files are git-ignored), otherwise **Hanken Grotesk**
+(free, from Google Fonts). Code uses IBM Plex Mono. No serif faces.
 
 ## Run it
 
