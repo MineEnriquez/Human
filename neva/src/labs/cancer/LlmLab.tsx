@@ -73,7 +73,7 @@ export default function LlmLab() {
         <button className="btn sm" onClick={() => finishPart(ID, EV[0], EV)} disabled={p.includes(EV[0])}>{p.includes(EV[0]) ? "Logged ✓" : "Log this trace as evidence"}</button>
       </LabCard>
 
-      <LabCard title="B. Temperature experiment" done={p.includes(EV[1])} sub={<>Prompt: <i>"The relapse sample carries a mutation in ___"</i>, with no report in the context. Change the temperature and sample 10 completions.</>}>
+      <LabCard title="B. Temperature experiment" done={p.includes(EV[1])} sub={<>Prompt: <i>"The relapse sample carries a mutation in ___"</i>, with no report in the context. Change the temperature and sample 10 completions. (An illustrative sampler: some current Claude and OpenAI reasoning models fix temperature instead of exposing it.)</>}>
         <div className="row"><label htmlFor="temp" className="muted">Temperature {T.toFixed(2)}</label><input id="temp" type="range" min={0.05} max={2} step={0.05} value={T} onChange={e => setT(+e.target.value)} style={{ flex: 1, maxWidth: 320 }} /></div>
         <div className="stack" style={{ margin: "14px 0", gap: 6 }}>
           {NEXT.map((n, i) => (
