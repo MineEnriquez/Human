@@ -17,7 +17,7 @@ type Decision = { id: string; decision: "include" | "exclude" | "unsure"; criter
 const PRISMA = [
   { id: "f1", label: "**Identify** records by searching databases and registers", why: "The flow diagram starts with the number of records found per source." },
   { id: "f2", label: "**Remove** duplicate records before screening", why: "Duplicates (and any records removed by automation tools) are counted and removed." },
-  { id: "f3", label: "**Screen** titles and abstracts; exclude clearly ineligible records", why: "Two reviewers independently; inclusive when unsure. AI tools used here must be reported." },
+  { id: "f3", label: "**Screen** titles and abstracts; exclude clearly ineligible records", why: "Ideally two reviewers independently (Cochrane accepts one at this first pass); over-inclusive when unsure. PRISMA 2020 asks you to report any automation tools used." },
   { id: "f4", label: "**Retrieve** full-text reports of the remaining records", why: "Reports that can't be retrieved are counted." },
   { id: "f5", label: "**Assess** full texts for eligibility, recording a reason for each exclusion", why: "PRISMA 2020 asks for the reasons reports were excluded at this stage." },
   { id: "f6", label: "**Include** studies, linking multiple reports of the same study", why: "The diagram ends with the studies (and reports) included in the review." },
